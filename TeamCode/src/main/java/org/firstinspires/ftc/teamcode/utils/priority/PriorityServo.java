@@ -4,21 +4,27 @@ import android.util.Log;
 
 import com.qualcomm.robotcore.hardware.Servo;
 
-public class PriorityServo extends PriorityDevice{
+import org.firstinspires.ftc.teamcode.utils.Globals;
+import org.firstinspires.ftc.teamcode.utils.RunMode;
+import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
+import org.firstinspires.ftc.teamcode.utils.Utils;
+
+public class nPriorityServo extends PriorityDevice {
     public enum ServoType {
+        // Radians/s is speed
         TORQUE(0.2162104887, Math.toRadians(60) / 0.25),
         SPEED(0.2162104887, Math.toRadians(60) / 0.11),
         SUPER_SPEED(0.2162104887, Math.toRadians(60) / 0.055),
-        AXON_MINI(0.1784612002049795, 5.6403953024772129),
+        AXON_MINI(1 / Math.toRadians(305), 5.3403953024772129),
         AXON_MAX(0.1775562245447108, 6.5830247235911042),
         AXON_MICRO(0.1775562245447108, 6.5830247235911042),  // TODO need to tune
         AMAZON(0.2122065908, Math.toRadians(60) / 0.13),
         PRO_MODELER(0.32698, Math.toRadians(60) / 0.139),
         JX(0.3183098862, Math.toRadians(60) / 0.12),
-        HITEC(0.2966648, 5.6403953024772129);
+        HITEC(0.2966648, 5.2);
 
-        public double positionPerRadian;
-        public double speed;
+        public final double positionPerRadian;
+        public final double speed;
 
         ServoType(double positionPerRadian, double speed) {
             this.positionPerRadian = positionPerRadian;
@@ -26,202 +32,210 @@ public class PriorityServo extends PriorityDevice{
         }
     }
 
-    public Servo[] servo;
-    public ServoType type;
-    public double minPos, minAng, maxPos, maxAng, basePos;
-    protected double currentAngle = 0, targetAngle = 0, power = 0;
-    protected boolean reachedIntermediate = false;
-    protected double currentIntermediateTargetAngle = 0;
-    protected double[] multipliers = null;
-    private long lastLoopTime = System.nanoTime();
-    public String name;
-    public double slowdownDist;
-    public double slowdownPow;
+    public final Servo[] servos;
+    private final ServoType type;
+    public final double minPos;
+    public final double maxPos;
+    public final double basePos;
+    private double currentAngle = 0, targetAngle = 0, power = 1.0, currentIntermediateTargetAngle = 0;
+    protected final boolean[] reversed;
+    private long lastLoopTime = Globals.LOOP_START;
+    private boolean first = true; // Priority servo has a problem when the servos won't get set at the start if theyre set to 0
+    private boolean forceUpdate = false;
 
-    // Defaults the motion profile
-    public PriorityServo(Servo servo, String name, ServoType type, double loadMultiplier, double min, double max, double basePos, boolean reversed, double basePriority, double priorityScale) {
-        this(new Servo[] {servo}, name, type, loadMultiplier, min, max, basePos, reversed, 0, 1, basePriority, priorityScale);
-    }
-
-    // Defaults the motion profile
-    public PriorityServo(Servo[] servo, String name, ServoType type, double loadMultiplier, double min, double max, double basePos, boolean reversed, double basePriority, double priorityScale, double[] multipliers) {
-        this(servo,name,type,loadMultiplier,min,max,basePos,reversed, 0, 1, basePriority,priorityScale);
-        this.multipliers = multipliers;
-    }
-
-    // Takes in multipliers
-    public PriorityServo(Servo servo, String name, ServoType type, double loadMultiplier, double min, double max, double basePos, boolean reversed, double slowdownDist, double slowdownPow, double basePriority, double priorityScale, double [] multipliers) {
-        this(new Servo[] {servo}, name, type, loadMultiplier, min,  max,  basePos,  reversed, slowdownDist, slowdownPow,  basePriority,  priorityScale);
-        this.multipliers = multipliers;
-    }
-
-    // Takes in servo[] and multipliers
-    public PriorityServo(Servo[] servo, String name, ServoType type, double loadMultiplier, double min, double max, double basePos, boolean reversed, double slowdownDist, double slowdownPow, double basePriority, double priorityScale, double [] multipliers) {
-        this(servo, name, type, loadMultiplier, min,  max,  basePos,  reversed, slowdownDist, slowdownPow,  basePriority,  priorityScale);
-        this.multipliers = multipliers;
-    }
-
-    public PriorityServo(Servo[] servo, String name, ServoType type, double loadMultiplier, double min, double max, double basePos, boolean reversed, double slowdownDist, double slowdownPow, double basePriority, double priorityScale) {
-        super(basePriority,priorityScale, name);
-        this.servo = servo;
+    /**
+     * Basic initializer
+     *
+     * @param servos If servos are connected in parallel add them all here
+     * @param name Name of device for HardwareQueue lookup
+     * @param type Type of servo type
+     * @param minPos Minimum pose that it can possibly move to
+     * @param maxPos Maximum pose that it can possibly move to
+     * @param basePos Pose that is set t0 "0"
+     * @param reversed Which servos in the servo array are reversed or not
+     * @param basePriority BP
+     * @param priorityScale PS
+     */
+    public nPriorityServo(Servo[] servos, String name, ServoType type, double minPos, double maxPos, double basePos, boolean[] reversed, double basePriority, double priorityScale) {
+        super(basePriority, priorityScale, name);
+        this.servos = servos;
         this.type = type;
-        this.type.speed *= loadMultiplier;
-        this.name = name;
-        if (reversed) {
-            this.type.positionPerRadian *= -1;
-        }
-
+        this.minPos = minPos;
+        this.maxPos = maxPos;
         this.basePos = basePos;
-
-        minPos = Math.min(min,max);
-        maxPos = Math.max(min,max);
-
-        minAng = convertPosToAngle(minPos);
-        maxAng = convertPosToAngle(maxPos);
-
-        callLengthMillis = 1.0;
-
-        multipliers = new double[servo.length];
-        for (int i = 0; i < servo.length; i++) {
-            multipliers[i] = 1;
-            //servo[i].getController().pwmEnable(); turn on if u want -- Eric
+        this.reversed = reversed;
+        this.currentAngle = convertPosToAngle(basePos);
+        if (type == ServoType.HITEC) { // I actually dislike this servo so much
+            servos[0].setPosition(1.0);
+            servos[0].setPosition(0.0);
+            servos[0].setPosition(basePos);
         }
-
-        this.slowdownDist = slowdownDist;
-        this.slowdownPow = slowdownPow;
     }
 
-    public double convertPosToAngle(double pos){
+    private double convertPosToAngle(double pos) {
         pos -= basePos;
         pos /= type.positionPerRadian;
         return pos;
     }
-    public double convertAngleToPos(double ang){
+
+    private double convertAngleToPos(double ang) {
         ang *= type.positionPerRadian;
         ang += basePos;
         return ang;
     }
 
-    public void setTargetPose(double targetPose, double power) {
-        setTargetAngle(convertPosToAngle(targetPose),power);
+    public boolean inPosition() {
+        //Log.e("ERIC LOG", "inPosition is " + (Math.abs(targetAngle-currentAngle) < Math.toRadians(0.01)) + "");
+        return Math.abs(targetAngle-currentAngle) < Math.toRadians(0.01);
+    }
+
+    public boolean inPosition(double thresh) {
+        return Math.abs(targetAngle - currentAngle) < thresh;
+    }
+
+    public void setTargetAngle(double angle) {
+        this.targetAngle = Utils.minMaxClip(angle, convertPosToAngle(minPos), convertPosToAngle(maxPos));
+    }
+
+    public void setTargetAngle(double angle, double power) {
+        this.targetAngle = Utils.minMaxClip(angle, convertPosToAngle(minPos), convertPosToAngle(maxPos));
+        this.power = power;
+    }
+
+    public double getTargetAngle() {
+        return targetAngle;
+    }
+
+    public void setTargetPos(double pos) {
+        this.setTargetPos(Utils.minMaxClip(pos, minPos, maxPos), 1);
+    }
+
+    public void setTargetPos(double pos, double power) {
+        this.targetAngle = convertPosToAngle(Math.max(Math.min(pos, maxPos), minPos));
+        this.power = power;
+    }
+
+    public double getTargetPos() {
+        return convertAngleToPos(targetAngle);
     }
 
     public double getCurrentAngle() {
         return currentAngle;
     }
 
-    public void setTargetAngle(double targetAngle, double power){
-        this.power = power;
-        this.targetAngle = Math.max(Math.min(targetAngle,maxAng),minAng);
-    }
-
-    public void updateServoValues() {
-        //updates the current angle the servo thinks it is at
-        long currentTime = System.nanoTime();
-        double loopTime = ((double) currentTime - lastLoopTime)/1.0E9;
-        double error = currentIntermediateTargetAngle - currentAngle;
-        double realError =targetAngle-currentAngle; //todo test this
-        double deltaAngle = loopTime * type.speed * (Math.abs(realError) <= slowdownDist ? slowdownPow : power) * Math.signum(error);
-        //double deltaAngle = timeSinceLastUpdate * type.speed * power * Math.signum(error);
-        reachedIntermediate = Math.abs(deltaAngle) >= Math.abs(error);
-        if (reachedIntermediate){
-            deltaAngle = error;
-        }
-        currentAngle += deltaAngle;
-        lastLoopTime = currentTime;
-        Log.i("PriorityServo angle", name + ", currentAngle = " + currentAngle + " = " + Math.toDegrees(currentAngle) + ", targetAngle = " + targetAngle + " = " + Math.toDegrees(targetAngle));
-    }
-
-    public void setCurrentAngle(double currentAngle) {
-        this.currentAngle = currentAngle;
-//        this.targetAngle = currentAngle;
-//        this.currentIntermediateTargetAngle=currentAngle;
-//
-//        for (int i = 0; i < servo.length; i++) {
-//            if (multipliers[i] == 1) {
-//                servo[i].setPosition(convertAngleToPos(currentAngle)); //sets the servo to actual move to the target
-//            } else {
-//                servo[i].setPosition(maxPos - convertAngleToPos(currentAngle)); //this might be completely wrong --Kyle
-//            }
-//        }
-    }
-
-    public boolean inPosition(){
-        return Math.abs(targetAngle-currentAngle) < Math.toRadians(0.01);
-    }
+    public void setForceUpdate() { forceUpdate = true; }
 
     @Override
-    public double getPriority(double timeRemaining) {
-        if (isUpdated) {
-            return 0;
-        }
+    protected void update() {
+        //Log.e("Priority Servo Log", name + " is moving with power " + power);
 
-        updateServoValues();
+        forceUpdate = false;
 
-        if (timeRemaining * 1000.0 <= callLengthMillis/2.0) {
-            return 0;
-        }
-
-        double priority = ((reachedIntermediate && currentIntermediateTargetAngle != targetAngle) ? basePriority : 0) + Math.abs(targetAngle-currentIntermediateTargetAngle) * (System.nanoTime() - lastUpdateTime)/1000000.0 * priorityScale;
-
-        if (priority == 0) {
-            lastUpdateTime = System.nanoTime();
-            return 0;
-        }
-
-        return priority;
-    }
-
-    @Override
-    public void update() {
-        //Finds the amount of time since the intermediate target variable has been updated
         long currentTime = System.nanoTime();
         double timeSinceLastUpdate = ((double) currentTime - lastUpdateTime)/1.0E9;
 
         double error = targetAngle - currentAngle;
-//        Log.e(name, "error: " + error);
-        //find the amount of movement the servo theoretically should have done in the time it took to update the servo
-        double deltaAngle = timeSinceLastUpdate * type.speed * (Math.abs(error) <= slowdownDist ? slowdownPow : power) * Math.signum(error);
-        //double deltaAngle = timeSinceLastUpdate * type.speed * power * Math.signum(error);
+        //Log.e("TTTTTTTTa", timeSinceLastUpdate + " is the time since last update");
+        //Log.e("TTTTTTTTa", error + " is the error");
+        double deltaAngle = timeSinceLastUpdate * type.speed * power * Math.signum(error);
+        //Log.e("TTTTTTTTa", deltaAngle + " delta ang");
+        //Log.e("TTTTTTTTa", power + " power");
 
-        if (Math.abs(deltaAngle) > Math.abs(error)){ //make sure that the servo doesn't ossilate over target
-            deltaAngle = error;
-        }
+        currentIntermediateTargetAngle += deltaAngle;
 
-        currentIntermediateTargetAngle += deltaAngle; // adds the change in pose to the target for the servo
-        if (power == 1) {
+        // Clamp
+        if (Math.abs(deltaAngle) > Math.abs(error) || power == 1)
             currentIntermediateTargetAngle = targetAngle;
-            if (slowdownDist != 0 && Math.abs(error) > slowdownDist + Math.toRadians(15)) {
-                currentIntermediateTargetAngle = targetAngle-slowdownDist*Math.signum(error); // makes it so that it goes to the end if the power is 1.0 ie no slow downs
-                //currentIntermediateTargetAngle = targetAngle;
-            }
-        }
+        //Log.e("ooga", "booga");
 
-//        if (Math.abs(error) < Math.toRadians(15)){
-//            currentIntermediateTargetAngle = targetAngle;
-//        }
-
-        for (int i = 0; i < servo.length; i++) {
-            if (multipliers[i] == 1) {
-                servo[i].setPosition(convertAngleToPos(currentIntermediateTargetAngle)); //sets the servo to actual move to the target
+        // Update servos
+        for (int i = 0; i < servos.length; i++) {
+            double pos = 0;
+            if (!reversed[i]) {
+                pos = convertAngleToPos(currentIntermediateTargetAngle);
             } else {
-                servo[i].setPosition(maxPos - convertAngleToPos(currentIntermediateTargetAngle)); //this might be completely wrong --Kyle
+                pos = 1 - convertAngleToPos(currentIntermediateTargetAngle);
             }
+            if (type == ServoType.HITEC && pos <= 0.07) {
+                // I kid you not this must happen
+                servos[i].setPosition(0.1);
+                servos[i].setPosition(0.07);
+            }
+            servos[i].setPosition(pos);
+            //Log.i("SLCI", "Set position of " + name + i + " to position " + pos + " current angle is " + currentAngle);
         }
 
         isUpdated = true;
         lastUpdateTime = currentTime;
     }
 
-    public double getTargetPosition () {
-        return convertAngleToPos(currentIntermediateTargetAngle);
-    }
-    public double getTargetAngle() {
-        return currentIntermediateTargetAngle;
-    }
+    @Override
+    protected double getPriority(double timeRemaining) {
+        // STUPID STUPID HACK I HATE YOU
+        if (first) {
+            if (!(Globals.TESTING_DISABLE_CONTROL && Globals.RUNMODE == RunMode.TESTER)) {
+                update();
+            }
+            Log.i(name, currentAngle + " is the value [ Eric's Log ]");
+            first = false;
+        }
 
-//    public void setTargetAngleFORCED(double angle) {
-//        setTargetAngle(angle, 1.0);
-//        update();
-//    }
+        // Update the servo internal values
+        long currentTime = System.nanoTime();
+        double loopTime = ((double) currentTime - lastLoopTime)/1.0E9;
+
+        // We actually use this to pretty much just get direction
+        double error = targetAngle - currentAngle;
+        //Log.i("SLCI", "currentIntermediateTargetAngle is " + currentIntermediateTargetAngle + " for " + name);
+        //Log.i("SLCI", "currentAngle is " + currentAngle + " for " + name);
+        //Log.i("SLCI", "targetAngle is " + targetAngle + " for " + name);
+
+        // How much the servo has moved from the start of the loop to now
+        double deltaAngle = loopTime * type.speed * Math.signum(error) * power;
+
+//        Log.e("adding " + this.name + "deltaAngle" , deltaAngle + "");
+//        Log.e(this.name + "'s current angle" , currentAngle + "");
+//        Log.e(this.name + "_loopTime" , loopTime + "");
+//        Log.e(this.name + "_type.speed" , type.speed + "");
+//        Log.e(this.name + "_error" , error + "");
+//        Log.e(this.name + "_power" , power + "");
+//        Log.e(this.name + "_targetAngle" , targetAngle + "");
+//        Log.e(this.name + "_currentAngle" , currentAngle + "");
+//        Log.e(this.name + "_currentIntermediateTargetAngle" , currentIntermediateTargetAngle + "");
+
+        currentAngle += deltaAngle;
+        TelemetryUtil.packet.put("currentPos " + name, currentAngle);
+
+        // Clamp
+        //Log.i("SLCI", deltaAngle + " is delta angle for servo " + name);
+        //Log.i("SLCI", error + " is error for servo " + name);
+        if (Math.abs(error) < Math.abs(deltaAngle)) {
+        //    Log.i("SLCI", "Gotcha! " + name);
+            currentAngle = targetAngle;
+        }
+
+        lastLoopTime = currentTime;
+
+        if (isUpdated)
+            return 0;
+
+        // Dawg what the hell??
+        if (timeRemaining * 1000.0 <= callLengthMillis/2.0) {
+            return 0;
+        }
+
+        // Ong trust this function.
+        double priority = (((currentAngle - targetAngle) != 0) ? basePriority : 0) + Math.abs(targetAngle-currentIntermediateTargetAngle) * (System.nanoTime() - lastUpdateTime)/1000000.0 * priorityScale;
+
+        // Yuh that means it just updated. Dont even touch that thing
+        if (priority == 0) {
+            lastUpdateTime = System.nanoTime();
+            return 0;
+        }
+
+        if (forceUpdate) priority += 1000;
+
+        Log.i("priority", name + " : " + priority);
+        return priority;
+    }
 }

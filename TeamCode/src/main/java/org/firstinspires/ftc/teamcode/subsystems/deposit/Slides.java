@@ -12,13 +12,8 @@ import org.firstinspires.ftc.teamcode.utils.priority.PriorityMotor;
 
 @Config
 public class Slides {
-    //public static double maxVel = 55.75589743589743;
-    //public static double kP = 0.8;
-    //public static double kA = 46;
     public static double kStaticRamp = 0.2;
     public static double minKStaticLength = 3;
-    //public static double minPower = 0.3;
-    //public static double minPowerThresh = 2;
     public static double forceDownPower = -0.2;
     public static double forceDownThresh = 5;
     public static double maxSlidesHeight = 35.3;
@@ -59,33 +54,13 @@ public class Slides {
         m2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
-    /**
-     * Pretty misleading function name -- Eric
-     * @return power
-     */
-    /*private double feedforward() {
-        double error = targetLength - length;
-        TelemetryUtil.packet.put("Slides : error", error);
-        TelemetryUtil.packet.put("Slides : targetLength", targetLength);
-        LogUtil.slidesTargetPos.set(targetLength);
-        //TelemetryUtil.packet.put("Slides: Length", length);
-
-        if (targetLength <= 3 && length <= forceDownThresh && Math.abs(error) > 1) { // force down
-            return length <= 0.5 ? forceDownPower / 2 : forceDownPower;
-        }
-        return (error * (maxVel / kA)) * kP + kStatic + kStaticRamp * targetLength + ((Math.abs(error) > minPowerThresh) ? minPower * Math.signum(error) : 0);
-    }*/
-
     public boolean manualMode = false;
 
     public void update() {
         length = this.robot.sensors.getSlidesPos();
         vel = this.robot.sensors.getSlidesVel();
-        TelemetryUtil.packet.put("Slides: Velocity", vel);
 
         if (!manualMode) {
-//            if (!(Globals.RUNMODE == RunMode.TESTER)) {
-            TelemetryUtil.packet.put("Slides : Error", targetLength - length);
             double pow = pid.update(targetLength - length, -1.0, 1.0) + ((length > minKStaticLength) ? kStaticRamp / maxSlidesHeight * length : 0);//feedforward();
             if (length <= forceDownThresh && targetLength == 0)
                 pow = forceDownPower;
@@ -100,13 +75,14 @@ public class Slides {
             }
 
             if (this.inPosition(0.3)) pid.resetIntegral();
+            slidesMotors.setTargetPower(Utils.minMaxClip(pow, -1, 1));
 
+            TelemetryUtil.packet.put("Slides: Velocity", vel);
+            TelemetryUtil.packet.put("Slides : Error", targetLength - length);
             TelemetryUtil.packet.put("Slides : Power", pow);
             TelemetryUtil.packet.put("Slides : Target", targetLength);
             TelemetryUtil.packet.put("Slides : concurrence", concurrence);
             TelemetryUtil.packet.put("Slides : targetDelta", slidesTargetDelta);
-            slidesMotors.setTargetPower(Utils.minMaxClip(pow, -1, 1));
-//            }
         }
     }
 
