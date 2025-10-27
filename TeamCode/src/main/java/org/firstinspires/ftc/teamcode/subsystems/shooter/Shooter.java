@@ -16,6 +16,12 @@ public class Shooter {
 
     private final DcMotorEx ms1, ms2;
 
+    /*
+        Servo Zeroes
+        turret: Relative to front of the robot, counterclockwise rotation is positive
+        hood: Fully retracted
+        cloth:
+     */
     private final nPriorityServo turret, hood, cloth;
     private final PriorityMotor flywheel;
 
