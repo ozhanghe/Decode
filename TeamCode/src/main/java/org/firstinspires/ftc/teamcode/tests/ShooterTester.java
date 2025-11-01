@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.utils.RunMode;
 @TeleOp(group = "Test")
 public class ShooterTester extends LinearOpMode {
     public static double turretAngle = 0.0, hoodAngle = 0.0, flywheelVelocity = 0.0, flywheelPower = 0.0;
-    public static boolean useVelocity = false;
+    public static boolean updateVelocity = false;
 
     public void runOpMode() {
         Globals.RUNMODE = RunMode.TESTER;
@@ -24,14 +24,13 @@ public class ShooterTester extends LinearOpMode {
             robot.update();
         }
 
-        // TODO: Update ShooterTester to
         while (!isStopRequested()) {
             shooter.setTurretAngle(turretAngle);
             shooter.setHoodAngle(hoodAngle);
 
-            if (useVelocity) {
+            if (updateVelocity) {
                 shooter.setTargetVelocity(flywheelVelocity);
-                useVelocity = false;
+                updateVelocity = false;
             }
 
             robot.update();
