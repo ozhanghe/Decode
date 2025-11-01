@@ -6,13 +6,17 @@ public class PriorityCRServo extends PriorityDevice {
     public CRServo[] servo;
     double power = 0;
     double lastPower = 0;
-    public PriorityCRServo(CRServo servo, String name,  double basePriority, double priorityScale) {
+    boolean reversed[];
+
+    public PriorityCRServo(CRServo servo, String name,  double basePriority, double priorityScale, boolean[] reversed) {
         super(basePriority, priorityScale, name);
         this.servo = new CRServo[]{servo};
+        this.reversed = reversed;
     }
-    public PriorityCRServo(CRServo[] servos, String name, double basePriority, double priorityScale) { //one of the servos must be reversed prior to use
+    public PriorityCRServo(CRServo[] servos, String name, double basePriority, double priorityScale, boolean[] reversed) { //one of the servos must be reversed prior to use
         super(basePriority, priorityScale, name);
         this.servo = servos;
+        this.reversed = reversed;
     }
 
     public void setTargetPower(double power) {
@@ -33,9 +37,10 @@ public class PriorityCRServo extends PriorityDevice {
 
     @Override
     protected void update() {
-        for (CRServo servo : servo) {
-            servo.setPower(power);
+        for(int i = 0; i < servo.length; i++){
+            servo[i].setPower(power * (reversed[i] ? -1.0 : 1.0));
         }
+
         lastUpdateTime = System.nanoTime();
         lastPower = power;
     }

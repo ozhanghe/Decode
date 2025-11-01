@@ -186,6 +186,8 @@ public class Sensors {
         fullChamber = false;
     }
 
+    public void toggleColor (boolean on) {colorToggle = on;}
+
     // Shooter
 
     public double getFlywheelVelocity () {return flywheelVelocity;}

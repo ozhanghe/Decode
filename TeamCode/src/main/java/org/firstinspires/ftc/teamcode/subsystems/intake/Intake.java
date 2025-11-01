@@ -12,7 +12,6 @@ import org.firstinspires.ftc.teamcode.utils.priority.PriorityMotor;
 public class Intake {
     private final Robot robot;
     public final PriorityMotor rollerMotor;
-    public final PriorityMotor transferMotor;
     public final PriorityCRServo feedServo;
 
     public enum State {
@@ -34,15 +33,11 @@ public class Intake {
             "roller", 2, 5,
             new double[] {1}, robot.sensors
         );
-        transferMotor = new PriorityMotor(
-            new DcMotorEx[] {robot.hardwareMap.get(DcMotorEx.class, "transfer")},
-            "transfer", 2, 5,
-            new double[] {1}, robot.sensors
-        );
+
         feedServo = new PriorityCRServo(
-            robot.hardwareMap.get(CRServo.class, "feed"),
+            new CRServo[] {robot.hardwareMap.get(CRServo.class, "feed1"), robot.hardwareMap.get(CRServo.class, "feed2")},
             "feed",
-            1, 5
+            1, 5, new boolean[] {false, true}
         );
 
         robot.hardwareQueue.addDevices(rollerMotor, feedServo);
@@ -52,14 +47,20 @@ public class Intake {
         switch (state) {
             case IDLE: {
                 // TODO Not spinning roller
+
+                // TODO Disable Color Detection?
                 break;
             }
             case INTAKE: {
                 // TODO Spin roller
+
+                // TODO Toggle Color Detection?
                 break;
             }
             case SORT_FEED: {
                 // TODO Hit 1 ball into shooter
+
+                // TODO: Toggle Color Detection?
                 break;
             }
             case SORT_WAIT: {
@@ -68,6 +69,8 @@ public class Intake {
             }
             case SHOOT_FEED: {
                 // TODO Shoot ball
+
+                // TODO Disable Color Detection?
                 break;
             }
             case SHOOT_WAIT: {
