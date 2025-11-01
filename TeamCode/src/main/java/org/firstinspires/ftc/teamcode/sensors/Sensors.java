@@ -180,6 +180,10 @@ public class Sensors {
         fullChamber = false;
     }
 
+    // Shooter
+
+    public double getFlywheelVelocity () {return flywheelVelocity;}
+
     public double getVoltage() {
         return voltage;
     }

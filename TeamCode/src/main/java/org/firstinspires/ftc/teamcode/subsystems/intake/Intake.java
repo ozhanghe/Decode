@@ -49,7 +49,7 @@ public class Intake {
     }
 
     public void update() {
-        switch (this.state) {
+        switch (state) {
             case IDLE: {
                 // TODO Not spinning roller
                 break;
