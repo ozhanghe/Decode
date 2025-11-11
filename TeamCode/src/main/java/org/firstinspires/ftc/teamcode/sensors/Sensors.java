@@ -178,6 +178,10 @@ public class Sensors {
         purpleCounter = isPurple ? Math.min(purpleCounter + 1, 3) : 0;
     }
 
+    public boolean isBall(){
+        return greenConfidence >= greenThresh || purpleConfidence >= purpleThresh;
+    }
+
     public void shot(){
         balls.set(2, balls.get(1));
         balls.set(1, balls.get(0));

@@ -11,16 +11,14 @@ import org.firstinspires.ftc.teamcode.utils.priority.PriorityMotor;
 
 public class Intake {
     private final Robot robot;
-    public final PriorityMotor rollerMotor;
-    public final PriorityCRServo feedServo;
+    public final PriorityMotor roller, feed;
+
+    private boolean requestIntake = false, requestShoot = false;
 
     public enum State {
         IDLE,
         INTAKE,
-        SORT_FEED,
-        SORT_WAIT,
-        SHOOT_FEED,
-        SHOOT_WAIT,
+        SHOOT_FEED
     }
 
     public State state = State.IDLE;
@@ -28,58 +26,74 @@ public class Intake {
     public Intake(Robot robot) {
         this.robot = robot;
 
-        rollerMotor = new PriorityMotor(
+        roller = new PriorityMotor(
             new DcMotorEx[] {robot.hardwareMap.get(DcMotorEx.class, "roller")},
             "roller", 2, 5,
             new double[] {1}, robot.sensors
         );
 
-        feedServo = new PriorityCRServo(
-            new CRServo[] {robot.hardwareMap.get(CRServo.class, "feed1"), robot.hardwareMap.get(CRServo.class, "feed2")},
-            "feed",
-            1, 5, new boolean[] {false, true}
+        feed = new PriorityMotor (
+                new DcMotorEx[] {robot.hardwareMap.get(DcMotorEx.class, "feed")},
+                "feed", 2, 5,
+                new double[] {1}, robot.sensors
         );
 
-        robot.hardwareQueue.addDevices(rollerMotor, feedServo);
+        robot.hardwareQueue.addDevices(roller, feed);
     }
+
+    long launchTime = System.currentTimeMillis();
 
     public void update() {
         switch (state) {
             case IDLE: {
                 // TODO Not spinning roller
+                roller.setTargetPower(0.0);
+                feed.setTargetPower(0.0);
 
                 // TODO Disable Color Detection?
+                robot.sensors.toggleColor(false);
+
+                if(requestIntake){
+                    requestIntake = false;
+                    state = State.INTAKE;
+                }
+
                 break;
             }
             case INTAKE: {
-                // TODO Spin roller
+                roller.setTargetPower(0.7);
+                feed.setTargetPower(0.3);
 
                 // TODO Toggle Color Detection?
-                break;
-            }
-            case SORT_FEED: {
-                // TODO Hit 1 ball into shooter
 
-                // TODO: Toggle Color Detection?
-                break;
-            }
-            case SORT_WAIT: {
-                // TODO Buffer state
+                if(requestShoot){
+                    requestShoot = false;
+                    state = State.SHOOT_FEED;
+                    launchTime = System.currentTimeMillis();
+                }
+
                 break;
             }
             case SHOOT_FEED: {
-                // TODO Shoot ball
+                roller.setTargetPower(0.7);
+                feed.setTargetPower(0.7);
 
-                // TODO Disable Color Detection?
-                break;
-            }
-            case SHOOT_WAIT: {
-                // TODO Buffer state
-                break;
+                // Add launch time requirement because last ball theoretically will not trigger color sensor
+                if(!robot.sensors.isBall() && System.currentTimeMillis() - launchTime >= 150) {
+                    state = State.IDLE;
+                }
             }
         }
 
         this.updateTelemetry();
+    }
+
+    public void reqIntake(boolean req){
+        requestIntake = req;
+    }
+
+    public void reqShoot(boolean req){
+        requestShoot = req;
     }
 
     private void updateTelemetry() {
