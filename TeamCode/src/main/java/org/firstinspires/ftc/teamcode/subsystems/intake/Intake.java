@@ -47,7 +47,6 @@ public class Intake {
     public void update() {
         switch (state) {
             case IDLE: {
-                // TODO Not spinning roller
                 roller.setTargetPower(0.0);
                 feed.setTargetPower(0.0);
 
@@ -62,7 +61,7 @@ public class Intake {
                 break;
             }
             case INTAKE: {
-                roller.setTargetPower(0.7);
+                roller.setTargetPower(1.0);
                 feed.setTargetPower(0.3);
 
                 // TODO Toggle Color Detection?
@@ -76,7 +75,7 @@ public class Intake {
                 break;
             }
             case SHOOT_FEED: {
-                roller.setTargetPower(0.7);
+                roller.setTargetPower(1.0);
                 feed.setTargetPower(0.7);
 
                 // Add launch time requirement because last ball theoretically will not trigger color sensor

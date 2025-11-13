@@ -96,7 +96,12 @@ public class Shooter {
     public void setClothPos(double target_angle){cloth.setTargetAngle(target_angle);}
 
     public void setShooterPower(double power) { flywheel.setTargetPower(power); }
-    public void setTargetVelocity(double targetVelocity) { this.targetVelocity = targetVelocity; }
+    public void setTargetVelocity(double targetVelocity) {
+        this.targetVelocity = targetVelocity;
+        if(targetVelocity != 0){
+            robot.intake.reqShoot(true);
+        }
+    }
     public double getTargetVelocity() { return targetVelocity; }
 
     public void aimAt(double target_x, double target_y, double target_z) { // TODO Calculations
