@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
 
 @Config
-@TeleOp(group = "IntakeTester")
+@TeleOp(group = "Test")
 public class IntakeTester extends LinearOpMode {
     public static double feedPower = 0.0, intakePower = 0.0;
     public static boolean updateValues = false;

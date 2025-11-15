@@ -25,11 +25,14 @@ public class Sensors {
     private final Robot robot;
     private GoBildaPinpointDriver odometry;
 
-    private Pose2d currentPose, lastPose;
+    private Pose2d currentPose = new Pose2d(0, 0, 0), lastPose;
     private long currentTime, lastTime = System.currentTimeMillis();
     private Vector2 vel = new Vector2();
 
-    private double flywheelVelocity;
+    // 426 mm (16.772 in) is belt circumference
+    // start: 42638
+    // end: 43062
+    private double flywheelVelocity, ticksToInches = 16.772 / (43062 - 42638);
 
     /*
     Index Key
@@ -89,7 +92,7 @@ public class Sensors {
         lastTime = currentTime;
         stopConfidence();
 
-        flywheelVelocity = robot.shooter.flywheel.getVelocity();
+        flywheelVelocity = robot.shooter.flywheel.getVelocity() * ticksToInches;
 
         /*
         if(colorToggle){
@@ -124,7 +127,7 @@ public class Sensors {
     public void recalibrate() { odometry.recalibrateIMU(); }
 
     public void setOdometryPosition(Pose2d pose2d) {
-        // odometry.setPosition(pose2d);
+        odometry.setPosition(pose2d);
     }
 
     public Pose2d getOdometryPosition() { return currentPose; }

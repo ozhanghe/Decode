@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems.shooter;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -11,21 +12,16 @@ import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.utils.priority.PriorityMotor;
 import org.firstinspires.ftc.teamcode.utils.priority.nPriorityServo;
 
+@Config
 public class Shooter {
     private final Robot robot;
 
     private final DcMotorEx ms1, ms2;
-
-    /*
-        Servo Zeroes
-        turret: Relative to front of the robot, counterclockwise rotation is positive
-        hood: Fully retracted
-        cloth:
-     */
-    private final nPriorityServo turret, hood, cloth;
     public final PriorityMotor flywheel;
+    private final nPriorityServo turret, hood/*, cloth*/;
 
-    public static PID velocityPID = new PID (1.0, 0.0, 0.0);
+    // velocity is in inches / second
+    public static PID velocityPID = new PID (0.005, 0.03, 0.0005);
     private double targetVelocity = 0.0;
 
     public Shooter(Robot robot) {
@@ -35,6 +31,7 @@ public class Shooter {
         this.ms2 = robot.hardwareMap.get(DcMotorEx.class, "shooter2");
         flywheel = new PriorityMotor(new DcMotorEx[]{ms1, ms2},"flywheel",3, 5, new double[] {1, -1}, robot.sensors);
 
+        /*
         cloth = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "cloth")},
             "cloth", nPriorityServo.ServoType.AXON_MINI,
@@ -42,6 +39,7 @@ public class Shooter {
             new boolean[] {false},
             2, 5
         );
+         */
 
         hood = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "hood1"), robot.hardwareMap.get(Servo.class,"hood2")},
@@ -59,18 +57,18 @@ public class Shooter {
             2, 5
         );
 
-        robot.hardwareQueue.addDevices(flywheel, cloth, hood, turret);
+        robot.hardwareQueue.addDevices(flywheel/*, cloth*/, hood, turret);
     }
 
     public void update() {
-//        double error = targetVelocity - robot.sensors.getFlywheelVelocity();
-//        double pow = velocityPID.update(error, 0.0, 1.0);
-//        setShooterPower(pow);
+        double error = targetVelocity - robot.sensors.getFlywheelVelocity();
+        double pow = velocityPID.update(error, 0.0, 1.0);
+        setShooterPower(pow);
 
-//        TelemetryUtil.packet.put("Flywheel Current Velocity", robot.sensors.getFlywheelVelocity());
+        TelemetryUtil.packet.put("Flywheel Current Velocity", robot.sensors.getFlywheelVelocity());
         TelemetryUtil.packet.put("Flywheel Target Velocity", targetVelocity);
-//        TelemetryUtil.packet.put("Flywheel Velocity Error", error);
-//        TelemetryUtil.packet.put("Flywheel PID Power", pow);
+        TelemetryUtil.packet.put("Flywheel Velocity Error", error);
+        TelemetryUtil.packet.put("Flywheel PID Power", pow);
     }
 
     /**
@@ -93,15 +91,10 @@ public class Shooter {
         LogUtil.hoodAngle.set(target_angle);
     }
 
-    public void setClothPos(double target_angle){cloth.setTargetAngle(target_angle);}
+    /*public void setClothPos(double target_angle){cloth.setTargetAngle(target_angle);}*/
 
     public void setShooterPower(double power) { flywheel.setTargetPower(power); }
-    public void setTargetVelocity(double targetVelocity) {
-        this.targetVelocity = targetVelocity;
-        if(targetVelocity != 0){
-            robot.intake.reqShoot(true);
-        }
-    }
+    public void setTargetVelocity(double targetVelocity) { this.targetVelocity = targetVelocity; }
     public double getTargetVelocity() { return targetVelocity; }
 
     public void aimAt(double target_x, double target_y, double target_z) { // TODO Calculations

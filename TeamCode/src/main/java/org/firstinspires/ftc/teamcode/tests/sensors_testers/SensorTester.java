@@ -32,23 +32,13 @@ public class SensorTester extends LinearOpMode {
 
         while (!isStopRequested()) {
             robot.sensors.update();
-            //robot.vision.update();
-
-//            telemetry.addData("leftOdo", sensors.getOdometry()[0]);
-//            telemetry.addData("rightOdo", sensors.getOdometry()[1]);
-//            telemetry.addData("backOdo", sensors.getOdometry()[2]);
 
             Pose2d pos = sensors.getOdometryPosition();
             String data = String.format(Locale.US, "{X: %.3f, Y: %.3f, H: %.3f}", pos.getX(), pos.getY(), pos.getHeading());
 
-            /*if (!robot.vision.isConnected()) {
-                gamepad1.rumble(100);
-                gamepad2.rumble(100);
-            }*/
-
             telemetry.addData("Robot Position", data);
             //telemetry.addData("Limelight connection", robot.vision.isConnected() ? "everything is fine" : "freaking packet yo");
-
+            telemetry.addData("flywheel encoder", robot.shooter.flywheel.motor[0].getCurrentPosition());
             telemetry.update();
             TelemetryUtil.sendTelemetry();
         }
