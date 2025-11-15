@@ -61,6 +61,7 @@ public class Shooter {
     }
 
     public void update() {
+        if (targetVelocity <= 0) velocityPID.resetIntegral();
         double error = targetVelocity - robot.sensors.getFlywheelVelocity();
         double pow = velocityPID.update(error, 0.0, 1.0);
         setShooterPower(pow);

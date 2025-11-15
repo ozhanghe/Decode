@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.utils.RunMode;
 @Config
 @TeleOp(group = "Test")
 public class ShooterTester extends LinearOpMode {
-    public static double turretAngle = 0.0, hoodAngle = 0.0, flywheelVelocity = 0.0, rollerPower = 0.7, feedPower = 0.5;
+    public static double turretAngle = 0.0, hoodAngle = 0.7, flywheelVelocity = 0.0, rollerPower = 0.7, feedPower = 0.5;
     public static boolean updateVelocity = false;
 
     public void runOpMode() {
@@ -31,12 +31,12 @@ public class ShooterTester extends LinearOpMode {
         }
 
         while (!isStopRequested()) {
-            robot.intake.roller.setTargetPower(rollerPower);
-            robot.intake.feed.setTargetPower(feedPower);
-            if (gamepad1.x) robot.intake.feed.setTargetPower(-0.5);
-            if (gamepad1.y) robot.intake.feed.setTargetPower(0.5);
-            if (gamepad1.a) robot.intake.roller.setTargetPower(-0.7);
-            if (gamepad1.b) robot.intake.roller.setTargetPower(0.7);
+            if (gamepad1.x) robot.intake.feed.setTargetPower(-feedPower);
+            else if (gamepad1.y) robot.intake.feed.setTargetPower(feedPower);
+            else robot.intake.feed.setTargetPower(0);
+            if (gamepad1.a) robot.intake.roller.setTargetPower(-rollerPower);
+            else if (gamepad1.b) robot.intake.roller.setTargetPower(rollerPower);
+            else robot.intake.roller.setTargetPower(0);
 
             if (up.isClicked(gamepad1.dpad_up)) {
                 flywheelVelocity += 5;

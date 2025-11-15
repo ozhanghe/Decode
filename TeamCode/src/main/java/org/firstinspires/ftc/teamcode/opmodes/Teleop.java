@@ -25,7 +25,7 @@ public class Teleop extends LinearOpMode {
         robot.setStopChecker(this::isStopRequested);
 
         ButtonToggle lb1 = new ButtonToggle();
-        ButtonToggle x1 = new ButtonToggle();
+        ButtonToggle a1 = new ButtonToggle();
         Direction intakeDirection = Direction.OFF;
 
         robot.intake.state = Intake.State.TEST;
@@ -41,16 +41,21 @@ public class Teleop extends LinearOpMode {
             robot.update();
 
             if (lb1.isClicked(gamepad1.left_bumper)) intakeDirection = intakeDirection == Direction.FORWARD ? Direction.OFF : Direction.FORWARD;
-            if (x1.isClicked(gamepad1.x)) intakeDirection = intakeDirection == Direction.REVERSE ? Direction.OFF : Direction.REVERSE;
-            if (intakeDirection == Direction.FORWARD) robot.intake.roller.setTargetPower(0.75);
-            if (intakeDirection == Direction.REVERSE) robot.intake.roller.setTargetPower(-0.75);
+            if (a1.isClicked(gamepad1.a)) intakeDirection = intakeDirection == Direction.REVERSE ? Direction.OFF : Direction.REVERSE;
+            if (intakeDirection == Direction.FORWARD) robot.intake.roller.setTargetPower(0.8);
+            else if (intakeDirection == Direction.REVERSE) robot.intake.roller.setTargetPower(-0.8);
             else robot.intake.roller.setTargetPower(0);
 
-            robot.shooter.setShooterPower(gamepad1.right_trigger);
+            //robot.shooter.setShooterPower(gamepad1.right_trigger);
+            robot.shooter.setTargetVelocity(gamepad1.right_trigger * 80);
             if (gamepad1.right_bumper) robot.intake.feed.setTargetPower(0.5);
             else robot.intake.feed.setTargetPower(0);
 
             robot.drivetrain.drive(gamepad1);
+
+            telemetry.addData("intakeDirection", intakeDirection);
+            telemetry.addData("intakePower", robot.intake.roller.getPower());
+            telemetry.update();
         }
     }
 }
