@@ -33,6 +33,14 @@ public class Shooter {
     private double filteredVelocity = 0.0;
     private double prevPow = 0;
 
+    /*
+    Hood / Velo
+    Far: 1.34 / 100
+    Middle: 1.0 / 70
+    Close: 0.7 / 60
+     */
+
+
     public Shooter(Robot robot) {
         this.robot = robot;
 
@@ -75,6 +83,7 @@ public class Shooter {
                 2, 5
         );
         robot.hardwareQueue.addDevices(flywheel/*, cloth*/, hood, turret, flywheelBlocker);
+
         flywheel.motor[0].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         flywheel.motor[0].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
