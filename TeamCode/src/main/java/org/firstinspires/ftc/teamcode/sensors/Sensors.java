@@ -29,6 +29,7 @@ public class Sensors {
     private long currentTime, lastTime = System.currentTimeMillis();
     public double loopTime;
     private Vector2 vel = new Vector2();
+    public int[] odoWheelPositions = {0, 0, 0};
 
     // 426 mm (16.772 in) is belt circumference
     // start: 42638
@@ -62,8 +63,8 @@ public class Sensors {
         currentTime = System.nanoTime();
 
         odometry = robot.hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
-        odometry.setOffsets(70, -160);
-        odometry.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        odometry.setOffsets(72, -160);
+        odometry.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD);
         odometry.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         /*
@@ -86,6 +87,11 @@ public class Sensors {
         lastTime = currentTime;
         currentTime = System.nanoTime();
         loopTime = (currentTime - lastTime) / 1e9;
+
+        odoWheelPositions[0] = robot.drivetrain.leftRear.motor[0].getCurrentPosition(); // left
+        odoWheelPositions[1] = robot.drivetrain.leftFront.motor[0].getCurrentPosition(); // right
+        odoWheelPositions[2] = robot.drivetrain.rightFront.motor[0].getCurrentPosition(); // back
+        robot.drivetrain.updateLocalizer();
 
         odometry.update();
 
@@ -139,11 +145,9 @@ public class Sensors {
 
     public Pose2d getOdometryPosition() { return currentPose; }
 
-    public double getHeading() {
-        return currentPose.heading;
-    }
+    public double getHeading() { return currentPose.heading; }
 
-    public Vector2 getVelocity(){ return vel;}
+    public Vector2 getVelocity() { return vel; }
 
     boolean isStopped = true;
     double confidence = 0.0;

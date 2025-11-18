@@ -101,12 +101,12 @@ public class Drivetrain {
         configureMotors();
 
         localizers = new Localizer[]{
-                new IMUMergeSoloLocalizer(hardwareMap, sensors, this, "#0000ff", "#ff00ff"),
-                new IMULocalizer(hardwareMap, sensors, this, "#ff0000", "#00ff00"),
-                new IMUMergeLocalizer(hardwareMap, sensors, this, "#ffff00", "#00ffff"),
-                new OneHundredMSIMULocalizer(hardwareMap, sensors, this, "#aa0000", "#00ee00"),
-                new TwoWheelLocalizer(hardwareMap, sensors, this, "#aaaa00", "#00aaaa"),
-                new Localizer(hardwareMap, sensors, this, "#0000aa", "#aa00aa")
+            new Localizer(hardwareMap, sensors, this, "#00c000", "#00c00060"),
+            new IMUMergeSoloLocalizer(hardwareMap, sensors, this, "#ff00ff", "#ff00ff60"),
+            new IMULocalizer(hardwareMap, sensors, this, "#ff0000", "#ff000060"),
+            new IMUMergeLocalizer(hardwareMap, sensors, this, "#ffff00", "#ffff0060"),
+            new OneHundredMSIMULocalizer(hardwareMap, sensors, this, "#0000ff", "#0000ff60"),
+            new TwoWheelLocalizer(hardwareMap, sensors, this, "#00ffff", "#00ffff60")
         };
 //        setMinPowersToOvercomeFriction();
     }
@@ -194,6 +194,13 @@ public class Drivetrain {
     public static double maxVelocity = 78.77995865593925; // TODO: Tune me!
 
     long perfectHeadingTimeStart = System.currentTimeMillis();
+
+    public void updateLocalizer() {
+        for (Localizer l : localizers) {
+            l.updateEncoders(sensors.odoWheelPositions);
+            l.update();
+        }
+    }
 
     public void update() {
         if (!DRIVETRAIN_ENABLED) {
@@ -653,6 +660,9 @@ public class Drivetrain {
     }
 
     public void setPoseEstimate(Pose2d pose2d) {
+        for (Localizer l : localizers) {
+            l.setPoseEstimate(pose2d);
+        }
         sensors.setOdometryPosition(pose2d);
     }
 
@@ -713,7 +723,7 @@ public class Drivetrain {
         LogUtil.driveTargetAngle.set(targetPoint.heading);
 
         Canvas canvas = TelemetryUtil.packet.fieldOverlay();
-        DashboardUtil.drawRobot(canvas, targetPoint, "#ff00ff");
+        DashboardUtil.drawRobot(canvas, targetPoint, "#8000ff");
 
         if (path != null) {
             Pose2d last = path.poses.get(0);

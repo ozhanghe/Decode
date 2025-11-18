@@ -66,7 +66,7 @@ public class Intake {
 
                 // TODO Toggle Color Detection?
 
-                if(requestShoot){
+                if (requestShoot) {
                     requestShoot = false;
                     state = State.SHOOT_FEED;
                     launchTime = System.currentTimeMillis();
@@ -79,7 +79,7 @@ public class Intake {
                 feed.setTargetPower(0.7);
 
                 // Add launch time requirement because last ball theoretically will not trigger color sensor
-                if(!robot.sensors.isBall() && System.currentTimeMillis() - launchTime >= 150) {
+                if (!robot.sensors.isBall() && System.currentTimeMillis() - launchTime >= 150) {
                     state = State.IDLE;
                 }
             }
@@ -95,7 +95,7 @@ public class Intake {
         requestIntake = req;
     }
 
-    public void reqShoot(boolean req){
+    public void reqShoot(boolean req) {
         requestShoot = req;
     }
 

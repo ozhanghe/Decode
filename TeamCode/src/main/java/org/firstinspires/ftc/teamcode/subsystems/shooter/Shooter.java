@@ -69,7 +69,7 @@ public class Shooter {
         turret = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "turret1"), robot.hardwareMap.get(Servo.class,"turret2")},
             "turret", nPriorityServo.ServoType.AXON_MINI,
-            0.12, 0.7, 0.402,
+            0.2, 0.6, 0.4,
             new boolean[] {false, false},
             2, 5
         );
@@ -82,7 +82,7 @@ public class Shooter {
                 new boolean[] {false},
                 2, 5
         );
-        robot.hardwareQueue.addDevices(flywheel/*, cloth*/, hood, turret, flywheelBlocker);
+        robot.hardwareQueue.addDevices(flywheel, hood, turret, flywheelBlocker);
 
         flywheel.motor[0].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         flywheel.motor[0].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -138,6 +138,7 @@ public class Shooter {
     public void setShooterPower(double power) { flywheel.setTargetPower(power); }
     public void setTargetVelocity(double targetVelocity) { this.targetVelocity = targetVelocity; }
     public double getTargetVelocity() { return targetVelocity; }
+    public double getFilteredVelocity() { return filteredVelocity; }
     public void setShooterBlocker(double angle){ flywheelBlocker.setTargetAngle(angle); }
 
     public void aimAt(double target_x, double target_y, double target_z) { // TODO Calculations

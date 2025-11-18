@@ -8,6 +8,7 @@ import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
 import org.firstinspires.ftc.teamcode.utils.ButtonToggle;
 import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
+import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
 
 @TeleOp(name = "A. Teleop")
@@ -20,10 +21,12 @@ public class Teleop extends LinearOpMode {
         ButtonToggle lb1 = new ButtonToggle();
         ButtonToggle a1 = new ButtonToggle();
         ButtonToggle b1 = new ButtonToggle();
+        ButtonToggle x1 = new ButtonToggle();
+        ButtonToggle y1 = new ButtonToggle();
         boolean intakeReversed = false;
         boolean intakeOn = false;
         boolean flywheelOn = false;
-        double angle = 0.46;
+        double turretAngle = 0;
 
         robot.intake.state = Intake.State.TEST;
 
@@ -47,29 +50,49 @@ public class Teleop extends LinearOpMode {
                 else robot.intake.roller.setTargetPower(0.8);
             } else robot.intake.roller.setTargetPower(0);
 
-            if (b1.isClicked(gamepad1.b)) {
-                flywheelOn = !flywheelOn;
-                robot.shooter.setTargetVelocity(flywheelOn ? 85 : 0);
+            if (b1.isHeld(gamepad1.b, 500)) { // Close
+                flywheelOn = false;
+                robot.shooter.setTargetVelocity(0);
+                robot.shooter.setHoodAngle(0);
+            } else if (b1.isClicked(gamepad1.b)) { // Close
+                flywheelOn = true;
+                robot.shooter.setTargetVelocity(60);
+                robot.shooter.setHoodAngle(0.7);
+            } else if (y1.isClicked(gamepad1.y)) { // Middle
+                flywheelOn = true;
+                robot.shooter.setTargetVelocity(70);
+                robot.shooter.setHoodAngle(1.0);
+            } else if (x1.isClicked(gamepad1.x)) { // Far
+                flywheelOn = true;
+                robot.shooter.setTargetVelocity(95);
+                robot.shooter.setHoodAngle(1.34);
             }
             if (gamepad1.right_bumper) {
-                robot.intake.feed.setTargetPower(0.5);
+                robot.intake.feed.setTargetPower(0.6);
                 robot.shooter.setShooterBlocker(0);
             } else {
                 robot.intake.feed.setTargetPower(0);
-                robot.shooter.setShooterBlocker(1);
+                robot.shooter.setShooterBlocker(1.5);
             }
-            if (gamepad1.dpad_up) {
-                angle += 0.05;
-                robot.shooter.setTurretAngle(angle);
-            } else if (gamepad1.dpad_down){
-                angle -= 0.05;
-                robot.shooter.setTurretAngle(angle);
+            if (gamepad1.dpad_left) {
+                turretAngle -= 0.05;
+                robot.shooter.setTurretAngle(turretAngle);
+            } else if (gamepad1.dpad_right) {
+                turretAngle += 0.05;
+                robot.shooter.setTurretAngle(turretAngle);
             }
 
+            if (gamepad1.left_stick_button) {
+                robot.drivetrain.setPoseEstimate(new Pose2d(0, 0, 0));
+                LogUtil.drivePositionReset = true;
+            }
             robot.drivetrain.drive(gamepad1);
 
-            telemetry.addData("intakeOn", flywheelOn);
+            telemetry.addData("intakeOn", intakeOn);
             telemetry.addData("intakeReversed", intakeReversed);
+            telemetry.addData("flywheelOn", flywheelOn);
+            telemetry.addData("flywheel target velocity", robot.shooter.getTargetVelocity());
+            telemetry.addData("flywheel current velocity", robot.shooter.getFilteredVelocity());
             telemetry.addData("intakePower", robot.intake.roller.getPower());
             telemetry.addData("turretPos", robot.shooter.turret.getCurrentAngle());
             telemetry.update();
