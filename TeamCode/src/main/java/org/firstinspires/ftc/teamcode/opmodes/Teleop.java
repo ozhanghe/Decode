@@ -46,8 +46,8 @@ public class Teleop extends LinearOpMode {
                 intakeOn = true;
             }
             if (intakeOn) {
-                if (intakeReversed) robot.intake.roller.setTargetPower(-0.8);
-                else robot.intake.roller.setTargetPower(0.8);
+                if (intakeReversed) robot.intake.roller.setTargetPower(-1);
+                else robot.intake.roller.setTargetPower(1);
             } else robot.intake.roller.setTargetPower(0);
 
             if (b1.isHeld(gamepad1.b, 500)) { // Close

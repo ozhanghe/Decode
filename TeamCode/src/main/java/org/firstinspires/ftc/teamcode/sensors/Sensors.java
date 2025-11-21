@@ -93,10 +93,10 @@ public class Sensors {
         odoWheelPositions[2] = robot.drivetrain.rightFront.motor[0].getCurrentPosition(); // back
         robot.drivetrain.updateLocalizer();
 
-        odometry.update();
+        //odometry.update();
 
         lastPose = currentPose.clone();
-        currentPose = odometry.getPosition();
+        currentPose = robot.drivetrain.localizers[0].getPoseEstimate();
 
         vel.x = (currentPose.x - lastPose.x) / loopTime;
         vel.y = (currentPose.y - lastPose.y) / loopTime;
