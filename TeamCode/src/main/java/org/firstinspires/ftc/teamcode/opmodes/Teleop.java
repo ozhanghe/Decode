@@ -12,7 +12,7 @@ import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
 
 @TeleOp(name = "A. Teleop")
-public class Teleop extends LinearOpMode {
+public class    Teleop extends LinearOpMode {
     public void runOpMode() {
         Globals.RUNMODE = RunMode.TELEOP;
         Robot robot = new Robot(hardwareMap);
@@ -57,19 +57,19 @@ public class Teleop extends LinearOpMode {
                 robot.shooter.setHoodAngle(0);
             } else if (b1.isClicked(gamepad1.b)) { // Close
                 flywheelOn = true;
-                robot.shooter.setTargetVelocity(60);
+                robot.shooter.setTargetVelocity(65);
                 robot.shooter.setHoodAngle(0.7);
             } else if (y1.isClicked(gamepad1.y)) { // Middle
                 flywheelOn = true;
-                robot.shooter.setTargetVelocity(70);
+                robot.shooter.setTargetVelocity(75);
                 robot.shooter.setHoodAngle(1.0);
             } else if (x1.isClicked(gamepad1.x)) { // Far
                 flywheelOn = true;
-                robot.shooter.setTargetVelocity(95);
+                robot.shooter.setTargetVelocity(100);
                 robot.shooter.setHoodAngle(1.34);
             }
             if (gamepad1.right_bumper) {
-                robot.intake.feed.setTargetPower(0.6);
+                robot.intake.feed.setTargetPower(0.8);
                 robot.shooter.setShooterBlocker(0);
             } else {
                 robot.intake.feed.setTargetPower(0);
