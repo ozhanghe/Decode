@@ -11,6 +11,7 @@ import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.utils.priority.PriorityMotor;
 import org.firstinspires.ftc.teamcode.utils.priority.nPriorityServo;
+import org.firstinspires.ftc.teamcode.vision.LLGoalDetector;
 
 @Config
 public class Shooter {
@@ -18,6 +19,11 @@ public class Shooter {
     private final DcMotorEx ms1, ms2;
     public final PriorityMotor flywheel;
     public final nPriorityServo flywheelBlocker, turret, hood/*, cloth*/;
+
+    public LLGoalDetector goalDetector;
+    private double turretError;
+    private long lastUpdateTime = System.currentTimeMillis();
+    public static double limelightThresh = 5.0, limelightTimeDelay = 10, limelightScalar = 0.05;
 
     // velocity is in inches / second
     public static PID velocityPID = new PID (0.0, 0.001, 0.001);
@@ -69,7 +75,7 @@ public class Shooter {
         turret = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "turret1"), robot.hardwareMap.get(Servo.class,"turret2")},
             "turret", nPriorityServo.ServoType.AXON_MINI,
-            0.2, 0.6, 0.4,
+            0.41, 0.99, 0.68,
             new boolean[] {false, false},
             2, 5
         );
@@ -86,6 +92,8 @@ public class Shooter {
 
         flywheel.motor[0].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         flywheel.motor[0].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        goalDetector = new LLGoalDetector(robot);
     }
 
     public void update() {
@@ -106,11 +114,17 @@ public class Shooter {
         setShooterPower(pow);
         prevPow = pow;
 
+        goalDetector.update();
+        if(goalDetector.isTagDetected() && Math.abs(goalDetector.getTx()) > limelightThresh && System.currentTimeMillis() - lastUpdateTime >= limelightTimeDelay){
+            turretError = turret.getCurrentAngle() - Math.signum(goalDetector.getTx()) * limelightScalar;
+            lastUpdateTime = System.currentTimeMillis();
+        }
+        turret.setTargetAngle(turretError);
+
         TelemetryUtil.packet.put("Shooter : Flywheel Filtered Velocity", filteredVelocity);
         TelemetryUtil.packet.put("Shooter : Flywheel Target Velocity", targetVelocity);
-        //TelemetryUtil.packet.put("Shooter : Flywheel Velocity Error", error);
         TelemetryUtil.packet.put("Shooter : Flywheel PID Power", pow * 100);
-        //TelemetryUtil.packet.put("Shooter : Flywheel PID Integral", velocityPID.getIntegral());
+        TelemetryUtil.packet.put("Shooter : Turret Target Angle", turret.getTargetAngle());
     }
 
     /**
