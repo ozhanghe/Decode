@@ -98,8 +98,8 @@ public class Drivetrain {
             hardwareQueue.addDevice(motor);
         }
 
-        setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         leftFront.motor[0].setDirection(DcMotor.Direction.REVERSE);

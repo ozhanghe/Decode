@@ -10,8 +10,8 @@ import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 public class LLGoalDetector {
     private Robot robot;
     private Limelight3A ll;
-    private double tx, ty, ta;
-    private boolean connection, tagDetected;
+    private double tx, ty, ta, staleness;
+    private boolean connection, tagDetected = false;
 
     public static int pollRate = 100;
 
@@ -43,6 +43,7 @@ public class LLGoalDetector {
             LLResult result = ll.getLatestResult();
             if(result != null && result.isValid()){
                 tagDetected = true;
+                staleness = result.getStaleness();
                 tx = result.getTx();
                 ty = result.getTy();
                 ta = result.getTa();
@@ -50,6 +51,10 @@ public class LLGoalDetector {
                 tagDetected = false;
             }
         }
+
+        TelemetryUtil.packet.put("Limelight : Tx", tx);
+        TelemetryUtil.packet.put("Limelight : Detected", tagDetected ? "Detected" : "Not Detected");
+        TelemetryUtil.sendTelemetry();
     }
 
     public double getTx(){
@@ -65,6 +70,13 @@ public class LLGoalDetector {
     }
 
     public boolean isTagDetected(){
-        return tagDetected;
+        if(connection){
+            return tagDetected;
+        }
+        return false;
+    }
+
+    public double getStaleness(){
+        return staleness;
     }
 }

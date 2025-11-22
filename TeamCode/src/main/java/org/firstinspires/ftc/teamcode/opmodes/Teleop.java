@@ -36,6 +36,7 @@ public class Teleop extends LinearOpMode {
 
         if (!isStopRequested()) LogUtil.init();
         LogUtil.drivePositionReset = true;
+        robot.shooter.goalDetector.start();
 
         while (!isStopRequested()) {
             robot.update();
@@ -94,7 +95,7 @@ public class Teleop extends LinearOpMode {
             telemetry.addData("flywheel target velocity", robot.shooter.getTargetVelocity());
             telemetry.addData("flywheel current velocity", robot.shooter.getFilteredVelocity());
             telemetry.addData("intakePower", robot.intake.roller.getPower());
-            telemetry.addData("turretPos", robot.shooter.turret.getCurrentAngle());
+            telemetry.addData("turretPos", robot.shooter.turret.getTargetPos());
             telemetry.update();
         }
     }
