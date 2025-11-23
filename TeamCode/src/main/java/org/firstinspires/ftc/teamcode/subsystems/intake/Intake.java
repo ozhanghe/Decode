@@ -28,21 +28,18 @@ public class Intake {
     public Intake(Robot robot) {
         this.robot = robot;
 
-        robot.hardwareMap.get(DcMotorEx.class, "roller").setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        robot.hardwareMap.get(DcMotorEx.class, "feed").setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
         roller = new PriorityMotor(
             new DcMotorEx[] {robot.hardwareMap.get(DcMotorEx.class, "roller")},
             "roller", 2, 5,
             new double[] {-1}, robot.sensors
         );
-
-        feed = new PriorityMotor (
+        feed = new PriorityMotor(
                 new DcMotorEx[] {robot.hardwareMap.get(DcMotorEx.class, "feed")},
                 "feed", 2, 5,
                 new double[] {1}, robot.sensors
         );
-
+        roller.motor[0].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        feed.motor[0].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.hardwareQueue.addDevices(roller, feed);
     }
 

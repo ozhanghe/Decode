@@ -107,6 +107,7 @@ public class PriorityMotor extends PriorityDevice {
 
     @Override
     protected void update() {
+
         for (int i = 0; i < motor.length; i ++) {
             motor[i].setPower(power * multipier[i]);
         }

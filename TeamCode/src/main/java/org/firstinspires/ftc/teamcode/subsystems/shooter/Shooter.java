@@ -32,8 +32,8 @@ public class Shooter {
     public static double velocityFilterLow = 0.05;
     public static double velocityFilterHigh = 0.5;
     public static double velocityFilterThresh = 10;
-    public static double velocityHighPowerThresh = 5;
-    public static double velocityNoSkipThresh = 40;
+    public static double velocityHighPowerThresh = 4;
+    public static double velocityNoSkipThresh = 45;
     public static double velocityNoSkipAccel = 0.7;
     private double targetVelocity = 0.0;
     private double filteredVelocity = 0.0;
@@ -67,7 +67,7 @@ public class Shooter {
         hood = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "hood1"), robot.hardwareMap.get(Servo.class,"hood2")},
             "hood", nPriorityServo.ServoType.AXON_MINI,
-            0, 0.38, 0.005,
+            0.03, 0.38, 0.03,
             new boolean[] {false, true},
             2, 5
         );
@@ -75,7 +75,7 @@ public class Shooter {
         turret = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "turret1"), robot.hardwareMap.get(Servo.class,"turret2")},
             "turret", nPriorityServo.ServoType.AXON_MINI,
-            0.5, 1, 0.75,
+            0.49, 0.51, 0.5,
             new boolean[] {false, false},
             2, 5
         );

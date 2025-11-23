@@ -70,20 +70,19 @@ public class Path {
         return this;
     }
 
-    public static double k_p = 1.0;
+    public static double k_p = 0.125;
 
     public Vector2 getVelocity (Spline s, double tau, Vector2 robot) {
         Vector2 v_t = s.getVel(tau);
         v_t.norm();
 
         Vector2 v_p = new Vector2(s.getPos(tau).x - robot.x, s.getPos(tau).y - robot.x);
-        v_p.norm();
         v_p.mul(k_p);
 
         Vector2 v_rep = new Vector2(0, 0);
         for(RepulsionPoint rep : repel) {
             Vector2 trep = new Vector2(robot.x - rep.x, robot.y - rep.y);
-            double scale = Math.pow(Math.E, -1 * trep.mag());
+            double scale = Math.pow(Math.E, 1 - Math.pow(trep.mag()/rep.weight,2));
             trep.norm();
             trep.mul(scale);
 

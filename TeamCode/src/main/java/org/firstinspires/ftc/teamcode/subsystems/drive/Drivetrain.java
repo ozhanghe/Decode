@@ -177,6 +177,7 @@ public class Drivetrain {
     private PID turnPID = new PID (1, 0, 0);
 
     public PathData pd;
+    public static double centripetalScalar = 0.2;
 
     public void update() {
         if (!DRIVETRAIN_ENABLED) {
@@ -196,7 +197,7 @@ public class Drivetrain {
                 pd = path.update(pos);
                 Vector2 pathForward, pathCentripetal;
                 pathForward = pd.vel;
-                pathCentripetal = new Vector2(0, pathForward.mag() * pathForward.mag() / pd.r);
+                pathCentripetal = new Vector2(0, pathForward.mag() * pathForward.mag() / pd.r * centripetalScalar);
                 pathCentripetal.rotate(Math.atan2(pathForward.y, pathForward.x));
 
                 moveVector = Vector2.add(pathForward, pathCentripetal);
@@ -303,8 +304,10 @@ public class Drivetrain {
             DashboardUtil.drawRobot(canvas, new Pose2d(ROBOT_POSITION.x + robot.sensors.loopTime * pd.vel.x, ROBOT_POSITION.y + robot.sensors.loopTime * pd.vel.y, Math.atan2(pd.vel.x, pd.vel.y)), "#8000ff");
             Spline s = path.pathSegments.get(pd.index).spline;
 
-            for(double t = 0; t < 1; t = t + 0.001){
-                canvas.strokeLine(s.getPos(t).x, s.getPos(t).y, s.getPos(t + 0.001).x, s.getPos(t + 0.001).y);
+            double n = 100;
+            double step = 1/n;
+            for(double t = 0; t < 1; t = t + step){
+                canvas.strokeLine(s.getPos(t).x, s.getPos(t).y, s.getPos(t + step).x, s.getPos(t + step).y);
             }
         }
     }
