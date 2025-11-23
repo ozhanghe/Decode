@@ -15,6 +15,20 @@ import org.firstinspires.ftc.teamcode.vision.LLGoalDetector;
 
 @Config
 public class Shooter {
+    public enum State {
+        CLOSE(0.7, 60),
+        MID(1.0, 70),
+        FAR(1.34, 100),
+        OFF(0.0, 0.0);
+
+        private final double hoodAngle, flywheelVel;
+
+        State(double hoodAngle, double flywheelVel){
+            this.hoodAngle = hoodAngle;
+            this.flywheelVel = flywheelVel;
+        }
+    } State state = State.CLOSE;
+
     private final Robot robot;
     private final DcMotorEx ms1, ms2;
     public final PriorityMotor flywheel;
@@ -96,6 +110,7 @@ public class Shooter {
         goalDetector = new LLGoalDetector(robot);
     }
 
+    double error;
     public void update() {
         if (targetVelocity <= 1) velocityPID.resetIntegral();
         else velocityPID.clipIntegral(-1, 1);
@@ -105,7 +120,7 @@ public class Shooter {
         } else {
             filteredVelocity = filteredVelocity * (1 - velocityFilterHigh) + actualVelocity * velocityFilterHigh;
         }
-        double error = targetVelocity - filteredVelocity;
+        error = targetVelocity - filteredVelocity;
         double pow = velocityPID.update(error, 0.0, 1.0) + targetVelocity * velocityFFm + velocityFFb;
         if (error > velocityHighPowerThresh) pow = 1;
         if (filteredVelocity < velocityNoSkipThresh) {
@@ -157,12 +172,12 @@ public class Shooter {
     public double getFilteredVelocity() { return filteredVelocity; }
     public void setShooterBlocker(double angle){ flywheelBlocker.setTargetAngle(angle); }
 
-    public void aimAt(double target_x, double target_y, double target_z) { // TODO Calculations
-        double curr_x = this.robot.sensors.getOdometryPosition().x;
-        double curr_y = this.robot.sensors.getOdometryPosition().y;
-        double max_velocity = 10;
-        double shoot_distance = Math.sqrt((target_x - curr_x) * (target_x - curr_x) + (target_y - curr_y) * (target_y - curr_y));
-        double shoot_theta = Math.atan(max_velocity - 9.8 * shoot_distance);
-        // pull the turret heading from the limelight
+    public void setShooter(State mode){
+        targetVelocity = mode.flywheelVel;
+        hood.setTargetAngle(mode.hoodAngle);
     }
+
+    public void setShooterBlocker (boolean on) {flywheelBlocker.setTargetAngle (on ? 1.5 : 0);}
+
+    public boolean atVel () {return error < 1.0;}
 }

@@ -5,14 +5,11 @@ import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_VELOCITY;
 import static org.firstinspires.ftc.teamcode.utils.Globals.TRACK_WIDTH;
 
-import android.util.Log;
-
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.firstinspires.ftc.teamcode.Robot;
@@ -20,14 +17,12 @@ import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.Localizer;
 import org.firstinspires.ftc.teamcode.utils.AngleUtil;
 import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
-import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.utils.Vector2;
 import org.firstinspires.ftc.teamcode.utils.priority.HardwareQueue;
 import org.firstinspires.ftc.teamcode.utils.priority.PriorityMotor;
-import org.firstinspires.ftc.teamcode.utils.priority.nPriorityServo;
 import org.firstinspires.ftc.teamcode.vision.Vision;
 
 import java.util.ArrayList;
@@ -38,6 +33,9 @@ import java.util.List;
 public class Drivetrain {
     public enum State {
         FOLLOW_SPLINE,
+        PID_TO_POINT,
+        BRAKE,
+        WAIT,
         DRIVE,
         IDLE
     }
@@ -179,6 +177,14 @@ public class Drivetrain {
     public PathData pd;
     public static double centripetalScalar = 0.2;
 
+    private Pose2d targetPoint = new Pose2d (0, 0, 0);
+    public static PID xPID = new PID (0.1, 0.0, 0.001);
+    public static PID yPID = new PID (0.1, 0.0, 0.001);
+    public static PID hPID = new PID (0.15, 0.0, 0.001);
+
+    public static double xThresh = 5.0, yThresh = 5.0, hThresh = 3.0;
+    private double xError = 0.0, yError = 0.0, hError = 0.0;
+
     public void update() {
         if (!DRIVETRAIN_ENABLED) {
             return;
@@ -220,6 +226,23 @@ public class Drivetrain {
                     state = State.IDLE;
                 }
                 break;
+            case PID_TO_POINT:
+                calculateErrors();
+                PIDF();
+
+                if(atPoint()){
+                    state = State.BRAKE;
+                }
+                break;
+            case BRAKE:
+                stopAllMotors();
+                state = State.WAIT;
+                break;
+            case WAIT:
+                if(!atPoint()){
+                    state = State.PID_TO_POINT;
+                }
+                break;
             case DRIVE:
                 break;
             case IDLE:
@@ -236,6 +259,49 @@ public class Drivetrain {
     public void addPoint(Pose2d point, boolean reversed) {
         path.addPoint(point);
         path.setReversed(reversed);
+    }
+
+    private void calculateErrors(){
+        double deltaX = (targetPoint.x - ROBOT_POSITION.x);
+        double deltaY = (targetPoint.y - ROBOT_POSITION.y);
+
+        // convert error into direction robot is facing
+        xError = Math.cos(ROBOT_POSITION.heading)*deltaX + Math.sin(ROBOT_POSITION.heading)*deltaY;
+        yError = -Math.sin(ROBOT_POSITION.heading)*deltaX + Math.cos(ROBOT_POSITION.heading)*deltaY;
+        hError = AngleUtil.clipAngle(targetPoint.heading - ROBOT_POSITION.heading);
+    }
+    
+    double fwd, strafe, h;
+
+    private void PIDF(){
+        fwd = xPID.update(xError, -maxPower, maxPower);
+        strafe = yPID.update(yError, -maxPower, maxPower);
+        h = turnPID.update(hError, -maxPower, maxPower);
+
+        setMinPowersToOvercomeFriction(1.0);
+
+        Vector2 move = new Vector2(fwd, strafe);
+        setMoveVector(move, h);
+    }
+
+    private boolean atPoint(){
+        return Math.abs(xError) < xThresh && Math.abs(yError) < yThresh && Math.abs(hError) < Math.toRadians(hThresh);
+    }
+
+    private Pose2d lastTargetPoint = new Pose2d(0, 0, 0);
+    double maxPower = 1.0;
+    public void goToPoint(Pose2d targetPoint, double maxPower){
+        lastTargetPoint = this.targetPoint;
+        this.targetPoint = targetPoint;
+        this.maxPower = maxPower;
+
+        if(lastTargetPoint.x != targetPoint.x || lastTargetPoint.y != targetPoint.y || lastTargetPoint.heading != targetPoint.heading){
+            xPID.resetIntegral();
+            yPID.resetIntegral();
+            hPID.resetIntegral();
+
+            state = State.PID_TO_POINT;
+        }
     }
 
     public void setMoveVector(Vector2 moveVector, double turn) {
@@ -298,6 +364,10 @@ public class Drivetrain {
 
     public void updateTelemetry() {
         TelemetryUtil.packet.put("Drivetrain : state", state);
+
+        TelemetryUtil.packet.put("Drivetrain : PID xError", xError);
+        TelemetryUtil.packet.put("Drivetrain : PID yError", yError);
+        TelemetryUtil.packet.put("Drivetrain : PID hError", hError);
 
         if (path != null) {
             Canvas canvas = TelemetryUtil.packet.fieldOverlay();
