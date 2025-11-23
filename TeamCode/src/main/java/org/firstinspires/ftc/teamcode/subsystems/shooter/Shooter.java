@@ -16,8 +16,8 @@ import org.firstinspires.ftc.teamcode.vision.LLGoalDetector;
 @Config
 public class Shooter {
     public enum State {
-        CLOSE(0.7, 60),
-        MID(1.0, 70),
+        CLOSE(0.7, 65),
+        MID(1.0, 75),
         FAR(1.34, 100),
         OFF(0.0, 0.0);
 
@@ -68,16 +68,6 @@ public class Shooter {
         this.ms2 = robot.hardwareMap.get(DcMotorEx.class, "shooter2");
         flywheel = new PriorityMotor(new DcMotorEx[]{ms1, ms2},"flywheel",3, 5, new double[] {1, -1}, robot.sensors);
 
-        /*
-        cloth = new nPriorityServo(
-            new Servo[]{robot.hardwareMap.get(Servo.class, "cloth")},
-            "cloth", nPriorityServo.ServoType.AXON_MINI,
-            0, 1, 0.5,
-            new boolean[] {false},
-            2, 5
-        );
-         */
-
         hood = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "hood1"), robot.hardwareMap.get(Servo.class,"hood2")},
             "hood", nPriorityServo.ServoType.AXON_MINI,
@@ -93,7 +83,6 @@ public class Shooter {
             new boolean[] {false, false},
             2, 5
         );
-        turret.maxPower = 0.2;
 
         flywheelBlocker = new nPriorityServo(
                 new Servo[]{robot.hardwareMap.get(Servo.class, "flywheelBlocker")},
@@ -106,12 +95,11 @@ public class Shooter {
 
         flywheel.motor[0].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         flywheel.motor[0].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        goalDetector = new LLGoalDetector(robot);
     }
 
     double error;
     public void update() {
+        // Flywheel Velocity PID
         if (targetVelocity <= 1) velocityPID.resetIntegral();
         else velocityPID.clipIntegral(-1, 1);
         double actualVelocity = robot.sensors.getFlywheelVelocity();
@@ -126,9 +114,11 @@ public class Shooter {
         if (filteredVelocity < velocityNoSkipThresh) {
             pow = Math.min(pow, prevPow + velocityNoSkipAccel * robot.sensors.loopTime);
         }
-        setShooterPower(pow);
+        flywheel.setTargetPower(pow);
         prevPow = pow;
 
+        // Auto-aim (Disabled)
+        /*
         goalDetector.update();
         if(goalDetector.isTagDetected() && Math.abs(goalDetector.getTx()) > limelightThresh && System.currentTimeMillis() - lastUpdateTime >= limelightTimeDelay){
             turretError = turret.getCurrentAngle() - Math.signum(goalDetector.getTx()) * limelightScalar;
@@ -137,6 +127,7 @@ public class Shooter {
             turretError = 0;
         }
         turret.setTargetAngle(turretError);
+         */
 
         TelemetryUtil.packet.put("Shooter : Flywheel Filtered Velocity", filteredVelocity);
         TelemetryUtil.packet.put("Shooter : Flywheel Target Velocity", targetVelocity);
@@ -144,9 +135,6 @@ public class Shooter {
         TelemetryUtil.packet.put("Shooter : Turret Target Angle", turret.getTargetAngle());
     }
 
-    /**
-     * @param target_angle specifies rotation in XY plane [-180, 180] or [-PI, PI]
-     */
     public void setTurretAngle(double target_angle) {
         turret.setTargetAngle(target_angle);
 
@@ -154,9 +142,6 @@ public class Shooter {
         LogUtil.turretAngle.set(target_angle);
     }
 
-    /**
-     * @param target_angle specifies rotation in Z plane [0, 90] or [0, PI/2]
-     */
     public void setHoodAngle(double target_angle) {
         hood.setTargetAngle(target_angle);
 
@@ -164,13 +149,10 @@ public class Shooter {
         LogUtil.hoodAngle.set(target_angle);
     }
 
-    /*public void setClothPos(double target_angle){cloth.setTargetAngle(target_angle);}*/
 
-    public void setShooterPower(double power) { flywheel.setTargetPower(power); }
     public void setTargetVelocity(double targetVelocity) { this.targetVelocity = targetVelocity; }
     public double getTargetVelocity() { return targetVelocity; }
     public double getFilteredVelocity() { return filteredVelocity; }
-    public void setShooterBlocker(double angle){ flywheelBlocker.setTargetAngle(angle); }
 
     public void setShooter(State mode){
         targetVelocity = mode.flywheelVel;

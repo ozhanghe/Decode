@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
+import static org.firstinspires.ftc.teamcode.utils.Globals.AUTO_ENDING_POSE;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -23,6 +25,8 @@ public class Teleop extends LinearOpMode {
         Globals.RUNMODE = RunMode.TELEOP;
         Robot robot = new Robot(hardwareMap);
         robot.setStopChecker(this::isStopRequested);
+
+        robot.drivetrain.setPoseEstimate(AUTO_ENDING_POSE);
 
         ButtonToggle lb1 = new ButtonToggle();
         ButtonToggle rb1 = new ButtonToggle();
@@ -88,10 +92,10 @@ public class Teleop extends LinearOpMode {
             // activate feed / toggling flywheel blocker
             if (gamepad1.right_bumper) {
                 robot.intake.feed.setTargetPower(0.6);
-                robot.shooter.setShooterBlocker(0);
+                robot.shooter.setShooterBlocker(false);
             } else {
                 robot.intake.feed.setTargetPower(0);
-                robot.shooter.setShooterBlocker(1.5);
+                robot.shooter.setShooterBlocker(true);
             }
 
             // toggle alliance

@@ -34,7 +34,7 @@ public class ShooterTester extends LinearOpMode {
             robot.shooter.setHoodAngle(hoodAngle);
             robot.intake.roller.setTargetPower(rollerPower);
             robot.intake.feed.setTargetPower(feedPower);
-            robot.shooter.setShooterBlocker(0.1);
+            robot.shooter.setShooterBlocker(false);
 
             if (updateVelocity) {
                 robot.shooter.setTargetVelocity(flywheelVelocity);

@@ -27,7 +27,7 @@ public class DrivetrainPIDFinder extends LinearOpMode {
             robot.update();
 
             if(updateNewPoint){
-                robot.drivetrain.goToPoint(new Pose2d(targetX, targetY, Math.toRadians(targetH)));
+                robot.drivetrain.goToPoint(new Pose2d(targetX, targetY, Math.toRadians(targetH)), 1.0);
                 updateNewPoint = false;
             }
         }

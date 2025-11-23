@@ -182,7 +182,7 @@ public class Drivetrain {
     public static PID yPID = new PID (0.1, 0.0, 0.001);
     public static PID hPID = new PID (0.15, 0.0, 0.001);
 
-    public static double xThresh = 5.0, yThresh = 5.0, hThresh = 3.0;
+    public static double xThresh = 1.0, yThresh = 1.0, hThresh = 3.0;
     private double xError = 0.0, yError = 0.0, hError = 0.0;
 
     public void update() {
