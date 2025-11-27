@@ -6,12 +6,17 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.Robot;
+import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
+import org.firstinspires.ftc.teamcode.utils.Vector2;
+import org.firstinspires.ftc.teamcode.utils.Vector3;
 import org.firstinspires.ftc.teamcode.utils.priority.PriorityMotor;
 import org.firstinspires.ftc.teamcode.utils.priority.nPriorityServo;
 import org.firstinspires.ftc.teamcode.vision.LLGoalDetector;
+
+import java.util.Vector;
 
 @Config
 public class Shooter {
@@ -30,6 +35,7 @@ public class Shooter {
     } State state = State.CLOSE;
 
     private final Robot robot;
+    private final Sensors sensors;
     private final DcMotorEx ms1, ms2;
     public final PriorityMotor flywheel;
     public final nPriorityServo flywheelBlocker, turret, hood/*, cloth*/;
@@ -53,6 +59,10 @@ public class Shooter {
     private double filteredVelocity = 0.0;
     private double prevPow = 0;
 
+    // autoaim stuff
+    public Vector3 ballTarget = new Vector3(-60, 60,38.75 + 5);
+    public PID turretPID = new PID (0.5, 0.0, 0.1);
+
     /*
     Hood / Velo
     Far: 1.34 / 100
@@ -63,6 +73,8 @@ public class Shooter {
 
     public Shooter(Robot robot) {
         this.robot = robot;
+
+        this.sensors = robot.sensors;
 
         this.ms1 = robot.hardwareMap.get(DcMotorEx.class, "shooter1");
         this.ms2 = robot.hardwareMap.get(DcMotorEx.class, "shooter2");
@@ -129,6 +141,10 @@ public class Shooter {
         turret.setTargetAngle(turretError);
          */
 
+        // Turret Auto-Aim
+        aimTurret(); // lmao
+
+
         TelemetryUtil.packet.put("Shooter : Flywheel Filtered Velocity", filteredVelocity);
         TelemetryUtil.packet.put("Shooter : Flywheel Target Velocity", targetVelocity);
         TelemetryUtil.packet.put("Shooter : Flywheel PID Power", pow * 100);
@@ -140,6 +156,23 @@ public class Shooter {
 
         TelemetryUtil.packet.put("Shooter : turretAngle", target_angle);
         LogUtil.turretAngle.set(target_angle);
+    }
+
+    public void aimTurret() {
+        Vector3 distance = new Vector3(ballTarget.getX() - sensors.getOdometryPosition().x, ballTarget.getY() - sensors.getOdometryPosition().y, 0);
+        Vector3 ballExit2DSpd = new Vector3(getBallExitSpd() * distance.x/distance.getMag(), getBallExitSpd() * distance.y/distance.getMag(), 0);
+        Vector3 tVel  = new Vector3(sensors.getVelocity().x, sensors.getVelocity().y, 0);
+        // find a way to get robot angular velocity from drivetrain "turn"
+        // Vector3 rVel = Vector3.cross(new Vector3(0, 0, ___), new Vector3(dLauncher * Math.cos(heading), dLauncher * Math.sin(heading), 0));
+        Vector3 vel = Vector3.add(ballExit2DSpd, tVel); // .add(rVel);
+        double rotate = Math.acos(Vector3.dot(vel, distance) / (vel.getMag() * distance.getMag())) * (Vector3.cross(vel, distance).z > 0 ? 1 : -1);
+        setTurretAngle(Math.acos(distance.x/ distance.getMag()) + rotate); // works for red, if blue: 360 - Math.acos(...) + rotate
+
+    }
+
+    public double getBallExitSpd() {
+        return 639.899748567 / 14 * sensors.getVoltage();
+        // the ~640 is just from the random 640 in/sec that PJ said, I have no clue what the model will be like but I suspect linear or quadratic
     }
 
     public void setHoodAngle(double target_angle) {

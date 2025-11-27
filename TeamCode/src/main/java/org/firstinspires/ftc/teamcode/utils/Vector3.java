@@ -69,6 +69,7 @@ public class Vector3 implements Cloneable {
     public static double dot(Vector3 a, Vector3 b) {
         return a.x * b.x + a.y * b.y + a.z * b.z;
     }
+    public static Vector3 cross(Vector3 a, Vector3 b) { return new Vector3(a.y * b.z - a.z * b.y, a.x * b.z - a.z * b.x, a.x * b.y - a.y - b.z); }
     public static Vector3 project(Vector3 v, Vector3 u) { // projects v onto u
         double component = Vector3.dot(v,u)/Vector3.dot(u,u);
         Vector3 temp = new Vector3(u.x,u.y,u.z);
