@@ -21,24 +21,31 @@ public class LimelightLocalizer extends Localizer{
     public void update(){
         long currentTime = System.nanoTime();
         double loopTime = (double)(currentTime - lastTime)/1.0E9;
-        lastTime = currentTime;
 
         if(drivetrain.vision.isDetected()) {
             res = drivetrain.vision.getResult();
+            lastTime = currentTime;
 
             double D = (tagHeight - drivetrain.vision.cameraHeight) / Math.tan(drivetrain.vision.cameraAngle + res.getTy());
             // TODO: sensors.getHeading() is a placeholder, replace once turret PID is written
             x = (Globals.isRed ? redTag.x : blueTag.x) - D * Math.cos(sensors.getHeading() - res.getTx());
             y = (Globals.isRed ? redTag.y : blueTag.y) - D * Math.sin(sensors.getHeading() - res.getTx());
             heading = sensors.getHeading() - res.getTx();
-
-            relHistory.add(0, new Pose2d(x - currentPose.x, y - currentPose.y, heading - currentPose.heading));
-            nanoTimes.add(0, currentTime);
-            poseHistory.add(0, currentPose.clone());
-
-            updateVelocity();
-            updateExpected();
-            updateField();
         }
+
+        Pose2d relDelta = new Pose2d (x - currentPose.x, y - currentPose.y, heading - currentPose.heading);
+        constAccelMath.calculate(loopTime, relDelta, currentPose);
+
+        x = currentPose.x;
+        y = currentPose.y;
+        heading = currentPose.heading;
+
+        relHistory.add(0, new Pose2d(x - currentPose.x, y - currentPose.y, heading - currentPose.heading));
+        nanoTimes.add(0, currentTime);
+        poseHistory.add(0, currentPose.clone());
+
+        updateVelocity();
+        updateExpected();
+        updateField();
     }
 }
