@@ -14,7 +14,9 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigu
 
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
+import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.LimelightLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.Localizer;
+import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.PinpointLocalizer;
 import org.firstinspires.ftc.teamcode.utils.AngleUtil;
 import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
@@ -81,7 +83,9 @@ public class Drivetrain {
         configureMotors();
 
         localizers = new Localizer[]{
-            new Localizer(robot.sensors, this, "#00c000", "#00c00060"),
+                new Localizer(robot.sensors, this, "#00c000", "#00c00060"),
+                new LimelightLocalizer(robot.sensors, this, "00c000", "#00c00060"),
+                new PinpointLocalizer(robot.hardwareMap, robot.sensors, this, "00c000", "#00c00060")
         };
 
         setMinPowersToOvercomeFriction(1.0);
@@ -149,7 +153,7 @@ public class Drivetrain {
 
     public void updateLocalizers() {
         for (Localizer l : localizers) {
-            l.updateEncoders(sensors.odoWheelPositions);
+            l.updateEncoders(sensors.getOdometry());
             l.update();
         }
     }
@@ -190,9 +194,8 @@ public class Drivetrain {
             return;
         }
 
-        ROBOT_POSITION = sensors.getOdometryPosition();
-        Vector2 vel = sensors.getVelocity();
-        ROBOT_VELOCITY = new Pose2d(vel.x, vel.y, Math.atan2(vel.x, vel.y));
+        ROBOT_POSITION = localizers[0].getPoseEstimate();
+        ROBOT_VELOCITY = localizers[0].getRelativePoseVelocity();
 
         if(path != null) {
             state = State.FOLLOW_SPLINE;

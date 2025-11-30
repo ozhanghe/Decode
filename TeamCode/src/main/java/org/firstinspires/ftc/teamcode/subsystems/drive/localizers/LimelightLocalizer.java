@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems.drive.localizers;
 
+import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
+
 import com.qualcomm.hardware.limelightvision.LLResult;
 
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
@@ -28,9 +30,9 @@ public class LimelightLocalizer extends Localizer{
 
             double D = (tagHeight - drivetrain.vision.cameraHeight) / Math.tan(drivetrain.vision.cameraAngle + res.getTy());
             // TODO: sensors.getHeading() is a placeholder, replace once turret PID is written
-            x = (Globals.isRed ? redTag.x : blueTag.x) - D * Math.cos(sensors.getHeading() - res.getTx());
-            y = (Globals.isRed ? redTag.y : blueTag.y) - D * Math.sin(sensors.getHeading() - res.getTx());
-            heading = sensors.getHeading() - res.getTx();
+            x = (Globals.isRed ? redTag.x : blueTag.x) - D * Math.cos(ROBOT_POSITION.getHeading() - res.getTx());
+            y = (Globals.isRed ? redTag.y : blueTag.y) - D * Math.sin(ROBOT_POSITION.getHeading() - res.getTx());
+            heading = ROBOT_POSITION.getHeading() - res.getTx();
         }
 
         Pose2d relDelta = new Pose2d (x - currentPose.x, y - currentPose.y, heading - currentPose.heading);
