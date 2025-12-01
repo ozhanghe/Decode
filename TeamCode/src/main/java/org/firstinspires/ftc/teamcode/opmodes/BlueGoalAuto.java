@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
+import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 
@@ -37,8 +38,7 @@ public class BlueGoalAuto extends LinearOpMode {
         robot = new Robot(hardwareMap);
         robot.intake.state = Intake.State.TEST;
         robot.setStopChecker(this::isStopRequested);
-
-
+        Globals.isRed = false;
 
         robot.drivetrain.setPoseEstimate(new Pose2d(-72.0 + ROBOT_LENGTH / 2, -(48 - ROBOT_WIDTH / 2), 0));
 
