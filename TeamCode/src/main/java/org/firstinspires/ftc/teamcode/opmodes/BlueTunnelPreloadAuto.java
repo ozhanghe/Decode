@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 
 @Autonomous(name = "Blue Tunnel Auto (Preload Only)", preselectTeleOp = "A. Teleop")
-public class BlueTunnelPreloadAuto extends LinearOpMode{
+public class BlueTunnelPreloadAuto extends LinearOpMode {
     Robot robot;
     long shooterTimer;
     long stallTimer;
@@ -60,7 +60,7 @@ public class BlueTunnelPreloadAuto extends LinearOpMode{
         robot.shooter.setShooterBlocker(true);
         robot.intake.roller.setTargetPower(0.0);
         robot.intake.feed.setTargetPower(0.0);
-        robot.drivetrain.goToPoint(new Pose2d(33, -ROBOT_WIDTH * 2 / 3, -Math.PI / 2), 0.5);
+        robot.drivetrain.goToPoint(new Pose2d(-48, -24, 0), 0.5);
         robot.update();
         // Disable all shooting mechanisms, move on to first row of intake balls
         // Wait for robot to reach point

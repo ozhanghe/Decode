@@ -179,7 +179,7 @@ public class Shooter {
         hood.setTargetAngle(mode.hoodAngle);
     }
 
-    public void setShooterBlocker (boolean on) {flywheelBlocker.setTargetAngle (on ? 1.5 : -0.2);}
+    public void setShooterBlocker (boolean on) {flywheelBlocker.setTargetAngle (on ? 2.1 : -0.2);}
 
     public boolean atVel () {return Math.abs(error) < 1.0;}
 }

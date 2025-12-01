@@ -59,7 +59,7 @@ public class RedGoalAuto extends LinearOpMode {
         robot.shooter.setShooterBlocker(true);
         robot.intake.roller.setTargetPower(0.0);
         robot.intake.feed.setTargetPower(0.0);
-        robot.drivetrain.goToPoint(new Pose2d(-15, 33, 0), 0.5);
+        robot.drivetrain.goToPoint(new Pose2d(-18, 33, Math.PI / 2), 0.5);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
@@ -67,7 +67,7 @@ public class RedGoalAuto extends LinearOpMode {
         stallTimer = System.currentTimeMillis();
         robot.intake.roller.setTargetPower(0.9);
         robot.intake.feed.setTargetPower(0.4);
-        robot.drivetrain.goToPoint(new Pose2d(-21, 60, Math.PI / 2), 0.2);
+        robot.drivetrain.goToPoint(new Pose2d(-18, 60, Math.PI / 2), 0.2);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT && System.currentTimeMillis() - stallTimer <= 2000);
 
