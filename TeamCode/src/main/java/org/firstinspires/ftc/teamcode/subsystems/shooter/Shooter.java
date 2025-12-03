@@ -11,47 +11,42 @@ import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.utils.priority.PriorityMotor;
 import org.firstinspires.ftc.teamcode.utils.priority.nPriorityServo;
-import org.firstinspires.ftc.teamcode.vision.LLGoalDetector;
-import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
 
 @Config
 public class Shooter {
+    public static double closeAngle = 0.7, closeVel = 65, midAngle = 1.0, midVel  = 77, farAngle = 1.34, farVel = 0.0;
+    public static boolean testing = false;
+
     public enum State {
-        CLOSE(0.7, 65),
-        MID(1.0, 75),
-        FAR(1.34, 100),
+        CLOSE(closeAngle, closeVel),
+        MID(midAngle, midVel),
+        FAR(farAngle, farVel),
         OFF(0.0, 0.0);
 
-        private final double hoodAngle, flywheelVel;
+        private double hoodAngle, flywheelVel;
 
         State(double hoodAngle, double flywheelVel){
             this.hoodAngle = hoodAngle;
             this.flywheelVel = flywheelVel;
         }
+
+        public static void setHoodAngle(State state, double angle){
+            state.hoodAngle = angle;
+        }
+
+        public static void setFlywheelVel (State state, double vel){
+            state.flywheelVel = vel;
+        }
     } State state = State.CLOSE;
 
-    public enum ShooterState {
-        IDLE,
-        SHOOT,
-        INDEX,
-        INDEX_STOP,
-        INDEX_WAIT,
-    }
-
-    public ShooterState shooterState = ShooterState.IDLE;
     private final Robot robot;
     private final DcMotorEx ms1, ms2;
     public final PriorityMotor flywheel;
-    public final nPriorityServo flywheelBlocker, turret, hood, net;
+    public final nPriorityServo flywheelBlocker, turret, hood/*, cloth*/;
 
-    public LLGoalDetector goalDetector;
     private double turretError;
     private long lastUpdateTime = System.currentTimeMillis();
     public static double limelightThresh = 5.0, limelightTimeDelay = 10, limelightScalar = 0.05;
-
-    private int[] obeliskOrder;
-    private int[] currOrder;
-    private int diff;
 
     // velocity is in inches / second
     public static PID velocityPID = new PID (0.0, 0.001, 0.001);
@@ -77,9 +72,6 @@ public class Shooter {
 
     public Shooter(Robot robot) {
         this.robot = robot;
-
-        obeliskOrder = new int[3];
-        currOrder = new int[3];
 
         this.ms1 = robot.hardwareMap.get(DcMotorEx.class, "shooter1");
         this.ms2 = robot.hardwareMap.get(DcMotorEx.class, "shooter2");
@@ -108,22 +100,13 @@ public class Shooter {
                 new boolean[] {false},
                 2, 5
         );
-
-        net = new nPriorityServo(
-                new Servo[]{robot.hardwareMap.get(Servo.class, "net")},
-                "flywheelBlocker", nPriorityServo.ServoType.AXON_MINI,
-                0, 1.0, 0.5,
-                new boolean[] {false},
-                2, 5
-        );
-
         robot.hardwareQueue.addDevices(flywheel, hood, turret, flywheelBlocker);
 
         flywheel.motor[0].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         flywheel.motor[0].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
-    double error;
+    public double error;
     public void update() {
         // Flywheel Velocity PID
         if (targetVelocity <= 1) velocityPID.resetIntegral();
@@ -154,31 +137,16 @@ public class Shooter {
         }
         turret.setTargetAngle(turretError);
          */
-        switch (shooterState) {
-            case IDLE:
-                setTargetVelocity(0);
-                setShooterBlocker(true);
-                setTurretAngle(0);
-                setHoodAngle(0);
-                break;
-            case INDEX:
-                setHoodAngle(3);
-                setTurretAngle(0);
-                setTargetVelocity(60);
-                break;
-            case INDEX_STOP:
-                setTargetVelocity(0);
-                setShooterBlocker(true);
-                if(flywheelBlocker.inPosition()){
-                    setHoodAngle(0);
-                }
-                break;
-            case INDEX_WAIT:
-                setShooterBlocker(false);
-                if(flywheelBlocker.inPosition()){
-                    shooterState = ShooterState.INDEX;
-                }
+
+        if(testing){
+            State.setHoodAngle(State.CLOSE, closeAngle);
+            State.setFlywheelVel(State.CLOSE, closeVel);
+            State.setHoodAngle(State.MID, midAngle);
+            State.setFlywheelVel(State.MID, midVel);
+            State.setHoodAngle(State.FAR, farAngle);
+            State.setFlywheelVel(State.FAR, farVel);
         }
+
         TelemetryUtil.packet.put("Shooter : Flywheel Filtered Velocity", filteredVelocity);
         TelemetryUtil.packet.put("Shooter : Flywheel Target Velocity", targetVelocity);
         TelemetryUtil.packet.put("Shooter : Flywheel PID Power", pow * 100);
@@ -209,19 +177,7 @@ public class Shooter {
         hood.setTargetAngle(mode.hoodAngle);
     }
 
-    public void setShooterBlocker (boolean on) {flywheelBlocker.setTargetAngle (on ? 1.5 : 0);}
+    public void setShooterBlocker (boolean on) {flywheelBlocker.setTargetAngle (on ? 2.1 : -0.2);}
 
-    public boolean atVel () {return error < 1.0;}
-
-    public int calcIndex(int greenBall, int goalDetector){
-        diff = (goalDetector - greenBall) % 3;
-        return diff;
-    }
-
-    public void indexBalls(int moves){
-        for(int x=0;x<moves;x++){
-            shooterState = ShooterState.INDEX_WAIT;
-        }
-    }
-
+    public boolean atVel () {return Math.abs(error) < 1.0;}
 }
