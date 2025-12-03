@@ -114,7 +114,6 @@ public class Teleop extends LinearOpMode {
 
             if (a2.isClicked(gamepad2.a)) {
                 Globals.isRed = !Globals.isRed;
-                robot.shooter.goalDetector.updatePipeline();
             }
 
             robot.drivetrain.drive(gamepad1);
