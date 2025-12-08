@@ -34,7 +34,7 @@ public class Shooter {
     private final DcMotorEx ms1, ms2;
     public final PriorityMotor flywheel;
     public final nPriorityServo flywheelBlocker, hood, net;
-    public final PriorityCRServo turret;
+    public final nPriorityServo turret;
 
     private boolean indexPrepareRequest = false, indexRequest = false;
     private boolean shootPrepareRequest = false, shootRequest = false;
@@ -64,7 +64,6 @@ public class Shooter {
     public Vector3 rVel = new Vector3(0, 0, 0);
     public Vector3 vel = new Vector3(0, 0, 0);
 
-    public PID turretPID = new PID (0.5, 0.0, 0.1);
 
 
     /*
@@ -92,9 +91,10 @@ public class Shooter {
             2, 5
         );
 
-        turret = new PriorityCRServo(
-            new CRServo[]{robot.hardwareMap.get(CRServo.class, "turret1"), robot.hardwareMap.get(CRServo.class,"turret2")},
-            "turret", PriorityCRServo.ServoType.AXON_MINI,
+        turret = new nPriorityServo(
+            new Servo[]{robot.hardwareMap.get(Servo.class, "turret1"), robot.hardwareMap.get(Servo.class,"turret2")},
+            "turret", nPriorityServo.ServoType.AXON_MINI,
+                0.03, 0.38, 0.03, // TODO: tune these values so base position is with heading
             new boolean[] {false, false},
             2, 5
         );
@@ -175,10 +175,6 @@ public class Shooter {
         flywheel.setTargetPower(pow);
         prevPow = pow;
 
-        // turret PID
-        error = turret.getAngle() - turret.getTargetAngle();
-        turret.setTargetPower(turretPID.update(error, -0.5, 0.5)); // starting with low maximums because unless the turret starts lagging behind turns, we don't need it to move crazy fast
-
 
 
         TelemetryUtil.packet.put("Shooter : Flywheel Filtered Velocity", filteredVelocity);
@@ -227,11 +223,11 @@ public class Shooter {
         double[] J_inv = {0};
         double detJReciprocal = 1;
         Vector2 s = new Vector2(0, 0);
-        double thetaNext = theta;
-        double phiNext = phi;
+        double thetaNext = theta + 1;
+        double phiNext = phi + 1;
         Vector3 TE = new Vector3(100, 0, 0);
 
-        while ((F0 < L || n < 2) && ((theta - thetaNext) * (theta - thetaNext) + (phi - phiNext) * (phi - phiNext) > 1e-14)) {
+        while ((F0 < L || n < 2) && ((theta - thetaNext) * (theta - thetaNext) + (phi - phiNext) * (phi - phiNext) > 1e-8)) {
             J = errorFunctionYields(theta, phi);
             E = new Vector2(J[4], J[5]);
             J_inv = new double[]{J[3], -J[1], -J[2], J[0]};
