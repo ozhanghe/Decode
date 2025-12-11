@@ -5,6 +5,8 @@ import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.utils.Globals;
@@ -14,14 +16,14 @@ public class MergeLocalizer extends Localizer{
     public MergeLocalizer (HardwareMap hardwareMap, Sensors sensors, Drivetrain drivetrain, String color, String expectedColor){
         super(sensors, drivetrain, color, expectedColor);
 
-        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
-        pinpoint.setOffsets(72, -160);
-        pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD);
-        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        pinpoint = hardwareMap.get(GoBildaPinpoint2Driver.class, "pinpoint");
+        pinpoint.setOffsets(72, -160, DistanceUnit.MM);
+        pinpoint.setEncoderResolution(GoBildaPinpoint2Driver.GoBildaOdometryPods.goBILDA_SWINGARM_POD);
+        pinpoint.setEncoderDirections(GoBildaPinpoint2Driver.EncoderDirection.FORWARD, GoBildaPinpoint2Driver.EncoderDirection.FORWARD);
     }
 
     // Pinpoint
-    private GoBildaPinpointDriver pinpoint;
+    private GoBildaPinpoint2Driver pinpoint;
     private boolean ppUpdateRequest = false;
     private long ppLastUpdateTime;
     private Pose2d ppLastPose;
@@ -59,16 +61,10 @@ public class MergeLocalizer extends Localizer{
         // PINPOINT
 
         if(ppUpdateRequest) {
-            ppLastPose = pinpoint.getPosition();
+            ppLastPose = new Pose2d(pinpoint.getPosX(DistanceUnit.INCH), pinpoint.getPosY(DistanceUnit.INCH), pinpoint.getHeading(AngleUnit.RADIANS));
             pinpoint.update();
             ppLastUpdateTime = System.currentTimeMillis();
         }
-
-        Pose2d ppRelDelta = new Pose2d (
-                pinpoint.getPosX() - ppLastPose.x,
-                pinpoint.getPosY() - ppLastPose.y,
-                pinpoint.getHeading() - ppLastPose.heading
-        );
 
         // LIMELIGHT
 
