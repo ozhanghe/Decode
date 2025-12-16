@@ -14,10 +14,8 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigu
 
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
-import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.LimelightLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.Localizer;
 import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.MergeLocalizer;
-import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.PinpointLocalizer;
 import org.firstinspires.ftc.teamcode.utils.AngleUtil;
 import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
@@ -48,7 +46,7 @@ public class Drivetrain {
     private final List<PriorityMotor> motors;
 
     public Robot robot;
-    public Localizer[] localizers;
+    public MergeLocalizer mergeLocalizer;
     public Vision vision;
     private final HardwareQueue hardwareQueue;
     private final Sensors sensors;
@@ -82,15 +80,9 @@ public class Drivetrain {
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 
         configureMotors();
-
-        localizers = new Localizer[]{
-                new Localizer(robot.sensors, this, "#0000ff", "#ff00ff"),
-                new LimelightLocalizer(robot.sensors, this, "#ff0000", "#00ff00"),
-                new MergeLocalizer (robot.sensors, this, "#ffff00", "#00ffff"),
-                new PinpointLocalizer(robot.hardwareMap, robot.sensors, this, "#aa0000", "#00ee00")
-        };
-
         setMinPowersToOvercomeFriction(1.0);
+
+        mergeLocalizer = new MergeLocalizer (robot.hardwareMap, robot.sensors, this, "#ffff00", "#00ffff");
     }
 
     public void configureMotors() {
@@ -157,24 +149,11 @@ public class Drivetrain {
     public void togglePinpoint (boolean toggle) { pinpointOverride = toggle;}
 
     public void updateLocalizers() {
-
-        localizers[0].updateEncoders (sensors.getOdometry());
-
-        if(!vision.obelisk){
-            localizers[1].updateEncoders(sensors.getOdometry());
-            localizers[1].update();
-        }
-
-        localizers[2].updateEncoders(sensors.getOdometry());
-        localizers[2].update();
-
-        if(pinpointOverride) { localizers[3].update();}
+        mergeLocalizer.updateEncoders(sensors.getOdometry());
     }
 
     public void setPoseEstimate(Pose2d pose2d) {
-        for (Localizer l : localizers) {
-            l.setPoseEstimate(pose2d);
-        }
+        mergeLocalizer.setPoseEstimate(pose2d);
     }
 
     public Pose2d getPoseEstimate() {
@@ -208,8 +187,8 @@ public class Drivetrain {
         }
 
         updateLocalizers();
-        ROBOT_POSITION = localizers[pinpointOverride ? 3 : 2].getPoseEstimate();
-        ROBOT_VELOCITY = localizers[pinpointOverride ? 3 : 2].getRelativePoseVelocity();
+        ROBOT_POSITION = mergeLocalizer.getPoseEstimate();
+        ROBOT_VELOCITY = mergeLocalizer.getRelativePoseVelocity();
 
         if(path != null) {
             state = State.FOLLOW_SPLINE;
@@ -217,7 +196,7 @@ public class Drivetrain {
 
         switch(state) {
             case FOLLOW_SPLINE:
-                pd = path.update(pos);
+                pd = path.update(ROBOT_POSITION);
                 Vector2 pathForward, pathCentripetal;
                 pathForward = pd.vel;
                 pathCentripetal = new Vector2(0, pathForward.mag() * pathForward.mag() / pd.r * centripetalScalar);
