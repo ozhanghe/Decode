@@ -131,7 +131,7 @@ public class Shooter {
                 if(shootPrepareRequest){
                     // Calculation for targetVelocity goes here
                     state = State.ACCEL;
-                    aimLauncherV4(); // starts autoaim going
+                    aimLauncherV7(); // starts autoaim going
                 }
 
                 if(indexPrepareRequest){
@@ -140,7 +140,7 @@ public class Shooter {
                 }
                 break;
             case ACCEL:
-                if(atVel() && shootRequest){
+                if((atVel() && shootRequest) && aimLauncherV7()){ // aimLauncherV7 will attempt to aim the launcher if (atVel() && shootRequest), but will stop the fsm from entering Shoot if a shot isn't possible
                     state = State.SHOOT;
                 }
 
@@ -149,12 +149,12 @@ public class Shooter {
                 }
                 break;
             case SHOOT:
-                aimLauncherV4(); // right up until the shot happens, the hood and turret should be recalculated as often as possible
+                aimLauncherV7(); // right up until the shot happens, the hood and turret should be recalculated as often as possible
                 break;
             case INDEX:
                 setShooterBlocker(false);
 
-                // TODO: Probably need to reorganize this to better differentiate the two actions, especially because indexing and shooting will lauch diff number of balls
+                // TODO: Probably need to reorganize this to better differentiate the two actions, especially because indexing and shooting will launch diff number of balls
                 break;
         }
 
@@ -203,8 +203,10 @@ public class Shooter {
     }
 
     /**
-     * treat turret angle as difference from heading
-     * phi is angle with respect to vertical
+     * Treat turret angle as difference from heading
+     * Phi is angle with respect to vertical
+     * V7 uses the quartic function solver
+     * @return whether or not a shot is possible as a boolean
      */
     public boolean aimLauncherV7() {
         Complex[] t = new Complex[4];
@@ -310,7 +312,7 @@ public class Shooter {
             i++;
 
         }
-        turret.setTargetAngle((thetaList[n] - ROBOT_POSITION.heading));
+        turret.setTargetAngle((thetaList[n] - ROBOT_POSITION.heading)); // converts from global to difference with heading
         hood.setTargetAngle(phiList[n]);
         return true;
     }
@@ -318,6 +320,7 @@ public class Shooter {
     /**
      * treat turret angle as the offset from heading
      * phi is angle with respect to vertical
+     * Uses multivariable Newton-Raphson to find the roots of the error vector function of (error in theta, error in time between x and y)
      */
     public void aimLauncherV4() {
         distance = new Vector3(ballTarget.getX() - ROBOT_POSITION.x, ballTarget.getY() -  ROBOT_POSITION.y, 0);
