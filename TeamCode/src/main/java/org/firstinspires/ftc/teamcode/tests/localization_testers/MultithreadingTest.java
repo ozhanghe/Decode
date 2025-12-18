@@ -16,7 +16,8 @@ class ControlHub implements Runnable {
     public void run() {
         if (System.currentTimeMillis() - opModeStartTime > 5000 && !triggered) {
             int pos = m.getCurrentPosition();
-            Log.i ("THREADING - Control", System.currentTimeMillis() - opModeStartTime + "");
+            double time = System.currentTimeMillis() - opModeStartTime;
+            Log.i ("THREADING - Control",  time + "");
             triggered = true;
         }
     }
@@ -30,7 +31,8 @@ class ExpansionHub implements  Runnable {
     public void run() {
         if (System.currentTimeMillis() - opModeStartTime > 5000 && !triggered) {
             int pos = m.getCurrentPosition();
-            Log.i ("THREADING - Expansion", System.currentTimeMillis() - opModeStartTime + "");
+            double time = System.currentTimeMillis() - opModeStartTime;
+            Log.i ("THREADING - Expansion",  time + "");
             triggered = true;
         }
     }

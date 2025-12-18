@@ -144,14 +144,6 @@ public class Drivetrain {
         }
     }
 
-    private boolean pinpointOverride = false;
-
-    public void togglePinpoint (boolean toggle) { pinpointOverride = toggle;}
-
-    public void updateLocalizers() {
-        mergeLocalizer.updateEncoders(sensors.getOdometry());
-    }
-
     public void setPoseEstimate(Pose2d pose2d) {
         mergeLocalizer.setPoseEstimate(pose2d);
     }
@@ -186,7 +178,8 @@ public class Drivetrain {
             return;
         }
 
-        updateLocalizers();
+        mergeLocalizer.updateEncoders(sensors.getOdometry());
+
         ROBOT_POSITION = mergeLocalizer.getPoseEstimate();
         ROBOT_VELOCITY = mergeLocalizer.getRelativePoseVelocity();
 

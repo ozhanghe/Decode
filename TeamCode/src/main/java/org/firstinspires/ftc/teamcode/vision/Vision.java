@@ -47,23 +47,14 @@ public class Vision {
             TelemetryUtil.packet.put("Limelight : Status", "Oops! Something broke :blehhh:");
         }else{
             result = limelight.getLatestResult();
-
-            /*
-
-            James let this be a reminder to never write important code past 1am - James 12/12/25
-
-            if(obelisk && result != null && result.isValid()){
-                // 21 = GPP
-                greenPosition = (result.getFiducialResults().get(0).getFiducialId() - 21 + 2) % 3;
-                startAprilTagDetection();
-            }
-            */
         }
     }
 
-    public LLResult getResult(){ return result;}
+    public void start() { limelight.start(); }
 
-    public boolean isDetected(){ return result != null && result.isValid(); }
+    public void stop() { limelight.stop(); }
+
+    public LLResult getResult(){ return result;}
 
     public void togglePipeline (boolean obelisk) {
         limelight.pipelineSwitch(obelisk ? 2 : (Globals.isRed ? 0 : 1));

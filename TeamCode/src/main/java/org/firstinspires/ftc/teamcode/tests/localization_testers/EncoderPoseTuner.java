@@ -28,9 +28,9 @@ public class EncoderPoseTuner extends LinearOpMode {
 
             robot.update();
 
-            telemetry.addData("leftOdoRadius", (robot.drivetrain.leftRear.motor[0].getCurrentPosition() - leftInitial) * robot.drivetrain.localizers[0].encoders[0].ticksToInches/theta + "");
-            telemetry.addData("rightOdoRadius", (robot.drivetrain.leftFront.motor[0].getCurrentPosition() - rightInitial) * robot.drivetrain.localizers[0].encoders[1].ticksToInches/theta + "");
-            telemetry.addData("backOdoRadius", (robot.drivetrain.rightFront.motor[0].getCurrentPosition() - backInitial) * robot.drivetrain.localizers[0].encoders[2].ticksToInches/theta + "");
+            telemetry.addData("leftOdoRadius", (robot.drivetrain.leftRear.motor[0].getCurrentPosition() - leftInitial) * robot.drivetrain.mergeLocalizer.encoders[0].ticksToInches/theta + "");
+            telemetry.addData("rightOdoRadius", (robot.drivetrain.leftFront.motor[0].getCurrentPosition() - rightInitial) * robot.drivetrain.mergeLocalizer.encoders[1].ticksToInches/theta + "");
+            telemetry.addData("backOdoRadius", (robot.drivetrain.rightFront.motor[0].getCurrentPosition() - backInitial) * robot.drivetrain.mergeLocalizer.encoders[2].ticksToInches/theta + "");
             telemetry.update();
         }
     }
