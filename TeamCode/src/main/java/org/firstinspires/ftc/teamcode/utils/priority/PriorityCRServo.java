@@ -39,6 +39,7 @@ public class PriorityCRServo extends PriorityDevice {
         this.reversed = reversed;
         this.servoType = servoType;
     }
+
     public PriorityCRServo(CRServo[] servos, String name, ServoType servoType, boolean[] reversed, double basePriority, double priorityScale) { //one of the servos must be reversed prior to use
         super(basePriority, priorityScale, name);
         this.servo = servos;
@@ -64,22 +65,18 @@ public class PriorityCRServo extends PriorityDevice {
 
     @Override
     protected void update() {
+        // Check how much the servo(s) have moved since last update
+        double dt = (System.nanoTime()-lastUpdateTime)/1.0E9;
+        angle += dt * power * servoType.speed % (2 * Math.PI);
+        lastUpdateTime = System.nanoTime();
+        lastPower = power;
+
         for(int i = 0; i < servo.length; i++){
             servo[i].setPower(power * (reversed[i] ? -1.0 : 1.0));
         }
-
-        double dt = (System.nanoTime()-lastUpdateTime)/1000000.0;
-        /*
-         rationale behind having only 1 angle (and not an array for all servos)
-         the servos are going to be the same type, power, & everything
-         so the delta between the servos should be the same
-         */
-        angle += dt * power * servoType.speed % (2 * Math.PI);
-        lastUpdateTime += dt;
-        lastPower = power;
     }
 
-    public double getAngle() {
+    public double getCurrentAngle() {
         return angle;
     }
 
@@ -90,6 +87,6 @@ public class PriorityCRServo extends PriorityDevice {
     public void setTargetAngle(double angle) {
         while(angle < 0) angle += 2 * Math.PI;
         while(angle >= 2 * Math.PI) angle -= 2 * Math.PI;
-        this.angle = angle;
+        this.targetAngle = angle;
     }
 }

@@ -10,6 +10,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Drivetrain;
+import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.vision.Vision;
@@ -61,26 +62,46 @@ public class MergeLocalizer extends Localizer{
         relDeltaX = (deltaRight*leftY - deltaLeft*rightY)/(leftY-rightY);
         distanceTraveled += Math.sqrt(relDeltaX*relDeltaX+relDeltaY*relDeltaY);
 
-        // currently this only represents the relOdoDelta but everything will get merged into this so its fine
         Pose2d relDelta = new Pose2d (relDeltaX,relDeltaY,deltaHeading);
+        constAccelMath.calculate(loopTime, relDelta, currentPose);
 
         // PINPOINT
         if (currentPose.getDistanceFromPoint(currPinpointPose) >= 24.0 || constantCorrection) {
-            lastPinpointPose = currentPose.clone();
             pinpoint.update();
-            currPinpointPose = new Pose2d(pinpoint.getPosX(), pinpoint.getPosY(), pinpoint.getHeading());
+            double timeStamp = System.nanoTime();
+            lastPinpointPose = currPinpointPose.clone();
+            currPinpointPose = new Pose2d (pinpoint.getPosX(), pinpoint.getPosY(), pinpoint.getHeading());
 
-            Pose2d relPinpoint = new Pose2d (currPinpointPose.x - lastPinpointPose.x, currPinpointPose.y - lastPinpointPose.y, currPinpointPose.heading - lastPinpointPose.heading);
-            double staleness = System.currentTimeMillis() - lastPinpointUpdate;
-            lastPinpointUpdate = System.currentTimeMillis();
+            // find closest pose to last poll time
+            int index = 0;
+            while (index < nanoTimes.size() && nanoTimes.get(index) - lastPinpointUpdate > 0) {
+                index++;
+            }
 
-            double posScalar = 1 - 2 / Math.PI * Math.atan (0.75 * staleness);
-            // extreme weighting for heading because flywheel vibration probably mess with pinpoint imu too much
-            double headingScalar = 1 - 2 / Math.PI * Math.atan (3 * staleness);
+            if (index == nanoTimes.size()){
+                index = nanoTimes.size()-1; // death to 10000000000 children
+            }
 
-            relDelta.x = relPinpoint.x * posScalar + relDelta.x * (1 - posScalar);
-            relDelta.y = relPinpoint.y * posScalar + relDelta.y * (1 - posScalar);
-            relDelta.heading = relPinpoint.heading * headingScalar + relDelta.heading * (1 - headingScalar);
+            Pose2d globalPinpointDelta = new Pose2d (
+                    currPinpointPose.x - lastPinpointPose.x,
+                    currPinpointPose.y - lastPinpointPose.y,
+                    currPinpointPose.heading - lastPinpointPose.heading
+            );
+
+            Pose2d relPinpointDelta = new Pose2d (
+                    Math.cos(lastPinpointPose.heading) * globalPinpointDelta.x + Math.sin(lastPinpointPose.heading) * globalPinpointDelta.y,
+                    -Math.sin(lastPinpointPose.heading) * globalPinpointDelta.x + Math.cos(lastPinpointPose.heading) * globalPinpointDelta.y,
+                    globalPinpointDelta.heading
+            );
+
+            Pose2d globalPinpointEstimate = new Pose2d (
+                    poseHistory.get(index).x + Math.cos(poseHistory.get(index).heading) * relPinpointDelta.x - Math.sin(poseHistory.get(index).heading) * relPinpointDelta.y,
+                    poseHistory.get(index).y + Math.sin(poseHistory.get(index).heading) * relPinpointDelta.x + Math.cos(poseHistory.get(index).heading) * relPinpointDelta.y,
+                    poseHistory.get(index).heading + relPinpointDelta.heading
+            );
+
+            currentPose = globalPinpointEstimate.clone();
+            lastPinpointUpdate = timeStamp;
         }
 
         // LIMELIGHT
@@ -90,24 +111,10 @@ public class MergeLocalizer extends Localizer{
             result = drivetrain.vision.getResult();
 
             if (result != null && result.isValid() && result.getStaleness() < lastStaleness) {
-                lastStaleness = result.getStaleness();
-
-                double D = (tagHeight - drivetrain.vision.cameraHeight) / Math.tan(drivetrain.vision.cameraAngle + ll.result.getTy());
-
-                // TODO: the ROBOT_POSITION.heading is a placeholder for turret global heading
-                Pose2d relLL = new Pose2d (
-                        (Globals.isRed ? redTag.x : blueTag.x) - D * Math.cos(ROBOT_POSITION.heading - ll.result.getTx()) - currentPose.x,
-                        (Globals.isRed ? redTag.x : blueTag.x) - D * Math.cos(ROBOT_POSITION.heading - ll.result.getTy()) - currentPose.y,
-                        ROBOT_POSITION.getHeading()  - ll.result.getTx()
-                );
-
-                // extreme weighing again because that camera was vibrating jesus
-                double posScalar = 1 - 2 / Math.PI * Math.atan (3 * ll.result.getStaleness());
-                double headingScalar = 1 - 2 / Math.PI * Math.atan (3 * ll.result.getStaleness());
-
-                relDelta.x = relLL.x * posScalar + relDelta.x * (1 - posScalar);
-                relDelta.y = relLL.y * posScalar + relDelta.y * (1 - posScalar);
-                relDelta.heading = relLL.heading * headingScalar + relDelta.x * (1 - headingScalar);
+                int index = 0;
+                while (index < Shooter.nanoTimes.size() && Shooter.nanoTimes.get(index) - result.getStaleness() > 0) {
+                    index++;
+                }
             }
         }
 
