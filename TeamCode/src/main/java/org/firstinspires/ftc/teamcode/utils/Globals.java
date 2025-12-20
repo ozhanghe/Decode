@@ -28,6 +28,11 @@ public class Globals {
         LOOP_START = System.nanoTime();
     }
 
+    // DECODE
+    public static Pose2d redTag = new Pose2d(-58.3414795, 55.6424675);
+    public static Pose2d blueTag = new Pose2d(-58.3414795, -55.6424675);
+    public static double tagHeight = 29.5;
+
     public static double GET_LOOP_TIME() {
         LOOP_TIME = (System.nanoTime() - LOOP_START) / 1.0e9; // converts from nano secs to secs
         return LOOP_TIME;
