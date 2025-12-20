@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.subsystems.shooter;
 
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_VELOCITY;
+import static org.firstinspires.ftc.teamcode.utils.Globals.blueTag;
+import static org.firstinspires.ftc.teamcode.utils.Globals.redTag;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -12,6 +14,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.utils.Complex;
+import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.Polynomial;
@@ -37,9 +40,8 @@ public class Shooter {
     private final Robot robot;
     private final Sensors sensors;
     private final DcMotorEx ms1, ms2;
-    private final PriorityMotor flywheel;
-    private final nPriorityServo flywheelBlocker, hood, net;
-    public final PriorityCRServo turret;
+    public final PriorityMotor flywheel;
+    public final nPriorityServo turret, hood, flywheelBlocker, net;
 
     public static ArrayList<Long> nanoTimes;
     public static ArrayList<Double> turretHistory;
@@ -85,22 +87,23 @@ public class Shooter {
         flywheel = new PriorityMotor(new DcMotorEx[]{ms1, ms2},"flywheel",3, 5, new double[] {1, -1}, robot.sensors);
 
         hood = new nPriorityServo(
-            new Servo[]{robot.hardwareMap.get(Servo.class, "hood1"), robot.hardwareMap.get(Servo.class,"hood2")},
+            new Servo[]{robot.hardwareMap.get(Servo.class, "hood1")},
             "hood", nPriorityServo.ServoType.AXON_MINI,
-            0.03, 0.38, 0.03,
-            new boolean[] {false, true},
+            0.0, 0.41, 0.412,
+            new boolean[] {false},
             2, 5
         );
 
-        turret = new PriorityCRServo(
-            new CRServo[]{robot.hardwareMap.get(CRServo.class, "turret1"), robot.hardwareMap.get(CRServo.class,"turret2")},
-            "turret", PriorityCRServo.ServoType.AXON_MINI,
-                // 0.03, 0.38, 0.03, // TODO: find out where in the servo is straight ahead
+        turret = new nPriorityServo(
+            new Servo[]{robot.hardwareMap.get(Servo.class, "turret1"), robot.hardwareMap.get(Servo.class,"turret2")},
+            "turret", nPriorityServo.ServoType.AXON_MINI,
+            0, 1.0, 0.5, // TODO: find out where in the servo is straight ahead
             new boolean[] {false, false},
             2, 5
         );
 
         nanoTimes = new ArrayList<>();
+        turretHistory = new ArrayList<>();
 
         flywheelBlocker = new nPriorityServo(
                 new Servo[]{robot.hardwareMap.get(Servo.class, "flywheelBlocker")},
@@ -178,8 +181,7 @@ public class Shooter {
         flywheel.setTargetPower(pow);
         prevPow = pow;
 
-        // turret aim
-        turret.setTargetPower(turretPID.update(turret.getCurrentAngle() - turret.getTargetAngle(), -0.75, 0.75));
+        setTurretAngle(Math.tan((ROBOT_POSITION.y - (Globals.isRed ? redTag.y : blueTag.y)) / (ROBOT_POSITION.x - (Globals.isRed ? redTag.x : blueTag.x))));
 
         nanoTimes.add(0, System.nanoTime());
         turretHistory.add(0, turret.getCurrentAngle());
@@ -203,10 +205,10 @@ public class Shooter {
      * The turret will operate in a system where facing the control hub is "0" to accommodate for (assuming intake side 0) -90 + 270 range of motion
      */
     public void setTurretAngle (double targetAngle) {
-        turret.setTargetAngle(targetAngle);
+        turret.setTargetAngle(targetAngle + Math.PI / 2);
 
-        TelemetryUtil.packet.put("Shooter : turretAngle", targetAngle);
-        LogUtil.turretAngle.set(targetAngle);
+        TelemetryUtil.packet.put("Shooter : turretAngle", targetAngle + Math.PI / 2);
+        LogUtil.turretAngle.set(targetAngle + Math.PI / 2);
     }
 
     public boolean aimLauncherV8() {
