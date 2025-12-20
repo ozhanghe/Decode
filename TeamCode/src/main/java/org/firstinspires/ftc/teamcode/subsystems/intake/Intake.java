@@ -14,7 +14,7 @@ public class Intake {
     private final Robot robot;
     public final PriorityMotor roller, feed;
 
-    private boolean requestIntake = false, requestShoot = false;
+    private boolean requestIntake = false, requestShoot = false, requestOff = false, reversed = false;
 
     public enum State {
         IDLE,
@@ -33,14 +33,17 @@ public class Intake {
             "roller", 2, 5,
             new double[] {1}, robot.sensors
         );
+
         feed = new PriorityMotor(
                 new DcMotorEx[] {robot.hardwareMap.get(DcMotorEx.class, "feed")},
                 "feed", 2, 5,
                 new double[] {-1}, robot.sensors
         );
+
+        robot.hardwareQueue.addDevices(roller, feed);
+
         roller.motor[0].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         feed.motor[0].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        robot.hardwareQueue.addDevices(roller, feed);
     }
 
     long launchTime = System.currentTimeMillis();
@@ -59,20 +62,36 @@ public class Intake {
                 break;
             }
             case INTAKE: {
-                roller.setTargetPower(1.0);
-                feed.setTargetPower(0.3);
+                roller.setTargetPower(0.8 * (reversed ? -1 : 1));
+                feed.setTargetPower(0.4 * (reversed ? -1 : 1));
+
+                if (requestOff) {
+                    requestOff = false;
+                    state = State.IDLE;
+                }
 
                 if (requestShoot) {
                     requestShoot = false;
                     state = State.SHOOT_FEED;
-                    launchTime = System.currentTimeMillis();
                 }
 
                 break;
             }
             case SHOOT_FEED: {
-                roller.setTargetPower(1.0);
-                feed.setTargetPower(0.7);
+                roller.setTargetPower(0.8);
+                feed.setTargetPower(0.6);
+
+                if (requestOff) {
+                    requestOff = false;
+                    state = State.IDLE;
+                }
+
+                if (requestIntake) {
+                    requestIntake = false;
+                    state = State.INTAKE;
+                }
+
+                break;
             }
             case TEST: {
                 break;
@@ -82,13 +101,17 @@ public class Intake {
         this.updateTelemetry();
     }
 
-    public void reqIntake(boolean req) {
+    public void reqIntake (boolean req) {
         requestIntake = req;
     }
 
-    public void reqShoot(boolean req) {
+    public void reqShoot (boolean req) {
         requestShoot = req;
     }
+
+    public void reqOff (boolean req) { requestOff = req; }
+
+    public void toggleDirection (boolean reversed) { this.reversed = reversed; }
 
     private void updateTelemetry() {
         TelemetryUtil.packet.put("Intake : state", this.state);

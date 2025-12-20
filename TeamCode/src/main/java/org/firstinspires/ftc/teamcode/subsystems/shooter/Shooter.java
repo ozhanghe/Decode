@@ -32,10 +32,11 @@ import java.util.List;
 public class Shooter {
     public enum State {
         IDLE,
-        ACCEL,
+        AIMING,
+        READY,
         SHOOT,
-        INDEX
-    } State state = State.IDLE;
+        TEST
+    } public State state = State.IDLE;
 
     private final Robot robot;
     private final Sensors sensors;
@@ -46,8 +47,7 @@ public class Shooter {
     public static ArrayList<Long> nanoTimes;
     public static ArrayList<Double> turretHistory;
 
-    private boolean indexPrepareRequest = false, indexRequest = false;
-    private boolean shootPrepareRequest = false, shootRequest = false;
+    private boolean aimRequest = false, shootRequest = false, stopRequest = false;
 
     // velocity is in inches / second
     public static PID velocityPID = new PID (0.0, 0.001, 0.001);
@@ -63,7 +63,7 @@ public class Shooter {
     private double filteredVelocity = 0.0;
     private double prevPow = 0;
 
-    // autoaim stuff
+    // auto-aim
     private final double dLauncher = Math.sqrt(66.632 * 66.632 + 229.61 * 229.61) / 25.4;
     private final double g = 9.805 * 100 / 2.54;
     private final double launcherHeight = 330.14203 / 25.4;
@@ -73,7 +73,6 @@ public class Shooter {
     public Vector3 tVel  = new Vector3(0, 0, 0);
     public Vector3 rVel = new Vector3(0, 0, 0);
     public Vector3 vel = new Vector3(0, 0, 0);
-    private final PID turretPID = new PID(0.5, 0.01, 0.01);
     public double minV0 = 0.0;
     public double minV0Superthresh = 6.0; // TODO: need to tune this, controls how much over minV0 we make the v0 strive for
 
@@ -97,7 +96,7 @@ public class Shooter {
         turret = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "turret1"), robot.hardwareMap.get(Servo.class,"turret2")},
             "turret", nPriorityServo.ServoType.AXON_MINI,
-            0, 1.0, 0.5, // TODO: find out where in the servo is straight ahead
+            0, 1.0, 0.5,
             new boolean[] {false, false},
             2, 5
         );
@@ -127,38 +126,58 @@ public class Shooter {
         flywheel.motor[0].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
-    public double error;
-
     public void update() {
         switch (state){
             case IDLE:
-                if(shootPrepareRequest){
-                    // Calculation for targetVelocity goes here
-                    state = State.ACCEL;
-                    aimLauncherV7(); // starts autoaim going
+                setFlywheelBlocker(true);
+                setTurretAngle(Math.tan((ROBOT_POSITION.y - (Globals.isRed ? redTag.y : blueTag.y)) / (ROBOT_POSITION.x - (Globals.isRed ? redTag.x : blueTag.x))));
+                setTargetVelocity(0.0);
+
+                if (aimRequest) {
+                    state = State.AIMING;
                 }
 
-                if(indexPrepareRequest){
-                    // Calculation for targetVelocity goes here
-                    state = State.ACCEL;
+                break;
+            case AIMING:
+                setFlywheelBlocker(true);
+                setTargetVelocity(minV0);
+
+                if (aimLauncherV8() && atVel()) {
+                    state = State.READY;
+                }
+
+                if (stopRequest) {
+                    state = State.IDLE;
+                    setTurretAngle(0.0);
                 }
                 break;
-            case ACCEL:
-                if((atVel() && shootRequest) && aimLauncherV7()){ // aimLauncherV7 will attempt to aim the launcher if (atVel() && shootRequest), but will stop the fsm from entering Shoot if a shot isn't possible
+            case READY:
+                setFlywheelBlocker(false);
+                aimLauncherV8();
+                setTargetVelocity(minV0);
+
+                if (flywheelBlocker.inPosition() && shootRequest) {
                     state = State.SHOOT;
+                    robot.intake.reqShoot(true);
                 }
 
-                if(atVel() && indexRequest){
-                    state = State.INDEX;
+                if (stopRequest) {
+                    state = State.IDLE;
+                    setTurretAngle(0.0);
                 }
                 break;
             case SHOOT:
-                aimLauncherV7(); // right up until the shot happens, the hood and turret should be recalculated as often as possible
-                break;
-            case INDEX:
-                setShooterBlocker(false);
+                setFlywheelBlocker(false);
+                aimLauncherV8();
+                setTargetVelocity(minV0);
 
-                // TODO: Probably need to reorganize this to better differentiate the two actions, especially because indexing and shooting will launch diff number of balls
+                if (stopRequest) {
+                    state = State.IDLE;
+                    setTurretAngle(0.0);
+                    robot.intake.reqOff(true);
+                }
+                break;
+            case TEST:
                 break;
         }
 
@@ -172,7 +191,7 @@ public class Shooter {
         } else {
             filteredVelocity = filteredVelocity * (1 - velocityFilterHigh) + actualVelocity * velocityFilterHigh;
         }
-        error = targetVelocity - filteredVelocity;
+        double error = targetVelocity - filteredVelocity;
         double pow = velocityPID.update(error, 0.0, 1.0) + targetVelocity * velocityFFm + velocityFFb;
         if (error > velocityHighPowerThresh) pow = 1;
         if (filteredVelocity < velocityNoSkipThresh) {
@@ -181,8 +200,7 @@ public class Shooter {
         flywheel.setTargetPower(pow);
         prevPow = pow;
 
-        setTurretAngle(Math.tan((ROBOT_POSITION.y - (Globals.isRed ? redTag.y : blueTag.y)) / (ROBOT_POSITION.x - (Globals.isRed ? redTag.x : blueTag.x))));
-
+        // Aim Correction
         nanoTimes.add(0, System.nanoTime());
         turretHistory.add(0, turret.getCurrentAngle());
 
@@ -192,13 +210,11 @@ public class Shooter {
         TelemetryUtil.packet.put("Shooter : Turret Target Angle", turret.getTargetAngle());
     }
 
-    public void indexPrepare() { indexPrepareRequest = true;}
+    public void reqShoot (boolean req) { shootRequest = req; }
 
-    public void index() { indexRequest = true;}
+    public void reqAim (boolean req) { aimRequest = req; }
 
-    public void shootPrepare() { shootPrepareRequest = true;}
-
-    public void shoot() {shootRequest = true;}
+    public void reqStop (boolean req) { stopRequest = req; }
 
     /**
      * The input targetAngle should be in terms of global heading
@@ -260,122 +276,6 @@ public class Shooter {
         return true;
         // currently doesn't solve the thing twice, where the v0 is set to minV0 + superThresh
         // may cause some deviations from target
-
-    }
-
-    /**
-     * Treat turret angle as difference from heading
-     * Phi is angle with respect to vertical
-     * V7 uses the quartic function solver
-     * @return whether or not a shot is possible as a boolean
-     */
-    public boolean aimLauncherV7() {
-        Complex[] t = new Complex[4];
-        int n = 0;
-        double S = 1; // safety margin for clearing lip
-        Vector3 P = new Vector3(-58.3414785, 55.6424675, 39.25 + S); // TODO: change this hardcoded target to account for team color
-        P.subtract(new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight));
-        Vector3 V = new Vector3(-ROBOT_VELOCITY.x, -ROBOT_VELOCITY.y, 0); // TODO: need to subtract robot angular vel component thing to this
-        // accel vector is irrelevant since the target is only accelerating constantly in upwards by g
-        double v0 = getBallExitSpd(); // TODO: ts still needs to be fixed
-        double A = g * g / 4;
-        double B = 0; // B = 2 * (a dot v) = 0
-        double C = V.x * V.x + V.y + V.y + g * P.z - v0 * v0; // g * P.z term is 2 * a.z * p.z, but 2 * a.z is g
-        double D = 2 * Vector3.dot(P, V);
-        double E = P.x * P.x + P.y * P.y + P.z * P.z;
-        double a = C / A;
-        double b = D / A;
-        double c = E / A;
-        if (Math.abs(b) < 1e-7) {
-            double re1 = a * a - 4 * c;
-            double im1 = re1;
-            if (re1 < 0) {
-                re1 = 0;
-                im1 = Math.sqrt(-im1);
-            } else {
-                im1 = 0;
-                re1 = Math.sqrt(re1);
-            }
-            for (int i = 0; i < t.length; i++) {
-                int s1 = i % 2 == 0 ? 1 : -1;
-                int s2 = i < 2 ? 1 : -1;
-                t[i] = new Complex(re1, im1);
-                t[i].multReal(s1);
-                t[i].addReal(-a);
-                t[i].multReal(0.5);
-                t[i].nRoot(2);
-                t[i].multReal(s2);
-                if (Math.abs(t[i].imag()) > 1e-7 || t[i].real() <= 0) t[i] = null;
-                else n++;
-            }
-        } else {
-            double p = -a/12 - c;
-            double q = -1 * a * a * a / 108 + a * c / 3 - b * b * 0.125;
-            double re1 = q * q * 0.25 + p * p * p / 27;
-            double im1 = re1;
-            if (re1 < 0) {
-                re1 = 0;
-                im1 = Math.sqrt(-im1);
-            } else {
-                im1 = 0;
-                re1 = Math.sqrt(re1);
-            }
-            Complex r = new Complex(-q * 0.5 + re1, im1);
-            r.nRoot(3);
-            Complex y1 = new Complex(-5 * a / 6, 0);
-            if (r.mag() < 1e-7) y1.addReal(-1 * Math.pow(q, 1 / 3.0));
-            else {
-                y1.add(r);
-                y1.add(Complex.divide(new Complex(p / -3, 0), r));
-            }
-            Complex w = new Complex(y1);
-            w.multReal(2);
-            w.addReal(a);
-            w.nRoot(2);
-            for (int i = 0; i < t.length; i++) {
-                int s1 = i % 2 == 0 ? 1 : -1;
-                int s2 = i < 2 ? 1 : -1;
-                t[i] = new Complex(3 * a, 0);
-                y1.multReal(2.0);
-                t[i].add(y1);
-                w.reciprocal();
-                t[i].add(Complex.divide(new Complex(s1 * 2 * b, 0), w));
-                t[i].multReal(-1.0);
-                t[i].nRoot(2);
-                t[i].multReal(s2);
-                w.multReal(s1);
-                t[i].add(w);
-                t[i].multReal(0.5);
-                if (Math.abs(t[i].imag()) > 1e-7 || t[i].real() <= 0) t[i] = null;
-                else n++;
-            }
-
-        }
-
-        if (n == 0) return false; // This means that a shot simply isn't possible
-        double[] thetaList = new double[n + 1];
-        double[] phiList = new double[n + 1];
-        for (int i = 0, j = 0; i < n && j < t.length; j++) {
-            if (t[j] == null) continue;
-            double t0 = t[j].real();
-            Vector3 pf = new Vector3(P.x + V.x * t0, P.y + V.y * t0, P.z + g * t0 * t0 / 2);
-            thetaList[i] = pf.theta();
-            phiList[i] = pf.phi();
-            if (i == 0) {
-                thetaList[n] = thetaList[0];
-                phiList[n] = phiList[0];
-            } else {
-                if (phiList[i] < phiList[n]) {
-                    phiList[n] = phiList[i];
-                    thetaList[n] = thetaList[i];
-                }
-            }
-            i++;
-
-        }
-        turret.setTargetAngle((thetaList[n] - ROBOT_POSITION.heading)); // converts from global to difference with heading
-        hood.setTargetAngle(phiList[n]);
-        return true;
     }
 
     /**
@@ -400,7 +300,8 @@ public class Shooter {
 
     public double getFilteredVelocity() { return filteredVelocity; }
 
-    public void setShooterBlocker (boolean on) {flywheelBlocker.setTargetAngle (on ? 2.1 : -0.2);}
+    // TODO: Re-tune blocker positions
+    public void setFlywheelBlocker (boolean active) { flywheelBlocker.setTargetAngle (active ? 2.1 : -0.2);}
 
-    public boolean atVel () {return Math.abs(error) < 1.0;}
+    public boolean atVel () {return Math.abs(targetVelocity - filteredVelocity) < 1.0;}
 }
