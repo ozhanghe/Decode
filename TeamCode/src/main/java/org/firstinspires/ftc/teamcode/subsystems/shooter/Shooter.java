@@ -38,8 +38,8 @@ public class Shooter {
     private final Robot robot;
     private final Sensors sensors;
     private final DcMotorEx ms1, ms2;
-    private final PriorityMotor flywheel;
-    private final nPriorityServo turret, hood, flywheelBlocker, net;
+    public final PriorityMotor flywheel;
+    public final nPriorityServo turret, hood, flywheelBlocker, net;
 
     public static ArrayList<Long> nanoTimes;
     public static ArrayList<Double> turretHistory;
@@ -83,17 +83,17 @@ public class Shooter {
         flywheel = new PriorityMotor(new DcMotorEx[]{ms1, ms2},"flywheel",3, 5, new double[] {1, -1}, robot.sensors);
 
         hood = new nPriorityServo(
-            new Servo[]{robot.hardwareMap.get(Servo.class, "hood1"), robot.hardwareMap.get(Servo.class,"hood2")},
+            new Servo[]{robot.hardwareMap.get(Servo.class, "hood1")},
             "hood", nPriorityServo.ServoType.AXON_MINI,
-            0.03, 0.38, 0.03,
-            new boolean[] {false, true},
+            0.0, 0.41, 0.412,
+            new boolean[] {false},
             2, 5
         );
 
         turret = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "turret1"), robot.hardwareMap.get(Servo.class,"turret2")},
             "turret", nPriorityServo.ServoType.AXON_MINI,
-            0, 0.25, 1.0, // TODO: find out where in the servo is straight ahead
+            0, 1.0, 0.5, // TODO: find out where in the servo is straight ahead
             new boolean[] {false, false},
             2, 5
         );

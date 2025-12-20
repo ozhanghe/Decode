@@ -31,12 +31,12 @@ public class Intake {
         roller = new PriorityMotor(
             new DcMotorEx[] {robot.hardwareMap.get(DcMotorEx.class, "roller")},
             "roller", 2, 5,
-            new double[] {-1}, robot.sensors
+            new double[] {1}, robot.sensors
         );
         feed = new PriorityMotor(
                 new DcMotorEx[] {robot.hardwareMap.get(DcMotorEx.class, "feed")},
                 "feed", 2, 5,
-                new double[] {1}, robot.sensors
+                new double[] {-1}, robot.sensors
         );
         roller.motor[0].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         feed.motor[0].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
