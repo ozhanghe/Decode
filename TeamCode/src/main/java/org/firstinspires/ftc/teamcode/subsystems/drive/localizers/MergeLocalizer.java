@@ -120,9 +120,9 @@ public class MergeLocalizer extends Localizer{
                 double D = (Globals.tagHeight - drivetrain.vision.cameraHeight) / Math.tan(drivetrain.vision.cameraAngle + result.getTx());
 
                 Pose2d globalLimelightEstimate = new Pose2d (
-                        (Globals.isRed ? Globals.redTag.x : Globals.blueTag.x) - D * Math.cos(Shooter.turretHistory.get(index) - result.getTy()),
-                        (Globals.isRed ? Globals.redTag.x : Globals.blueTag.x) - D * Math.sin(Shooter.turretHistory.get(index) - result.getTy()),
-                        Shooter.turretHistory.get(index) - result.getTy()
+                        (Globals.isRed ? Globals.redTag.x : Globals.blueTag.x) - D * Math.cos(Shooter.turretHistory.get(index) + poseHistory.get(index).heading - result.getTy()),
+                        (Globals.isRed ? Globals.redTag.x : Globals.blueTag.x) - D * Math.sin(Shooter.turretHistory.get(index) + poseHistory.get(index).heading - result.getTy()),
+                        Shooter.turretHistory.get(index) + poseHistory.get(index).heading - result.getTy()
                 );
 
                 currentPose.x = currentPose.x * 0.8 + globalLimelightEstimate.x * 0.2;

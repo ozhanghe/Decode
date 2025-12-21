@@ -214,10 +214,6 @@ public class Shooter {
 
     public void reqStop (boolean req) { stopRequest = req; }
 
-    /**
-     * The input targetAngle should be in terms of global heading
-     * The turret will operate in a system where facing the control hub is "0" to accommodate for (assuming intake side 0) -90 + 270 range of motion
-     */
     public void setTurretAngle (double targetAngle) {
         turret.setTargetAngle(targetAngle);
 
