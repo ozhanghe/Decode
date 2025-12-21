@@ -300,7 +300,7 @@ public class Shooter {
         }
         if (phis[tRoots.size()] == 100) return false;
         targetTurretAngle = AngleUtil.clipAngle(thetas[tRoots.size()] - ROBOT_POSITION.heading); // converts from global to difference with heading
-        targetHoodAngle = phis[tRoots.size()];
+        targetHoodAngle = Math.PI / 2 - phis[tRoots.size()] - phiLim;
         return true;
     }
 
