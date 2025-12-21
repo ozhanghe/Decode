@@ -11,6 +11,14 @@ public class Vector3 implements Cloneable {
         this.y = y;
         this.z = z;
     }
+
+    public Vector3(Vector3 b) {
+        x = b.x;
+        y = b.y;
+        z = b.z;
+        magcache = b.magcache;
+    }
+
     public Vector3() {
         x=y=z=0;
     }
@@ -18,8 +26,6 @@ public class Vector3 implements Cloneable {
     public Pose2d toPose() {
         return new Pose2d(x, y, z);
     }
-
-
 
     public void add(Vector3 a) {
         x += a.x;
