@@ -111,21 +111,22 @@ public class Teleop extends LinearOpMode {
                 atSpeedRumble = true;
                 firstLoop = true;
             }
-            if(atSpeedRumble && firstLoop) {
-                    firstLoop = false;
+            if (atSpeedRumble && firstLoop) {
+                firstLoop = false;
             } else if (atSpeedRumble && robot.shooter.atVel()) {
                 gamepad1.rumble(200);
                 gamepad2.rumble(200);
                 atSpeedRumble = false;
             }
 
-
-            if ((gamepad1.right_bumper || gamepad2.right_bumper) && dist != Shooter.Dist.OFF) {
+            if (gamepad1.right_bumper) {
                 robot.shooter.setShooterBlocker(false);
-                robot.intake.feed.setTargetPower(robot.shooter.flywheelBlocker.inPosition() ? feedPower : 0);
-            } else {
-                robot.intake.feed.setTargetPower(intakeOn ? (intakeReversed ? -idleFeedPower : idleFeedPower) : 0);
+                if (robot.shooter.flywheelBlocker.inPosition()) robot.intake.reqShoot(true);
+                // robot.intake.feed.setTargetPower(robot.shooter.flywheelBlocker.inPosition() ? feedPower : 0);
+            } else if (rb1.isReleased(gamepad1.right_bumper)){
                 robot.shooter.setShooterBlocker(true);
+                robot.intake.reqOff(true);
+                // robot.intake.feed.setTargetPower(intakeOn ? (intakeReversed ? -idleFeedPower : idleFeedPower) : 0);
             }
             /*
             if (b1.isClicked(gamepad1.b)) {
@@ -135,6 +136,7 @@ public class Teleop extends LinearOpMode {
             // rumble when ready to shoot
             if (robot.shooter.state == Shooter.State.READY && firstLoop) {
                 gamepad1.rumble(150);
+                gamepad2.rumble(150);
                 firstLoop = false;
             } else if (robot.shooter.state != Shooter.State.READY) {
                 firstLoop = true;

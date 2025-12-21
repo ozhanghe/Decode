@@ -57,6 +57,11 @@ public class Intake {
                     state = State.INTAKE;
                 }
 
+                if (requestShoot) {
+                    requestShoot = false;
+                    state = State.SHOOT_FEED;
+                }
+
                 break;
             }
             case INTAKE: {
@@ -79,7 +84,7 @@ public class Intake {
             }
             case SHOOT_FEED: {
                 roller.setTargetPower(0.8);
-                feed.setTargetPower(0.6);
+                feed.setTargetPower(0.8);
 
                 if (requestOff) {
                     requestOff = false;

@@ -20,12 +20,12 @@ public class RedGoalParkAuto extends LinearOpMode {
     public void runOpMode(){
         Globals.isRed = true;
         robot = new Robot(hardwareMap);
-        robot.drivetrain.setPoseEstimate(new Pose2d (-72.0 + ROBOT_LENGTH / 2, 48 - ROBOT_WIDTH / 2, 0));
+        robot.drivetrain.setPoseEstimate(new Pose2d(-72.0 + ROBOT_LENGTH / 2, 48 - ROBOT_WIDTH / 2, 0));
         robot.setStopChecker(this::isStopRequested);
 
         while (opModeInInit()) { robot.update(); }
 
-        robot.drivetrain.goToPoint(new Pose2d (-48 + ROBOT_LENGTH / 2, 48 - ROBOT_WIDTH / 2, 0), 1.0);
+        robot.drivetrain.goToPoint(new Pose2d(-48, 48, 0), 1.0);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
         while (!isStopRequested()) { AUTO_ENDING_POSE = ROBOT_POSITION.clone(); }
