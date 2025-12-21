@@ -62,7 +62,7 @@ public class MergeLocalizer extends Localizer{
 
         Pose2d relDelta = new Pose2d (relDeltaX,relDeltaY,deltaHeading);
         constAccelMath.calculate(loopTime, relDelta, currentPose);
-
+        /*
         // PINPOINT
         if ((currPinpointPose != null && currentPose.getDistanceFromPoint(currPinpointPose) >= 24.0) || constantCorrection) {
             Log.i("Localization Test", "pinpoint in use");
@@ -102,7 +102,7 @@ public class MergeLocalizer extends Localizer{
             currentPose = globalPinpointEstimate.clone();
             lastPinpointUpdate = timeStamp;
         }
-
+        */
         // LIMELIGHT
 
         if (limelightToggle) {

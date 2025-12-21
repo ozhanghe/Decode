@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
 import static org.firstinspires.ftc.teamcode.utils.Globals.AUTO_ENDING_POSE;
+import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -31,6 +32,8 @@ public class Teleop extends LinearOpMode {
         Robot robot = new Robot(hardwareMap);
         robot.setStopChecker(this::isStopRequested);
 
+        robot.shooter.state = Shooter.State.TEST;
+
         robot.drivetrain.setPoseEstimate(AUTO_ENDING_POSE);
 
         ButtonToggle lb1 = new ButtonToggle(); // intake stuff
@@ -52,7 +55,7 @@ public class Teleop extends LinearOpMode {
         boolean firstLoop = true;
         Shooter.Dist dist = Shooter.Dist.OFF;
 
-        while (opModeInInit()) robot.update();
+        while (opModeInInit());
 
         if (!isStopRequested()) LogUtil.init();
 
@@ -110,7 +113,7 @@ public class Teleop extends LinearOpMode {
             }
             if(atSpeedRumble && firstLoop) {
                     firstLoop = false;
-            } else if (atSpeedRumble && robot.shooter.atVelBootleg()) {
+            } else if (atSpeedRumble && robot.shooter.atVel()) {
                 gamepad1.rumble(200);
                 gamepad2.rumble(200);
                 atSpeedRumble = false;
@@ -155,8 +158,9 @@ public class Teleop extends LinearOpMode {
             telemetry.addData("feedPower", robot.intake.feed.getPower());
             telemetry.addData("flywheelOn", flywheelOn);
             telemetry.addData("flywheelAtVel", robot.shooter.atVel());
-            telemetry.addData("flywheelAtVelBootleg", robot.shooter.atVelBootleg());
+            telemetry.addData("flywheelAtVelBootleg", robot.shooter.atVel());
             telemetry.addData("flywheel target velocity", robot.shooter.getTargetVelocity());
+            telemetry.addData("robot thonker its at", ROBOT_POSITION.x + ", " + ROBOT_POSITION.y + ", " + ROBOT_POSITION.heading);
 
             telemetry.update();
         }
