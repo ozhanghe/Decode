@@ -53,7 +53,7 @@ public class Shooter {
     private boolean aimRequest = false, shootRequest = false, stopRequest = false;
 
     // velocity is in inches / second
-    public static PID velocityPID = new PID (0.0, 0.0001, 0.0001);
+    public static PID velocityPID = new PID (0.0, 0.0002, 0.0001);
     public static double velocityFFm = 0.000838827;
     public static double velocityFFb = 0.0530646;
     public static double velocityFilterLow = 0.05;
@@ -62,7 +62,8 @@ public class Shooter {
     public static double velocityHighPowerThresh = 25;
     public static double velocityNoSkipThresh = 400;
     public static double velocityNoSkipAccel = 0.8;
-    public static double latchBlockAngle = 2.7;
+    public static double atVelThresh = 15;
+    public static double latchBlockAngle = 2.5;
     private double targetVelocity = 0.0;
     private double filteredVelocity = 0.0;
     private double prevPow = 0;
@@ -97,7 +98,7 @@ public class Shooter {
         hood = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "hood1")},
             "hood", nPriorityServo.ServoType.AXON_MINI,
-            0.0, 0.4, 0.02,
+            0.0, 0.4, 0.03,
             new boolean[] {false},
             2, 5
         );
@@ -229,7 +230,7 @@ public class Shooter {
         else velocityPID.clipIntegral(-1, 1);
         double pidpow = velocityPID.update(error, -1.0, 1.0);
         double ffpow = targetVelocity * velocityFFm + velocityFFb;
-        double pow = pidpow + ffpow;
+        double pow = Math.max(0, pidpow + ffpow);
         if (error > velocityHighPowerThresh) pow = 1;
         if (filteredVelocity < velocityNoSkipThresh) {
             pow = Math.min(pow, prevPow + velocityNoSkipAccel * robot.sensors.loopTime);
@@ -347,9 +348,8 @@ public class Shooter {
 
     public void setShooterBlocker(boolean active) { flywheelBlocker.setTargetAngle(active ? latchBlockAngle : -0.2);}
 
-
     // bootleg LM1 strat being used in LM2 code
-    public static double closeAngle = 0.1, closeVel = 575, midAngle = 0.65, midVel  = 750, farAngle = 0.5, farVel = 840;
+    public static double closeAngle = 0.1, closeVel = 630, midAngle = 0.65, midVel  = 750, farAngle = 0.5, farVel = 840;
     public enum Dist {
         CLOSE(closeAngle, closeVel),
         MID(midAngle, midVel),
@@ -358,16 +358,16 @@ public class Shooter {
 
         private double hoodAngle, flywheelVel;
 
-        Dist(double hoodAngle, double flywheelVel){
+        Dist(double hoodAngle, double flywheelVel) {
             this.hoodAngle = hoodAngle;
             this.flywheelVel = flywheelVel;
         }
 
-        public static void setHoodAngle(Dist dist, double angle){
+        public static void setHoodAngle(Dist dist, double angle) {
             dist.hoodAngle = angle;
         }
 
-        public static void setFlywheelVel (Dist dist, double vel){
+        public static void setFlywheelVel(Dist dist, double vel) {
             dist.flywheelVel = vel;
         }
     } Dist dist = Dist.CLOSE;
@@ -377,5 +377,5 @@ public class Shooter {
         targetHoodAngle = mode.hoodAngle;
     }
 
-    public boolean atVel() { return Math.abs(targetVelocity - filteredVelocity) <= 20; }
+    public boolean atVel() { return Math.abs(targetVelocity - filteredVelocity) <= atVelThresh; }
 }

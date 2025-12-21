@@ -356,7 +356,7 @@ public class Drivetrain {
         TelemetryUtil.packet.put("Drivetrain : PID hError", hError);
 
         Canvas canvas = TelemetryUtil.packet.fieldOverlay();
-        DashboardUtil.drawRobot(canvas, targetPoint, "8000ff");
+        DashboardUtil.drawRobot(canvas, targetPoint, "#c000ff");
 
         if (path != null) {
             DashboardUtil.drawRobot(canvas, new Pose2d(ROBOT_POSITION.x + robot.sensors.loopTime * pd.vel.x, ROBOT_POSITION.y + robot.sensors.loopTime * pd.vel.y, Math.atan2(pd.vel.x, pd.vel.y)), "#8000ff");

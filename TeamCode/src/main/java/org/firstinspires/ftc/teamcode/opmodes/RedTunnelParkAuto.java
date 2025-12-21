@@ -10,18 +10,23 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Drivetrain;
+import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
+import org.firstinspires.ftc.teamcode.utils.RunMode;
 
 @Autonomous(name = "RedTunnelParkAuto")
 public class RedTunnelParkAuto extends LinearOpMode {
     private Robot robot;
 
     public void runOpMode() {
-        Globals.isRed = false;
+        Globals.isRed = true;
+        Globals.RUNMODE = RunMode.AUTO;
         robot = new Robot(hardwareMap);
-        robot.drivetrain.setPoseEstimate(new Pose2d(72 - ROBOT_LENGTH / 2, 48 - ROBOT_WIDTH / 2, Math.PI));
         robot.setStopChecker(this::isStopRequested);
+        robot.drivetrain.setPoseEstimate(new Pose2d(72 - ROBOT_LENGTH / 2, 48 - ROBOT_WIDTH / 2, Math.PI));
+
+        robot.shooter.state = Shooter.State.TEST;
 
         while (opModeInInit()) { robot.update(); }
 

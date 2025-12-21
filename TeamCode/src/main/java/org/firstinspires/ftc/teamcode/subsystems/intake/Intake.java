@@ -14,6 +14,8 @@ public class Intake {
 
     private boolean requestIntake = false, requestShoot = false, requestOff = false, reversed = false;
 
+    public static double intakeRollerPower = 0.8, intakeFeedPower = 0.4, shootRollerPower = 0.8, shootFeedPower = 0.8;
+
     public enum State {
         IDLE,
         INTAKE,
@@ -49,6 +51,8 @@ public class Intake {
     public void update() {
         switch (state) {
             case IDLE: {
+                requestOff = false;
+
                 roller.setTargetPower(0.0);
                 feed.setTargetPower(0.0);
 
@@ -65,8 +69,10 @@ public class Intake {
                 break;
             }
             case INTAKE: {
-                roller.setTargetPower(0.8 * (reversed ? -1 : 1));
-                feed.setTargetPower(0.4 * (reversed ? -1 : 1));
+                requestIntake = false;
+
+                roller.setTargetPower(intakeRollerPower * (reversed ? -1 : 1));
+                feed.setTargetPower(intakeFeedPower * (reversed ? -1 : 1));
 
                 if (requestOff) {
                     requestOff = false;
@@ -83,8 +89,10 @@ public class Intake {
                 break;
             }
             case SHOOT_FEED: {
-                roller.setTargetPower(0.8);
-                feed.setTargetPower(0.8);
+                requestShoot = false;
+
+                roller.setTargetPower(shootRollerPower);
+                feed.setTargetPower(shootFeedPower);
 
                 if (requestOff) {
                     requestOff = false;
