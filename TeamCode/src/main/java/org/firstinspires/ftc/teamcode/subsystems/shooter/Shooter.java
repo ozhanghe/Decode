@@ -324,6 +324,8 @@ public class Shooter {
         return true;
     }
 
+    public double getBallExitSpd() { return filteredVelocity * flywheelEfficiency * 0.5; }
+
     public void setHoodAngle(double target_angle) {
         hood.setTargetAngle(target_angle);
 
