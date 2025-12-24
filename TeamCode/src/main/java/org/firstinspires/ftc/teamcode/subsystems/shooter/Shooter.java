@@ -265,9 +265,11 @@ public class Shooter {
         P.subtract(new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight));
         Vector3 V = new Vector3(-ROBOT_VELOCITY.x, -ROBOT_VELOCITY.y, 0); // TODO: need to subtract robot angular vel component thing to this
 
+        targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - ROBOT_POSITION.heading);
+
         double a = g * g / 4;
         // double b = 0;
-        double c = V.x * V.x + V.y + V.y + g * P.z;
+        double c = V.x * V.x + V.y * V.y + g * P.z;
         double d = 2 * Vector3.dot(P, V);
         double e = P.x * P.x + P.y * P.y + P.z * P.z;
         List<Double> tRoots = Polynomial.findRealRoots(new double[]{1, 0.0, 0.0, -d/(2 * a), -e/a}, 1e-4);
@@ -284,14 +286,13 @@ public class Shooter {
         minV0 = Math.sqrt(2 * a * tRoots.get(0) * tRoots.get(0) + c + d / 2 / tRoots.get(0)) + minV0Superthresh;
         minV0 *= minV0factor * 2 / flywheelEfficiency; // converts minV0 to min flywheel vel for triple
 
-        targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - ROBOT_POSITION.heading);
         double v0 = getBallExitSpd();
         double[] thetas;
         double[] phis;
         if (v0 > 36)  {
             if (V.getMag() < 6) {
-                double A = 4 * Math.pow(v0, 4) * P.getMag() * P.getMag();
-                double dist2 = P.x * P.x + P.y + P.y; // 2D dist squared
+                double A = 4 * Math.pow(v0, 4) * e;
+                double dist2 = e - P.z * P.z; // 2D dist squared
                 double B = 4 * dist2 * v0 * v0 * (g * P.z - v0 * v0);
                 double C = dist2 * dist2 * g * g;
                 tRoots = Polynomial.findRealRoots(new double[]{A, B, C}, 1e-4);
