@@ -261,11 +261,13 @@ public class Shooter {
     }
 
     public boolean aimLauncherV8() {
+        Log.i("Points", "Starting aimLauncherV8");
         Vector3 P = new Vector3(ballTarget); // TODO: change this target to account for distance
         P.subtract(new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight));
         Vector3 V = new Vector3(-ROBOT_VELOCITY.x, -ROBOT_VELOCITY.y, 0); // TODO: need to subtract robot angular vel component thing to this
 
         targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - ROBOT_POSITION.heading);
+        Log.i("Points", "Set target turret angle & Starting MinV0");
 
         double a = g * g / 4;
         // double b = 0;
@@ -279,28 +281,43 @@ public class Shooter {
                 i--;
             }
         }
+        Log.i("MinV0", tRoots.size() + "");
         if (tRoots.isEmpty()) {
-            Log.i("MinV0", "none");
+            Log.i("Points", "Shot dies in MinV0, tRoots is empty");
             return false;
         }
+        Log.i("MinV0", "tRoots[0]: " + tRoots.get(0));
 
         minV0 = Math.sqrt(2 * a * tRoots.get(0) * tRoots.get(0) + c + d / 2 / tRoots.get(0)) + minV0Superthresh;
+        Log.i("MinV0", "value: " + minV0);
         minV0 *= minV0factor * 2 / flywheelEfficiency; // converts minV0 to min flywheel vel for triple
+        Log.i("MinV0", "min flywheel:" + minV0);
 
         double v0 = getBallExitSpd();
+        Log.i("Points", "Got past MinV0, v0 = " + v0);
+
         double[] thetas;
         double[] phis;
         if (v0 > 36)  {
+            Log.i("Points", "Entering the hood calculator");
             if (V.getMag() < 6) {
-                double A = 4 * Math.pow(v0, 4) * e;
+                Log.i("Points" , "Entering Static");
+                double A = 4 * v0 * v0 * v0 * v0 * e;
                 double dist2 = e - P.z * P.z; // 2D dist squared
                 double B = 4 * dist2 * v0 * v0 * (g * P.z - v0 * v0);
                 double C = dist2 * dist2 * g * g;
                 tRoots = Polynomial.findRealRoots(new double[]{A, B, C}, 1e-4);
+                Log.i("Static", "Root count: " + tRoots.size() + ", for [" + A + ", " + B + ", " + C + "]");
                 if (tRoots.isEmpty()) {
-                    Log.i("Static Shot", "not possible");
+                    Log.i("Points", "Shot dies in Static, tRoots is empty");
                     return false;
                 }
+                StringBuilder roots = new StringBuilder("[");
+                for (int i = 0; i < tRoots.size(); i++) {
+                    roots.append(tRoots.get(i));
+                    if (i != tRoots.size() - 1) roots.append(", ");
+                }
+                Log.i("Static", "Roots: [" + roots.toString() + "]");
                 phis = new double[tRoots.size() + 1];
                 thetas = new double[phis.length];
 
@@ -308,16 +325,21 @@ public class Shooter {
                     if (Math.abs(tRoots.get(i) - 0.5) <= 0.5) {
                         phis[i] = Math.asin(Math.sqrt(tRoots.get(i)));
                     } else phis[i] = 100;
+                    Log.i("Static", "Point 1: i = " + i + ", phis[i] = " + phis[i]);
                     thetas[i] = targetTurretAngle;
 
                     double slope = c1 * (ROBOT_VELOCITY.y + v0 * Math.sin(thetas[i]) * Math.sin(phis[i])) - (ROBOT_VELOCITY.x + v0 * Math.cos(thetas[i]) * Math.sin(phis[i]));
                     double t = -c2 / slope;
 
-                    if (t < 0)
+                    if (t < 0) {
                         phis[i] = 100; // this makes sure the ball goes into the target through the restricted diagonal plane
-                    else if (launcherHeight + v0 * Math.cos(phis[i]) * t - g * t * t / 2 < 38.75 + 3.5)
+                        Log.i("Static", "Point 2: i = " + i + ", phis[i] = " + phis[i]);
+                    } else if (launcherHeight + v0 * Math.cos(phis[i]) * t - g * t * t / 2 < 38.75 + 3.5) {
                         phis[i] = 100;
-                    if (phis[i] - phiLim < 0) phis[i] = 100;
+                        Log.i("Static", "Point 3: i = " + i + ", phis[i] = " + phis[i]);
+                    }
+                    if (Math.PI / 2 - phis[i] - phiLim < 0) phis[i] = 100;
+                    Log.i("Static", "Point 4: i = " + i + ", phis[i] = " + phis[i]);
                     if (i == 0) {
                         thetas[tRoots.size()] = thetas[0];
                         phis[tRoots.size()] = phis[0];
@@ -327,15 +349,30 @@ public class Shooter {
                             thetas[tRoots.size()] = thetas[i];
                         }
                     }
+                    Log.i("Static", "High Phi: " + phis[tRoots.size()]);
+                    Log.i("Points", "Leaving Static");
                 }
             } else {
+                Log.i("Points", "Entering Dynamic");
                 c -= v0 * v0;
                 tRoots = Polynomial.findRealRoots(new double[]{1, 0, c/a, d/a, e/a}, 1e-4);
+                Log.i("Dynamic", "tRoots.size() = " + tRoots.size());
+                for(int i = 0; i < tRoots.size(); i++) {
+                    if(tRoots.get(i) < 0) {
+                        tRoots.remove(i);
+                        i--;
+                    }
+                }
                 if (tRoots.isEmpty()) {
-                    Log.i("Moving Shot", "not possible");
+                    Log.i("Points", "Shot dies in Dynamic, tRoots is empty");
                     return false;
                 }
-
+                StringBuilder roots = new StringBuilder("[");
+                for (int i = 0; i < tRoots.size(); i++) {
+                    roots.append(tRoots.get(i));
+                    if (i != tRoots.size() - 1) roots.append(", ");
+                }
+                Log.i("Dynamic", "Roots: [" + roots.toString() + "]");
                 phis = new double[tRoots.size() + 1];
                 thetas = new double[phis.length];
                 for (int i = 0; i < tRoots.size(); i++) {
@@ -346,10 +383,18 @@ public class Shooter {
 
                     double slope = c1 * (ROBOT_VELOCITY.y + v0 * Math.sin(thetas[i]) * Math.sin(phis[i])) - (ROBOT_VELOCITY.x + v0 * Math.cos(thetas[i]) * Math.sin(phis[i]));
                     double t = -c2 / slope;
-
-                    if (t < 0) phis[i] = 100; // this makes sure the ball goes into the target through the restricted diagonal plane
-                    else if (launcherHeight + v0 * Math.cos(phis[i]) * t - g * t * t / 2 < 38.75 + 3.5) phis[i] = 100;
-                    if (phis[i] - phiLim < 0) phis[i] = 100;
+                    Log.i("Dynamic", "Point 1: i = " + i + ", phis[i] = " + phis[i]);
+                    if (t < 0) {
+                        Log.i("Dynamic", "Point 2: i = " + i + ", phis[i] = " + phis[i]);
+                        phis[i] = 100; // this makes sure the ball goes into the target through the restricted diagonal plane
+                    } else if (launcherHeight + v0 * Math.cos(phis[i]) * t - g * t * t / 2 < 38.75 + 3.5) {
+                        Log.i("Dynamic", "Point 3: i = " + i + ", phis[i] = " + phis[i]);
+                        phis[i] = 100;
+                    }
+                    if (Math.PI / 2 - phis[i] - phiLim < 0) {
+                        Log.i("Dynamic", "Point 4: i = " + i + ", phis[i] = " + phis[i]);
+                        phis[i] = 100;
+                    }
                     if (i == 0) {
                         thetas[tRoots.size()] = thetas[0];
                         phis[tRoots.size()] = phis[0];
@@ -357,22 +402,23 @@ public class Shooter {
                         phis[tRoots.size()] = phis[i];
                         thetas[tRoots.size()] = thetas[i];
                     }
-
+                    Log.i("Dynamic", "High Phi: " + phis[i]);
+                    Log.i("Points", "Leaving Dynamic");
                 }
             }
         } else {
-            Log.i("shot possible by current V0", "no");
+            Log.i("Points", "Shot isn't possible, v0 is sub-36 in/s");
             return false;
         }
 
 
         if (phis[tRoots.size()] == 100) {
-            Log.i("phis", "cooked");
+            Log.i("Points", "Phis are cooked, phis[" + tRoots.size() + "] = 100");
             return false;
         }
         targetTurretAngle = AngleUtil.clipAngle(thetas[tRoots.size()] - ROBOT_POSITION.heading); // converts from global to difference with heading
         targetHoodAngle = Math.PI / 2 - phis[tRoots.size()] - phiLim; // first part converts angle from vertical to angle from horizontal && then subtracts the sweep of the hood
-        Log.i("Shot", "Possible");
+        Log.i("Points", "The shot is possible and we're returning true!!");
         return true;
     }
 
