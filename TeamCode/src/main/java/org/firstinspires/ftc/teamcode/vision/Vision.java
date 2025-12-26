@@ -36,6 +36,7 @@ public class Vision {
         if(!limelight.isConnected()){
             TelemetryUtil.packet.put("Limelight : Status", "Oops! Something broke :blehhh:");
         }else{
+            TelemetryUtil.packet.put("Limelight : Status", "at least it doesn't need glasses");
             result = limelight.getLatestResult();
         }
     }
