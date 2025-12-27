@@ -5,6 +5,8 @@ import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_VELOCITY;
 import static org.firstinspires.ftc.teamcode.utils.Globals.TRACK_WIDTH;
 
+import android.util.Log;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -119,10 +121,10 @@ public class Drivetrain {
 
     // leftFront, leftRear, rightRear, rightFront
     double[] minPowersToOvercomeFriction = {
-            0.2413194940290,
-            0.2337791473,
-            0.246122952040818,
-            0.2737912666227906
+            0.2431906580541209,
+            0.14544137800655768,
+            0.183475227610153,
+            0.18010218334461908
     };
 
     public void setMinPowersToOvercomeFriction(double scalar) {
@@ -157,13 +159,12 @@ public class Drivetrain {
 
     private Path path = null;
     ArrayList<RepulsionPoint> repel;
-    private Pose2d pos;
 
     private Vector2 moveVector = new Vector2(0, 0);
     private double turn = 0;
     public double[] powers = {0, 0, 0, 0};
 
-    private PID turnPID = new PID (1, 0, 0);
+    private PID turnPID = new PID (0.15, 0, 0.003);
 
     public PathData pd;
     public static double centripetalScalar = 0.2;
@@ -188,30 +189,45 @@ public class Drivetrain {
         switch(state) {
             case FOLLOW_SPLINE:
                 pd = path.update(ROBOT_POSITION);
+
+                if(path != null && path.completed) {
+                    targetPoint = path.lastPose.clone();
+                    path = null;
+                    state = State.PID_TO_POINT;
+                    break;
+                }
+                Log.i("Path Completed? ", path.completed + "");
+                Log.i("Path data", (pd == null) + "");
+
                 Vector2 pathForward, pathCentripetal;
                 pathForward = pd.vel;
+
                 pathCentripetal = new Vector2(0, pathForward.mag() * pathForward.mag() / pd.r * centripetalScalar);
                 pathCentripetal.rotate(Math.atan2(pathForward.y, pathForward.x));
 
+                Log.i("Path vel", pathForward.x + " " + pathForward.y);
+                Log.i("Path accel", pd.accel + "");
+                Log.i("Path cent", pathCentripetal.x + " " + pathCentripetal.y);
+                Log.i("Path r", pd.r + "");
+
+                pathCentripetal.mul(0);
+
                 moveVector = Vector2.add(pathForward, pathCentripetal);
                 double mag = moveVector.mag();
-                moveVector.rotate(-pos.heading);
+                moveVector.rotate(-ROBOT_POSITION.heading);
                 moveVector.norm();
 
                 double pathRot = 0;
                 if(Math.abs(pd.r) < Spline.MAX_RADIUS) {
-                    pathRot = pathForward.mag() / mag * TRACK_WIDTH / (2.0 * pd.r) * (pd.reversed ? -1 : 1);
+                    pathRot = pathForward.mag() / mag * (TRACK_WIDTH / (2.0 * pd.r)) * (pd.reversed ? -1 : 1);
                 }
 
                 double targetHeading = Math.atan2(pathForward.y, pathForward.x) + (pd.reversed ? Math.PI : 0);
-                turn = pathRot + turnPID.update(AngleUtil.clipAngle(targetHeading - pos.heading), -0.6, 0.6);
+                turn = pathRot + turnPID.update(AngleUtil.clipAngle(targetHeading - ROBOT_POSITION.heading), -0.6, 0.6);
+
+                Log.i("Path turn", turn + "");
 
                 setMoveVector(moveVector, turn);
-
-                if(path.completed) {
-                    path = null;
-                    state = State.IDLE;
-                }
                 break;
             case PID_TO_POINT:
                 calculateErrors();
@@ -359,7 +375,7 @@ public class Drivetrain {
 
         Canvas canvas = TelemetryUtil.packet.fieldOverlay();
         if (path != null) {
-            DashboardUtil.drawRobot(canvas, new Pose2d(ROBOT_POSITION.x + robot.sensors.loopTime * pd.vel.x, ROBOT_POSITION.y + robot.sensors.loopTime * pd.vel.y, Math.atan2(pd.vel.x, pd.vel.y)), "#8000ff");
+            DashboardUtil.drawRobot(canvas, new Pose2d(ROBOT_POSITION.x + robot.sensors.loopTime * pd.vel.x, ROBOT_POSITION.y + robot.sensors.loopTime * pd.vel.y, Math.atan2(pd.vel.y, pd.vel.x)), "#8000ff");
             Spline s = path.pathSegments.get(pd.index).spline;
 
             double n = 100;

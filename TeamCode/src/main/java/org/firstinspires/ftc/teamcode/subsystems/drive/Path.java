@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems.drive;
 
+import android.util.Log;
+
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.Vector2;
 
@@ -75,9 +77,12 @@ public class Path {
     public Vector2 getVelocity (Spline s, double tau, Vector2 robot) {
         Vector2 v_t = s.getVel(tau);
         v_t.norm();
+        Log.i("Path v_t", v_t + "");
 
-        Vector2 v_p = new Vector2(s.getPos(tau).x - robot.x, s.getPos(tau).y - robot.x);
+        Vector2 v_p = new Vector2(s.getPos(tau).x - robot.x, s.getPos(tau).y - robot.y);
         v_p.mul(k_p);
+        Log.i("Path v_p", v_p + "");
+
 
         Vector2 v_rep = new Vector2(0, 0);
         for(RepulsionPoint rep : repel) {
@@ -88,6 +93,7 @@ public class Path {
 
             v_rep.add(trep);
         }
+        Log.i("Path v_rep", v_rep + "");
 
         return Vector2.add(v_t, Vector2.add(v_p, v_rep));
     }
@@ -96,7 +102,12 @@ public class Path {
         Pose2d robotNext = new Pose2d(robot.x + vel.x * 0.001, robot.y + vel.y * 0.001);
         double tauNext = s.getT(robotNext);
 
+        Log.i("Path tau", tau + "");
+        Log.i("Path tauNext", tauNext + "");
+        Log.i("Path robotNext", robotNext + "");
+
         Vector2 velNext = getVelocity (s, tauNext, new Vector2(robotNext.x, robotNext.y));
+        Log.i("Path velNext", velNext + "");
 
         return new Vector2 ((velNext.x - vel.x) / 0.001, (velNext.y - vel.y) / 0.001);
     }
@@ -106,15 +117,22 @@ public class Path {
         PathSegment curr;
         int index = 0;
 
-        while(pathSegments.get(index).spline.getT(robot) == 1.0) {
+        while(index < pathSegments.size() && pathSegments.get(index).spline.getT(robot) == 1.0) {
             index++;
         }
+
+        completed = index == pathSegments.size();
+        if (completed) {
+            Log.i("Path completed shoots itself and becomes null", "yes");
+            return null;
+        }
+
         curr = pathSegments.get(index);
         double tau = curr.spline.getT(robot);
 
         Vector2 vel = getVelocity (curr.spline, tau, new Vector2(robot.x, robot.y));
         Vector2 accel = getAccel (curr.spline, tau, new Vector2(robot.x, robot.y), vel);
 
-        return new PathData(vel, accel, (vel.x * accel.y - vel.y * accel.x) / (vel.mag() * vel.mag() * vel.mag()), curr.power, curr.reversed, index);
+        return new PathData(vel, accel, (vel.mag() * vel.mag() * vel.mag()) / (vel.x * accel.y - vel.y * accel.x), curr.power, curr.reversed, index);
     }
 }
