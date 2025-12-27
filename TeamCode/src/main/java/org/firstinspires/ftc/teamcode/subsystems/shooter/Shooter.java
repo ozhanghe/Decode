@@ -176,6 +176,25 @@ public class Shooter {
                     state = State.INDEX;
                 }
                 break;
+            case MANUAL:
+                setShooter(dist);
+            case INDEX:
+                calcIndexPosition(0,0); // get values from LL
+                state = State.INDEXING;
+                break;
+            case INDEXING:
+                setShooterBlocker(true);
+                setKicker(0);
+                // have the feeder and whatever contraption push balls forward
+                if(moves > 0){
+                    moves--;
+                    index = true;
+                    state = State.SHOOT;
+                    break;
+                }
+                reqIndex(false);
+                state = State.IDLE;
+                break;
             case AIMING:
                 setShooterBlocker(true);
 
@@ -246,28 +265,8 @@ public class Shooter {
                     robot.intake.reqShoot(false);
                 }
                 break;
-            case MANUAL:
-                setShooter(dist);
             case TEST: // LEAVE THIS EMPTY AT ALL TIMES
                 break;
-            case INDEX:
-                calcIndexPosition(0,0); // get values from LL
-                state = State.INDEXING;
-                break;
-            case INDEXING:
-                setShooterBlocker(true);
-                setKicker(0);
-                // have the feeder and whatever contraption push balls forward
-                if(moves > 0){
-                    moves--;
-                    index = true;
-                    state = State.SHOOT;
-                    break;
-                }
-                reqIndex(false);
-                state = State.IDLE;
-                break;
-
         }
 
         // Flywheel Velocity PID
