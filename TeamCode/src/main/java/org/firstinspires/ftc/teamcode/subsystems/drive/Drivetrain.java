@@ -164,7 +164,7 @@ public class Drivetrain {
     private double turn = 0;
     public double[] powers = {0, 0, 0, 0};
 
-    private PID turnPID = new PID (0.15, 0, 0.003);
+    private PID turnPID = new PID (0.55, 0, 0.002);
 
     public PathData pd;
     public static double centripetalScalar = 0.2;
@@ -222,6 +222,11 @@ public class Drivetrain {
 
                 double targetHeading = Math.atan2(pathForward.y, pathForward.x) + (pd.reversed ? Math.PI : 0);
                 turn = pathRot + turnPID.update(AngleUtil.clipAngle(targetHeading - ROBOT_POSITION.heading), -0.6, 0.6);
+
+                double distRemaining = ROBOT_POSITION.getDistanceFromPoint(path.lastPose);
+                if (distRemaining <= 6) {
+                    moveVector.mul(Math.sqrt(distRemaining) / 6);
+                }
 
                 setMoveVector(moveVector, turn);
                 break;

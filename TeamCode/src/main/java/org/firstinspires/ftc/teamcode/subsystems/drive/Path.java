@@ -78,16 +78,16 @@ public class Path {
         return this;
     }
 
-    public static double k_p = 0.125;
+    public static double k_p = 0.1666;
 
     public Vector2 getVelocity (Spline s, double tau, Vector2 robot) {
         Vector2 v_t = s.getVel(tau);
         v_t.norm();
-        // Log.i("Path v_t", v_t + "");
+        Log.i("Path v_t", v_t + "");
 
         Vector2 v_p = new Vector2(s.getPos(tau).x - robot.x, s.getPos(tau).y - robot.y);
         v_p.mul(k_p);
-        // Log.i("Path v_p", v_p + "");
+        Log.i("Path v_p", v_p + "");
 
         Vector2 v_rep = new Vector2(0, 0);
         for(RepulsionPoint rep : repel) {
@@ -98,7 +98,7 @@ public class Path {
 
             v_rep.add(trep);
         }
-        // Log.i("Path v_rep", v_rep + "");
+        Log.i("Path v_rep", v_rep + "");
 
         return Vector2.add(v_t, Vector2.add(v_p, v_rep));
     }
@@ -126,11 +126,9 @@ public class Path {
         }
 
         lastReachedIndex = index;
-
-        for (int i = 0; i < pathSegments.size(); i++){
-            Log.i("Path Spline " + i + " tau", pathSegments.get(i).spline.getT(robot) + "");
-        }
-
+//        for (int i = 0; i < pathSegments.size(); i++){
+//            Log.i("Path Spline " + i + " tau", pathSegments.get(i).spline.getT(robot) + "");
+//        }
         Log.i("Path chosen index", index + "");
 
         completed = index == pathSegments.size();
