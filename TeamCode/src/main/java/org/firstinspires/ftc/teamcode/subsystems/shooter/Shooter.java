@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems.shooter;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_VELOCITY;
 import static org.firstinspires.ftc.teamcode.utils.Globals.blueTag;
@@ -717,6 +718,10 @@ public class Shooter {
         TelemetryUtil.packet.put("Shooter : FF Power", ffpow * 100);
         TelemetryUtil.packet.put("Shooter : Applied Power", pow * 100);
         LogUtil.shooterState.set(this.state.toString());
+
+        if (state == State.MANUAL) {
+            telemetry.addData("Shooter Dist", dist.name());
+        }
     }
 
     // further separation :)

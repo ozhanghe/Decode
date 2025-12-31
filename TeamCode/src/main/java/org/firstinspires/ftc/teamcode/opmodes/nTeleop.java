@@ -117,6 +117,8 @@ public class nTeleop extends LinearOpMode {
                 robot.intake.reqOff(true);
                 // robot.intake.feed.setTargetPower(intakeOn ? (intakeReversed ? -idleFeedPower : idleFeedPower) : 0);
             }
+
+
             // manual shooting
             if (options.isClicked(gamepad1.options)) {
                 manualOn = !manualOn;
