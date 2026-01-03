@@ -31,11 +31,12 @@ public class EncoderPoseTuner extends LinearOpMode {
             drivetrain.drive(gamepad1);
             theta = Math.PI * 20; // 10 rotations
 
+            sensors.update();
             drivetrain.update();
 
-            telemetry.addData("leftOdoRadius", (drivetrain.leftRear.motor[0].getCurrentPosition() - leftInitial) * drivetrain.mergeLocalizer.encoders[0].ticksToInches/theta + "");
-            telemetry.addData("rightOdoRadius", (drivetrain.leftFront.motor[0].getCurrentPosition() - rightInitial) * drivetrain.mergeLocalizer.encoders[1].ticksToInches/theta + "");
-            telemetry.addData("backOdoRadius", (drivetrain.rightFront.motor[0].getCurrentPosition() - backInitial) * drivetrain.mergeLocalizer.encoders[2].ticksToInches/theta + "");
+            telemetry.addData("leftOdoRadius", (drivetrain.leftFront.motor[0].getCurrentPosition() - leftInitial) * drivetrain.mergeLocalizer.encoders[0].ticksToInches/theta + "");
+            telemetry.addData("rightOdoRadius", (drivetrain.rightFront.motor[0].getCurrentPosition() - rightInitial) * drivetrain.mergeLocalizer.encoders[1].ticksToInches/theta + "");
+            telemetry.addData("backOdoRadius", (drivetrain.leftRear.motor[0].getCurrentPosition() - backInitial) * drivetrain.mergeLocalizer.encoders[2].ticksToInches/theta + "");
             telemetry.addData("heading", ROBOT_POSITION.heading);
             telemetry.update();
         }

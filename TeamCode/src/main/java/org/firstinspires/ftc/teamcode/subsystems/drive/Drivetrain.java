@@ -190,7 +190,6 @@ public class Drivetrain {
         mergeLocalizer.update();
 
         ROBOT_POSITION = mergeLocalizer.getPoseEstimate();
-        ROBOT_POSITION.heading = AngleUtil.clipAngle(ROBOT_POSITION.heading);
         ROBOT_VELOCITY = mergeLocalizer.getRelativePoseVelocity();
 
         if(path != null) {
@@ -236,7 +235,7 @@ public class Drivetrain {
 
                 double distRemaining = ROBOT_POSITION.getDistanceFromPoint(path.lastPose);
                 if (path.pathSegments.get(pd.index).decel && distRemaining <= 6) {
-                    moveVector.mul(Math.sqrt(distRemaining) / 6);
+                    moveVector.mul(0.8 * Math.sqrt(distRemaining/6) + 0.2);
                 }
 
                 setMoveVector(moveVector, turn);

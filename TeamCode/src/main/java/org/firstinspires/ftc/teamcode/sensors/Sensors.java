@@ -49,14 +49,14 @@ public class Sensors {
         currentTime = System.nanoTime();
         loopTime = (currentTime - lastTime) / 1e9;
 
-        odoWheelPositions[0] = ((PriorityMotor) hardwareMap.get(DcMotorEx.class, "leftFront")).motor[0].getCurrentPosition();
-        odoWheelPositions[1] = ((PriorityMotor) hardwareMap.get(DcMotorEx.class, "rightFront")).motor[0].getCurrentPosition();
-        odoWheelPositions[2] = ((PriorityMotor) hardwareMap.get(DcMotorEx.class, "leftRear")).motor[0].getCurrentPosition();
+        odoWheelPositions[0] = hardwareMap.get(DcMotorEx.class, "leftFront").getCurrentPosition();
+        odoWheelPositions[1] = hardwareMap.get(DcMotorEx.class, "rightFront").getCurrentPosition();
+        odoWheelPositions[2] = hardwareMap.get(DcMotorEx.class, "leftRear").getCurrentPosition();
 
-        double flywheelPos = ((PriorityMotor) hardwareMap.get(DcMotorEx.class, "rightRear")).motor[0].getCurrentPosition();
+        double flywheelPos = hardwareMap.get(DcMotorEx.class, "rightRear").getCurrentPosition();
 
         // (flywheelPos - flywheelLastPos) / 28.0 = delta revolutions
-        flywheelAngularVel = ((PriorityMotor) hardwareMap.get(DcMotorEx.class, "rightRear")).motor[0].getVelocity() / 28.0;
+        flywheelAngularVel = hardwareMap.get(DcMotorEx.class, "rightRear").getVelocity() / 28.0;
         flywheelVelocity = flywheelAngularVel * 96.0 * Math.PI / 25.4;
 
 
