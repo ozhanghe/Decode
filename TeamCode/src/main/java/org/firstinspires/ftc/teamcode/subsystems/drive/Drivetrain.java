@@ -54,6 +54,8 @@ public class Drivetrain {
     private final HardwareQueue hardwareQueue;
     private final Sensors sensors;
 
+    public Drivetrain(Robot robot, Vision vision) { this(robot.hardwareMap, robot.sensors, robot.hardwareQueue, vision); }
+
     public Drivetrain(HardwareMap hardwareMap, Sensors sensors, HardwareQueue hardwareQueue, Vision vision) {
         this.vision = vision;
         this.hardwareQueue = hardwareQueue;

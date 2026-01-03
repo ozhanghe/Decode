@@ -35,6 +35,8 @@ public class Sensors {
     private final double voltageUpdateTime = 5000;
     private long lastVoltageUpdatedTime = System.currentTimeMillis();
 
+    public Sensors (Robot robot) { this(robot.hardwareMap); }
+
     public Sensors(HardwareMap hardwareMap) {
         this.hardwareMap = hardwareMap;
 
