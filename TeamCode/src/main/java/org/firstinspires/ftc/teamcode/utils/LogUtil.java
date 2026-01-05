@@ -48,6 +48,8 @@ public class LogUtil {
     public static Datalogger.GenericField driveTargetX = new Datalogger.GenericField("driveTargetX");
     public static Datalogger.GenericField driveTargetY = new Datalogger.GenericField("driveTargetY");
     public static Datalogger.GenericField driveTargetAngle = new Datalogger.GenericField("driveTargetAngle");
+    public static Datalogger.GenericField parkState = new Datalogger.GenericField("parkState");
+    public static Datalogger.GenericField parkAngle = new Datalogger.GenericField("parkAngle");
 
     private static int loopCountBeforeWrite;
 

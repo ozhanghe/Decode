@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
-//import org.firstinspires.ftc.teamcode.utils.AbsoluteEncoder;
+import org.firstinspires.ftc.teamcode.utils.AbsoluteEncoder;
 
 @Config
 public class Sensors {
@@ -25,7 +25,7 @@ public class Sensors {
     // Enocder Resolution: 28 PPR
     private double flywheelAngularVel = 0, flywheelVelocity = 0;
 
-    //AbsoluteEncoder parkEncoder;
+    AbsoluteEncoder parkEncoder;
 
 
 
@@ -39,7 +39,7 @@ public class Sensors {
         currentTime = System.nanoTime();
         voltage = robot.hardwareMap.voltageSensor.iterator().next().getVoltage();
 
-        //parkEncoder = new AbsoluteEncoder("park_encoder", robot.hardwareMap);
+        parkEncoder = new AbsoluteEncoder("park_encoder", robot.hardwareMap);
     }
 
     public void update() {
@@ -59,7 +59,7 @@ public class Sensors {
         robot.drivetrain.mergeLocalizer.updateEncoders(odoWheelPositions);
         robot.drivetrain.mergeLocalizer.update();
 
-        //parkEncoder.updateEncoder();
+        parkEncoder.updateEncoder();
 
         if (System.currentTimeMillis() - lastVoltageUpdatedTime > voltageUpdateTime) {
             voltage = robot.hardwareMap.voltageSensor.iterator().next().getVoltage();
@@ -79,7 +79,7 @@ public class Sensors {
     }
 
     //angle that the park servo has traveled, not the bellypan
-    //public double getParkAngleTraveled() { return parkEncoder.getAngleTraveled(); }
+    public double getParkAngleTraveled() { return parkEncoder.getAngleTraveled(); }
 
 
     private void updateTelemetry() {
