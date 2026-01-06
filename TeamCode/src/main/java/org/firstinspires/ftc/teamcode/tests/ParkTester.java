@@ -13,30 +13,31 @@ import org.firstinspires.ftc.teamcode.utils.RunMode;
 @Config
 @TeleOp(group = "Test")
 public class ParkTester extends LinearOpMode {
+    public static double targetAngle = 0;
 
     public void runOpMode() {
         Globals.RUNMODE = RunMode.TESTER;
         Robot robot = new Robot(hardwareMap);
         Park park = new Park(robot);
         park.state = Park.State.IDLE;
-        double targetAngle = 0;
+        targetAngle = 0;
 
         while (opModeInInit()) {
             robot.update();
             park.update();
         }
 
-
         while (!isStopRequested()) {
-            if (gamepad1.x) park.moveNextState();
-            if (gamepad1.y) park.movePreviousState();
-            if (gamepad1.a) park.state = Park.State.MANUAL_CONTROL;
-            if (gamepad2.x && park.state == Park.State.MANUAL_CONTROL) park.setTargetAngle(targetAngle + 0.2); targetAngle += 0.2;
-            if(gamepad2.y && park.state == Park.State.MANUAL_CONTROL) park.setTargetAngle(targetAngle - 0.2); targetAngle -= 0.2;
-
-
-
-
+            if (gamepad1.x) park.state = Park.State.IDLE;
+            if (gamepad1.y) park.state = Park.State.MANUAL_CONTROL;
+            if (park.state == Park.State.MANUAL_CONTROL) {
+                if (gamepad2.a) targetAngle += 0.1;
+                if (gamepad2.b) targetAngle -= 0.1;
+                park.setTargetAngle(targetAngle);
+            } else {
+                if (gamepad1.a) park.moveNextState();
+                if (gamepad1.b) park.movePreviousState();
+            }
 
             robot.update();
             park.update();

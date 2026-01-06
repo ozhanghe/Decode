@@ -17,10 +17,10 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigu
 
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
-import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.Localizer;
 import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.MergeLocalizer;
 import org.firstinspires.ftc.teamcode.utils.AngleUtil;
 import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
+import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
@@ -48,7 +48,6 @@ public class Drivetrain {
     public PriorityMotor leftFront, leftRear, rightRear, rightFront;
     private final List<PriorityMotor> motors;
 
-    // public Localizer localizer;
     public Vision vision;
     public MergeLocalizer mergeLocalizer;
     private final HardwareQueue hardwareQueue;
@@ -87,7 +86,6 @@ public class Drivetrain {
         configureMotors();
         setMinPowersToOvercomeFriction(1.0);
 
-        // localizer = new Localizer (sensors, this, "#00ff00", "#ff0000");
         mergeLocalizer = new MergeLocalizer (hardwareMap, sensors, this, "#0000ff", "#ffffff");
     }
 
@@ -152,6 +150,7 @@ public class Drivetrain {
 
     public void setPoseEstimate(Pose2d pose2d) {
         mergeLocalizer.setPoseEstimate(pose2d);
+        LogUtil.drivePositionReset = true;
     }
 
     public Pose2d getPoseEstimate() {
@@ -182,9 +181,6 @@ public class Drivetrain {
         if (!DRIVETRAIN_ENABLED) {
             return;
         }
-
-//        localizer.updateEncoders(odoWheelPositions);
-//        localizer.update();
 
         if(path != null) {
             state = State.FOLLOW_SPLINE;
@@ -377,6 +373,8 @@ public class Drivetrain {
 //        TelemetryUtil.packet.put("Drivetrain : PID xError", xError);
 //        TelemetryUtil.packet.put("Drivetrain : PID yError", yError);
 //        TelemetryUtil.packet.put("Drivetrain : PID hError", hError);
+
+        LogUtil.drivePath.set("0 0 0 0 0 0 0 0"); // TODO Log spline
 
         Canvas canvas = TelemetryUtil.packet.fieldOverlay();
         if (path != null) {

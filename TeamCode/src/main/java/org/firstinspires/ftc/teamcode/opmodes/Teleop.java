@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.utils.ButtonToggle;
 import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
+import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 
 @Config
 @TeleOp(name = "A. Teleop")
@@ -51,7 +52,10 @@ public class Teleop extends LinearOpMode {
         boolean confirmation = true;
         boolean manualToggled = false;
 
-        while (opModeInInit());
+        while (opModeInInit()) {
+            robot.sensors.update();
+            TelemetryUtil.sendTelemetry();
+        }
 
         if (!isStopRequested()) LogUtil.init();
 

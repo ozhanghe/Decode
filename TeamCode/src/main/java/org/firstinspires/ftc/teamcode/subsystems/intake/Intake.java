@@ -35,9 +35,9 @@ public class Intake {
         );
 
         feed = new PriorityMotor(
-                new DcMotorEx[] {robot.hardwareMap.get(DcMotorEx.class, "feed")},
-                "feed", 2, 5,
-                new double[] {1}, robot.sensors
+            new DcMotorEx[] {robot.hardwareMap.get(DcMotorEx.class, "feed")},
+            "feed", 2, 5,
+            new double[] {1}, robot.sensors
         );
 
         robot.hardwareQueue.addDevices(roller, feed);

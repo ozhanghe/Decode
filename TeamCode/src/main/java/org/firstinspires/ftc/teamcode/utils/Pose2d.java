@@ -68,6 +68,6 @@ public class Pose2d implements Cloneable {
 
     @SuppressLint("DefaultLocale")
     public String toString() {
-        return String.format("(%.3f, %.3f, %.3f", x, y, heading);
+        return String.format("(%.3f, %.3f, %.3f)", x, y, heading);
     }
 }

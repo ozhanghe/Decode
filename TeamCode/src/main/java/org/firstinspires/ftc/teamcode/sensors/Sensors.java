@@ -39,7 +39,7 @@ public class Sensors {
         currentTime = System.nanoTime();
         voltage = robot.hardwareMap.voltageSensor.iterator().next().getVoltage();
 
-        parkEncoder = new AbsoluteEncoder("park_encoder", robot.hardwareMap);
+        parkEncoder = new AbsoluteEncoder(robot.hardwareMap, "park_encoder");
     }
 
     public void update() {
@@ -59,7 +59,7 @@ public class Sensors {
         robot.drivetrain.mergeLocalizer.updateEncoders(odoWheelPositions);
         robot.drivetrain.mergeLocalizer.update();
 
-        parkEncoder.updateEncoder();
+        parkEncoder.update();
 
         if (System.currentTimeMillis() - lastVoltageUpdatedTime > voltageUpdateTime) {
             voltage = robot.hardwareMap.voltageSensor.iterator().next().getVoltage();
@@ -81,19 +81,21 @@ public class Sensors {
     //angle that the park servo has traveled, not the bellypan
     public double getParkAngleTraveled() { return parkEncoder.getAngleTraveled(); }
 
-
     private void updateTelemetry() {
         TelemetryUtil.packet.put("Voltage", voltage);
         TelemetryUtil.packet.put("Shooter : Flywheel Angular Velocity", flywheelAngularVel);
         TelemetryUtil.packet.put("Shooter : Flywheel Current Velocity", flywheelVelocity);
         TelemetryUtil.packet.put("Shooter : Hood top angle (deg)", Math.toDegrees(robot.shooter.hood.getCurrentAngle()) * 30 / 48 + 34);
+        TelemetryUtil.packet.put("Park : Servo angle", parkEncoder.getAngleTraveled());
 
         ROBOT_POSITION = robot.drivetrain.mergeLocalizer.getPoseEstimate();
         ROBOT_VELOCITY = robot.drivetrain.mergeLocalizer.getRelativePoseVelocity();
         Pose2d currentPose = ROBOT_POSITION;
+        TelemetryUtil.packet.put("Robot position", currentPose.toString());
         Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
         DashboardUtil.drawRobot(fieldOverlay, currentPose, "#ff0000");
 
+        LogUtil.turretAngle.set(0); // TODO Log turret angle
         LogUtil.flywheelVelocity.set(flywheelVelocity);
         LogUtil.driveCurrentX.set(currentPose.x);
         LogUtil.driveCurrentY.set(currentPose.y);

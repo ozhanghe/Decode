@@ -96,20 +96,18 @@ public class Shooter {
             2, 5
         );
 
-        /*
         kicker = new nPriorityServo(
-                new Servo[]{robot.hardwareMap.get(Servo.class, "kicker")},
-                "kicker", nPriorityServo.ServoType.AXON_MICRO,
-                0.027, 0.4, 0.03,
-                new boolean[] {false},
-                2, 5
+            new Servo[]{robot.hardwareMap.get(Servo.class, "kicker")},
+            "kicker", nPriorityServo.ServoType.AXON_MICRO,
+            0.027, 0.4, 0.03,
+            new boolean[] {false},
+            2, 5
         );
-         */
 
         turret = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "turret1"), robot.hardwareMap.get(Servo.class,"turret2")},
-                "turret", nPriorityServo.ServoType.AXON_MINI,
-                0.1, 0.78, 0.5,
+            "turret", nPriorityServo.ServoType.AXON_MINI,
+            0.1, 0.78, 0.5,
             new boolean[] {false, false},
             2, 5
         );
@@ -119,27 +117,19 @@ public class Shooter {
         turretHistory = new ArrayList<>();
 
         flywheelBlocker = new nPriorityServo(
-                new Servo[]{robot.hardwareMap.get(Servo.class, "flywheelBlocker")},
-                "flywheelBlocker", nPriorityServo.ServoType.AXON_MICRO,
-                0, 0.7, 0.1,
-                new boolean[] {false},
-                2, 5
+            new Servo[]{robot.hardwareMap.get(Servo.class, "flywheelBlocker")},
+            "flywheelBlocker", nPriorityServo.ServoType.AXON_MICRO,
+            0, 0.7, 0.1,
+            new boolean[] {false},
+            2, 5
         );
 
         net = new nPriorityServo(
-                new Servo[] {robot.hardwareMap.get(Servo.class, "net")},
-                "net", nPriorityServo.ServoType.AXON_MINI,
-                0.42, 0.95, 0.5,
-                new boolean [] {false},
-                2, 5
-        );
-
-        kicker = new nPriorityServo(
-                new Servo[] {robot.hardwareMap.get(Servo.class, "kicker")},
-                "kicker", nPriorityServo.ServoType.AXON_MINI,
-                0.0, 1.0, 0.5,
-                new boolean [] {false},
-                2, 5
+            new Servo[] {robot.hardwareMap.get(Servo.class, "net")},
+            "net", nPriorityServo.ServoType.AXON_MINI,
+            0.42, 0.95, 0.5,
+            new boolean [] {false},
+            2, 5
         );
 
         robot.hardwareQueue.addDevices(flywheel, hood, turret, flywheelBlocker, net);
@@ -320,7 +310,7 @@ public class Shooter {
         //turret.setTargetAngle(targetAngle);
 
         TelemetryUtil.packet.put("Shooter : turretTargetAngle", targetAngle);
-        LogUtil.turretAngle.set(targetAngle);
+        LogUtil.turretTarget.set(targetAngle);
     }
 
     public void setHoodAngle(double target_angle) {
@@ -330,7 +320,10 @@ public class Shooter {
         LogUtil.hoodAngle.set(target_angle);
     }
 
-    public void setTargetVelocity(double targetVelocity) { this.targetVelocity = targetVelocity; }
+    public void setTargetVelocity(double targetVelocity) {
+        this.targetVelocity = targetVelocity;
+        LogUtil.flywheelTarget.set(targetVelocity);
+    }
 
     public double getTargetVelocity() { return targetVelocity; }
 
