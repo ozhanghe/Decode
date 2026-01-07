@@ -41,9 +41,10 @@ public class SensorTester extends LinearOpMode {
             }
 
             telemetry.addData("Robot Position", data);
-            telemetry.addData("Flywheel Encoder", robot.drivetrain.rightRear.motor[0].getCurrentPosition());
-            telemetry.addData("Turret Encoder", robot.sensors.turretEncoder.getVoltage());
+            //telemetry.addData("Flywheel Encoder", robot.drivetrain.rightRear.motor[0].getCurrentPosition());
+            //telemetry.addData("Turret Encoder", robot.sensors.turretEncoder.getVoltage());
             telemetry.update();
+            TelemetryUtil.sendTelemetry();
         }
     }
 }

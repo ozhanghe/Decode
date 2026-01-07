@@ -185,7 +185,7 @@ public class Teleop extends LinearOpMode {
             telemetry.addData("flywheel target velocity", robot.shooter.getTargetVelocity());
             telemetry.addData("flywheelAtVel", robot.shooter.atVel());
             telemetry.addData("shooter state", robot.shooter.state.toString());
-            telemetry.addData("robot thonker its at", ROBOT_POSITION.x + ", " + ROBOT_POSITION.y + ", " + ROBOT_POSITION.heading);
+            telemetry.addData("Robot position", ROBOT_POSITION.x + ", " + ROBOT_POSITION.y + ", " + ROBOT_POSITION.heading);
 
             telemetry.update();
         }

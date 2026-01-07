@@ -30,7 +30,6 @@ public class PriorityCRServo extends PriorityDevice {
     double lastPower = 0;
     boolean reversed[];
     private double angle = 0;
-    private double targetAngle;
     final ServoType servoType;
 
     public PriorityCRServo(CRServo servo, String name, ServoType servoType, boolean[] reversed, double basePriority, double priorityScale) {
@@ -60,18 +59,15 @@ public class PriorityCRServo extends PriorityDevice {
         if (timeRemaining * 1000.0 <= callLengthMillis/2.0) {
             return 0;
         }
-        return basePriority + Math.abs(power-lastPower) + (System.nanoTime()-lastUpdateTime)/1000000.0  * priorityScale;
+        return basePriority + Math.abs(power-lastPower) + (System.nanoTime()-lastUpdateTime)/1.0E6 * priorityScale;
     }
 
     @Override
-    protected void update() {
+    public void update() {
         for(int i = 0; i < servo.length; i++){
             servo[i].setPower(power * (reversed[i] ? -1.0 : 1.0));
         }
-    }
-
-
-    public double getTargetAngle() {
-        return targetAngle;
+        lastUpdateTime = System.nanoTime();
+        lastPower = power;
     }
 }

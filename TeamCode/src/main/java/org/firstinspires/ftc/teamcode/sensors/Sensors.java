@@ -12,7 +12,7 @@ import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
-import org.firstinspires.ftc.teamcode.utils.AbsoluteEncoder;
+import org.firstinspires.ftc.teamcode.utils.RelativeEncoder;
 
 @Config
 public class Sensors {
@@ -26,9 +26,11 @@ public class Sensors {
     // Enocder Resolution: 28 PPR
     private double flywheelAngularVel = 0, flywheelVelocity = 0;
 
-    private AbsoluteEncoder parkEncoder;
+    public RelativeEncoder parkEncoder;
     public AnalogInput turretEncoder;
-    private double turretGlobal, lastTurretGlobal;
+    private double turretEncoderVoltage, turretAngle, lastTurretAngle;
+    public static double turretEncoderOffset = Math.toRadians(187);
+    public static double turretAngleFilter = 0.3;
 
     private double voltage;
     private final double voltageUpdateTime = 5000;
@@ -40,9 +42,9 @@ public class Sensors {
         currentTime = System.nanoTime();
         voltage = robot.hardwareMap.voltageSensor.iterator().next().getVoltage();
 
-        parkEncoder = new AbsoluteEncoder(robot.hardwareMap, "park_encoder");
+        parkEncoder = new RelativeEncoder(robot.hardwareMap, "park_encoder");
         turretEncoder = robot.hardwareMap.get(AnalogInput.class, "turret_encoder");
-        lastTurretGlobal = turretGlobal = turretEncoder.getVoltage() / 3.3 * 2.0 * Math.PI;
+        lastTurretAngle = turretAngle = 0;
     }
 
     public void update() {
@@ -66,8 +68,10 @@ public class Sensors {
 
         parkEncoder.update();
 
-        lastTurretGlobal = turretGlobal;
-        turretGlobal = turretEncoder.getVoltage() / 3.3 * 2.0 * Math.PI;
+        lastTurretAngle = turretAngle;
+        turretEncoderVoltage = turretEncoder.getVoltage();
+        if (turretEncoderVoltage > 0.1) turretAngle = turretAngle * (1 - turretAngleFilter)
+            + (RelativeEncoder.normalizeVoltage(turretEncoderVoltage) - turretEncoderOffset) * turretAngleFilter;
 
         if (System.currentTimeMillis() - lastVoltageUpdatedTime > voltageUpdateTime) {
             voltage = robot.hardwareMap.voltageSensor.iterator().next().getVoltage();
@@ -76,9 +80,6 @@ public class Sensors {
 
         updateTelemetry();
     }
-
-    // Odometry
-    public int[] getOdometry() {return odoWheelPositions;}
 
     public double getFlywheelVelocity() { return flywheelVelocity; }
 
@@ -91,14 +92,14 @@ public class Sensors {
      * (turretGlobal >= Math.PI ? 2 * Math.PI : 0) adjusts the output to be [-Math.PI, Math.PI] to complete the wraparound
      * @return
      */
-    public double getTurretAng() { return turretGlobal - (turretGlobal >= Math.PI ? 2 * Math.PI : 0); }
+    public double getTurretAngle() { return turretAngle - (turretAngle >= Math.PI ? 2 * Math.PI : 0); }
 
     /**
      * Assumes the turret encoder 0 is facing robot-centric x
      * (turretGlobal >= Math.PI ? 2 * Math.PI : 0) adjusts the output to be [-Math.PI, Math.PI] to complete the wraparound
      * @return
      */
-    public double getLastTurretGlobal() { return lastTurretGlobal - (turretGlobal >= Math.PI ? 2 * Math.PI : 0); }
+    public double getLastTurretAngle() { return lastTurretAngle - (turretAngle >= Math.PI ? 2 * Math.PI : 0); }
 
     //angle that the park servo has traveled, not the bellypan
     public double getParkAngleTraveled() { return parkEncoder.getAngleTraveled(); }
@@ -107,7 +108,9 @@ public class Sensors {
         TelemetryUtil.packet.put("Voltage", voltage);
         TelemetryUtil.packet.put("Shooter : Flywheel Angular Velocity", flywheelAngularVel);
         TelemetryUtil.packet.put("Shooter : Flywheel Current Velocity", flywheelVelocity);
+        TelemetryUtil.packet.put("Shooter : Turret angle (deg)", Math.toDegrees(turretAngle));
         TelemetryUtil.packet.put("Shooter : Hood top angle (deg)", Math.toDegrees(robot.shooter.hood.getCurrentAngle()) * 30 / 48 + 34);
+        TelemetryUtil.packet.put("Shooter : Turret encoder voltage", turretEncoderVoltage);
         TelemetryUtil.packet.put("Park : Servo angle", parkEncoder.getAngleTraveled());
 
         Pose2d currentPose = ROBOT_POSITION;
@@ -115,7 +118,7 @@ public class Sensors {
         Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
         DashboardUtil.drawRobot(fieldOverlay, currentPose, "#ff0000");
 
-        LogUtil.turretAngle.set(0); // TODO Log turret angle
+        LogUtil.turretAngle.set(turretAngle);
         LogUtil.flywheelVelocity.set(flywheelVelocity);
         LogUtil.driveCurrentX.set(currentPose.x);
         LogUtil.driveCurrentY.set(currentPose.y);

@@ -3,14 +3,14 @@ package org.firstinspires.ftc.teamcode.utils;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-public class AbsoluteEncoder {
+public class RelativeEncoder {
     //private String name;
-    private final AnalogInput encoder;
+    public final AnalogInput encoder;
     private double currentAngle;
     private double prevAngle = 0;
     private double angleTraveled = 0;
 
-    public AbsoluteEncoder(HardwareMap hardwareMap, String name) {
+    public RelativeEncoder(HardwareMap hardwareMap, String name) {
         encoder = hardwareMap.get(AnalogInput.class, name);
         prevAngle = currentAngle = normalizeVoltage(encoder.getVoltage());
     }
