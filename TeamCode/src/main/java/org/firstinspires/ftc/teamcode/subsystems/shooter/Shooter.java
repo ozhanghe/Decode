@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.Robot;
+import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.utils.AngleUtil;
 import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
@@ -43,9 +44,9 @@ public class Shooter {
     public nPriorityServo hood, flywheelBlocker, net, kicker;
     public PriorityCRServo turret;
 
-    private boolean aimRequest = false, shootRequest = false, stopRequest = false, reAimRequest = false, indexRequest = false;
+    private boolean aimRequest = false, shootRequest = false, stopRequest = false, indexRequest = false;
 
-    public static PID turretPID = new PID (0.2, 0.5, 0.02);
+    public static PID turretPID = new PID (0.2, 0.0, 0.02);
     public static double turretMinPow = 0.1;
     public static double turretIntegralThresh = Math.toRadians(40);
 
@@ -74,12 +75,15 @@ public class Shooter {
     public double v0, cv0;
     public double minV0 = 0.0, minFlywheelVelocity = 0.0;
     public double minV0Superthresh = 0.0; // TODO: need to tune this, controls how much over minV0 we make the v0 strive for pre mult
-    public double minV0factor = 1.07; // TODO: tune this so that triple fire works; without this, 2nd & 3rd balls don't go in
-    public double flywheelEfficiency = 0.63;
+    public double minV0factor = 1.07;
+    public static double minV0factorClose = 1.108; // TODO: tune this so that triple fire works; without this, 2nd & 3rd balls don't go in
+    public static double minV0factorFar = 1.17; // TODO: tune this so that triple fire works; without this, 2nd & 3rd balls don't go in
+    public static double flywheelEfficiency = 0.63;
+    public static double flywheelEfficiencyConstantFarAddition = -0.05;
     public double targetTurretAngle = 0.0;
     public double targetHoodAngle = 0.0;
-    public double hoodSweep = Math.toRadians(34.0);
-    public static double hoodGearRatio = 48 / 30;
+    public static double hoodSweep = Math.toRadians(34.0);
+    public static double hoodGearRatio = 48.0 / 30.0;
     private final double c1 = (58.3414785 + 72) / (55.6424675 - 48);
     private final double c2 = c1 * 48 - 72;
     private int moves;
@@ -144,9 +148,12 @@ public class Shooter {
     public void update() {
         switch (state) {
             case IDLE:
-                aimLauncherV8();
+                stopRequest = false;
+
+                //aimLauncherV8();
+                setTurretAngle(0.0);
                 setTargetVelocity(0.0);
-                setHoodAngle(targetHoodAngle);
+                setHoodAngle(0.0);
                 setShooterBlocker(true);
 
                 if (aimRequest) {
@@ -163,6 +170,8 @@ public class Shooter {
                 state = State.INDEXING;
                 break;
             case INDEXING:
+                indexRequest = false;
+
                 setShooterBlocker(true);
                 setKicker(0);
                 // have the feeder and whatever contraption push balls forward
@@ -176,13 +185,14 @@ public class Shooter {
                 state = State.IDLE;
                 break;
             case AIMING:
-                setShooterBlocker(true);
+                aimRequest = false;
 
+                setShooterBlocker(true);
                 if (aimLauncherV8()) {
                     state = State.READY;
                 }
                 setTargetVelocity(minFlywheelVelocity);
-                setHoodAngle(targetHoodAngle);
+                setHoodAngle(0.0);
 
                 if (stopRequest) {
                     stopRequest = false;
@@ -217,6 +227,8 @@ public class Shooter {
                 }
                 break;
             case SHOOT:
+                shootRequest = false;
+
                 setShooterBlocker(false);
                 if (index) {
                     setTargetVelocity(60); //test optimal
@@ -238,12 +250,6 @@ public class Shooter {
                     shootRequest = false;
                     state = State.IDLE;
                     setTargetVelocity(0.0);
-                    robot.intake.reqShoot(false);
-                    robot.intake.reqOff(true);
-                }
-                if (reAimRequest) {
-                    reAimRequest = false;
-                    state = State.AIMING;
                     robot.intake.reqShoot(false);
                     robot.intake.reqOff(true);
                 }
@@ -273,8 +279,8 @@ public class Shooter {
         prevPow = pow;
 
         // Turret PIDF
-        targetTurretAngle = turretAngleClip(targetTurretAngle);
-        double turretError = targetTurretAngle - turretAngleClip(robot.sensors.getTurretAngle());
+        targetTurretAngle = Sensors.turretAngleClip(targetTurretAngle);
+        double turretError = targetTurretAngle - Sensors.turretAngleClip(robot.sensors.getTurretAngle());
         if (Math.abs(turretError) > turretIntegralThresh) turretPID.resetIntegral();
         else turretPID.clipIntegral(-1, 1);
         double turretPow = turretPID.update(turretError, -1, 1) + turretMinPow * Math.signum(turretError);
@@ -282,15 +288,18 @@ public class Shooter {
         turret.setTargetPower(turretPow);
 
         TelemetryUtil.packet.put("Shooter : state", this.state);
-        TelemetryUtil.packet.put("Shooter : Flywheel Power PID", pidpow * 100);
-        TelemetryUtil.packet.put("Shooter : Flywheel Power FF", ffpow * 100);
+        //TelemetryUtil.packet.put("Shooter : Flywheel Power PID", pidpow * 100);
+        //TelemetryUtil.packet.put("Shooter : Flywheel Power FF", ffpow * 100);
         TelemetryUtil.packet.put("Shooter : Flywheel Power Applied", pow * 100);
-        TelemetryUtil.packet.put("Shooter : Filtered Velocity", filteredVelocity);
+        TelemetryUtil.packet.put("Shooter : Flywheel Target Velocity", targetVelocity);
+        TelemetryUtil.packet.put("Shooter : Flywheel Filtered Velocity", filteredVelocity);
         TelemetryUtil.packet.put("Shooter : Turret Target", targetTurretAngle);
         TelemetryUtil.packet.put("Shooter : Hood Target", hood.getTargetAngle());
         TelemetryUtil.packet.put("Shooter : Turret Power PID", turretPow * 100);
+        LogUtil.flywheelTarget.set(targetVelocity);
         LogUtil.shooterState.set(this.state.toString());
         LogUtil.turretTarget.set(targetTurretAngle);
+        LogUtil.hoodAngle.set(hood.getTargetAngle());
     }
 
     public void reqShoot (boolean req) { shootRequest = req; }
@@ -299,11 +308,10 @@ public class Shooter {
 
     public void reqStop (boolean req) { stopRequest = req; }
 
-    public void reqReAim (boolean req) { reAimRequest = req; }
-
     public void setManual(boolean on) {
         if (on) {
             state = State.TEST;
+            robot.shooter.setTurretAngle(0);
             setShooter(Dist.OFF);
         } else {
             state = State.IDLE;
@@ -316,26 +324,15 @@ public class Shooter {
         targetTurretAngle = targetAngle;
     }
 
-    public void setHoodAngle(double target_angle) {
-        hood.setTargetAngle(target_angle);
+    public void setHoodAngle(double target_angle) { hood.setTargetAngle(target_angle); }
 
-        TelemetryUtil.packet.put("Shooter : hoodTargetAngle", target_angle);
-        LogUtil.hoodAngle.set(target_angle);
-    }
-
-    public void setTargetVelocity(double targetVelocity) {
-        this.targetVelocity = targetVelocity;
-        TelemetryUtil.packet.put("Shooter : Target Velocity", targetVelocity);
-        LogUtil.flywheelTarget.set(targetVelocity);
-    }
+    public void setTargetVelocity(double targetVelocity) { this.targetVelocity = targetVelocity; }
 
     public double getTargetVelocity() { return targetVelocity; }
 
     public double getFilteredVelocity() { return filteredVelocity; }
 
     public void setShooterBlocker(boolean active) { flywheelBlocker.setTargetAngle(active ? latchBlockAngle : -0.2);}
-
-    public static double turretAngleClip(double angle) { return Utils.minMaxClip(Utils.headingClip(angle), -Math.PI * 3 / 4, Math.PI * 3 / 4); }
 
     public void updateBallTarget() {
         ballTarget = new Vector3(-70.5, 60 * (Globals.isRed ? 1 : -1), 38.75);
@@ -351,7 +348,7 @@ public class Shooter {
         // targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - ROBOT_POSITION.heading);
         // above works
         // below needs testing
-        targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - ROBOT_POSITION.heading - Math.PI / 2) + Math.PI / 2;
+        targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - ROBOT_POSITION.heading);
         return true;
     }
 
@@ -368,6 +365,9 @@ public class Shooter {
         cv0 = c - v0 * v0;
         d = 2 * Vector3.dot(P, V);
         e = P.x * P.x + P.y * P.y + P.z * P.z;
+        if (P.getMag() >= 90) minV0factor = minV0factorFar;
+        else minV0factor = minV0factorClose;
+
     }
 
     public boolean calcMinFlywheelVelocity() {
@@ -382,7 +382,9 @@ public class Shooter {
         if (tRoots.isEmpty()) return false;
         minV0 = Math.sqrt(2 * a * tRoots.get(0) * tRoots.get(0) + c + d / 2 / tRoots.get(0)) + minV0Superthresh;
         minV0 *= minV0factor;
-        minFlywheelVelocity = minV0 * 2 / flywheelEfficiency;
+        minFlywheelVelocity = minV0 * 2;
+        if (P.getMag() >= 90) minFlywheelVelocity /= flywheelEfficiency + flywheelEfficiencyConstantFarAddition;
+        else minFlywheelVelocity /= flywheelEfficiency;
         return true;
     }
 
@@ -508,6 +510,7 @@ public class Shooter {
         Log.i("Points", "Starting aimLauncherV8");
         Vector3 P = new Vector3(ballTarget); // TODO: change this target to account for distance
         P.subtract(new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight));
+        this.P = P;
         Vector3 V = new Vector3(-ROBOT_VELOCITY.x, -ROBOT_VELOCITY.y, 0); // TODO: need to subtract robot angular vel component thing to this
 
         targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - ROBOT_POSITION.heading);
@@ -532,9 +535,13 @@ public class Shooter {
         }
         Log.i("MinV0", "tRoots[0]: " + tRoots.get(0));
 
-        minV0 = (Math.sqrt(2 * a * tRoots.get(0) * tRoots.get(0) + c + d / 2 / tRoots.get(0)) + minV0Superthresh) * minV0factor;
+        minV0 = (Math.sqrt(2 * a * tRoots.get(0) * tRoots.get(0) + c + d / 2 / tRoots.get(0)) + minV0Superthresh);
+        if (P.getMag() >= 90) minV0 *= minV0factorFar;
+        else minV0 *= minV0factorClose;
         Log.i("MinV0", "value: " + minV0);
-        minFlywheelVelocity = minV0 * 2 / flywheelEfficiency;
+        minFlywheelVelocity = minV0 * 2;
+        if (P.getMag() >= 90) minFlywheelVelocity /= flywheelEfficiency + flywheelEfficiencyConstantFarAddition;
+        else minFlywheelVelocity /= flywheelEfficiency;
         Log.i("MinV0", "min flywheel:" + minFlywheelVelocity);
 
         double v0 = getBallExitSpd();
@@ -713,7 +720,13 @@ public class Shooter {
         return true;
     }
 
-    public double getBallExitSpd() { return filteredVelocity * flywheelEfficiency * 0.5; }
+    public double getBallExitSpd() {
+        if (P == null) return -1.0;
+        double res = filteredVelocity * 0.5;
+        if (P.getMag() >= 90) res *= flywheelEfficiency + flywheelEfficiencyConstantFarAddition;
+        else res *= flywheelEfficiency;
+        return res;
+    }
 
     // further separation :)
     // bootleg LM1 strat being used in LM2 code

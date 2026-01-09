@@ -32,6 +32,7 @@ import org.firstinspires.ftc.teamcode.vision.Vision;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 @Config
 public class Drivetrain {
@@ -374,7 +375,8 @@ public class Drivetrain {
 //        TelemetryUtil.packet.put("Drivetrain : PID yError", yError);
 //        TelemetryUtil.packet.put("Drivetrain : PID hError", hError);
 
-        LogUtil.drivePath.set("0 0 0 0 0 0 0 0"); // TODO Log spline
+        LogUtil.driveState.set(state.toString());
+        LogUtil.drivePath.set(String.format(Locale.US, "%.2f %.2f %.2f", targetPoint.x, targetPoint.y, targetPoint.heading)); // TODO Log spline
 
         Canvas canvas = TelemetryUtil.packet.fieldOverlay();
         if (path != null) {

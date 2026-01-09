@@ -36,7 +36,7 @@ public class LogUtil {
     // These are all of the fields that we want in the datalog.
     // Note that order here is NOT important. The order is important in the setFields() call below
     //public static Datalogger.GenericField loopTime = new Datalogger.GenericField("loopTime");
-    public static StateField intakeState = new StateField("intakeState");
+    public static Datalogger.GenericField intakeState = new Datalogger.GenericField("intakeState");
     public static StateField shooterState = new StateField("shooterState");
     public static Datalogger.GenericField turretAngle = new Datalogger.GenericField("turretAngle");
     public static Datalogger.GenericField turretTarget = new Datalogger.GenericField("turretTarget");
@@ -72,7 +72,7 @@ public class LogUtil {
         long timeNow = System.currentTimeMillis();
         String fileName = "Log_" + timeNow + "_"
             + new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US).format(new Date(timeNow))
-            + "_CAT1_Decode_" + Globals.RUNMODE.toString();
+            + "_CAT3_Decode_" + Globals.RUNMODE.toString();
         TelemetryUtil.packet.put("LogUtil : filename", fileName);
 
         if (datalogger != null) throw new IllegalStateException("LogUtil was already initialized");
@@ -98,9 +98,7 @@ public class LogUtil {
                 driveCurrentY,
                 driveCurrentAngle,
                 drivePath,
-                driveState,
-                parkState,
-                parkAngle
+                driveState
             )
             .build();
     }

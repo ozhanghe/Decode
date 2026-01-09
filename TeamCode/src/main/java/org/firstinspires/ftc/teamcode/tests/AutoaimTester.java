@@ -15,7 +15,7 @@ import org.firstinspires.ftc.teamcode.utils.RunMode;
 @Config
 @TeleOp(group = "Test")
 public class AutoaimTester extends LinearOpMode {
-    public static double rollerPower = 0.8, feedPower = 0.6, minV0Factor = 1.07, minV0SuperThresh = 0.0;
+    public static double rollerPower = 0.8, feedPower = 0.6, minV0FactorClose = Shooter.minV0factorClose, minV0FactorFar = Shooter.minV0factorFar, minV0SuperThresh = 0.0;
     public static boolean latchBlock = false, aimReq = false, shootReq = false, stopReq = false;
 
     public void runOpMode() {
@@ -34,7 +34,8 @@ public class AutoaimTester extends LinearOpMode {
             robot.intake.roller.setTargetPower(rollerPower);
             robot.intake.feed.setTargetPower(feedPower);
             robot.shooter.minV0Superthresh = minV0SuperThresh;
-            robot.shooter.minV0factor = minV0Factor;
+            robot.shooter.minV0factorClose = minV0FactorClose;
+            robot.shooter.minV0factorFar = minV0FactorFar;
             robot.shooter.setShooterBlocker(latchBlock);
             robot.shooter.reqAim(aimReq);
             if (aimReq) aimReq = false;

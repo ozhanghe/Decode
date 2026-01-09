@@ -14,8 +14,11 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.utils.ButtonToggle;
 import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
+import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
+
+import java.util.Locale;
 
 @Config
 @TeleOp(name = "A. Teleop")
@@ -38,6 +41,7 @@ public class Teleop extends LinearOpMode {
         ButtonToggle b1 = new ButtonToggle();
         ButtonToggle y1 = new ButtonToggle();
         ButtonToggle x1 = new ButtonToggle();
+        ButtonToggle rt1 = new ButtonToggle();
 
         ButtonToggle a2 = new ButtonToggle();
         ButtonToggle b2 = new ButtonToggle();
@@ -51,6 +55,7 @@ public class Teleop extends LinearOpMode {
         boolean atSpeedRumble = false;
         boolean confirmation = true;
         boolean manualToggled = false;
+        final double triggerThresh = 0.2;
 
         while (opModeInInit()) {
             robot.sensors.update();
@@ -104,7 +109,7 @@ public class Teleop extends LinearOpMode {
             if (robot.shooter.state == Shooter.State.TEST) {
                 rb1.isClicked(gamepad1.right_bumper);
 
-                if (b1.isHeld(gamepad1.b, 500) || b2.isHeld(gamepad2.b, 500)
+                if (rt1.isClicked(gamepad1.right_trigger > triggerThresh) || b1.isHeld(gamepad1.b, 500) || b2.isHeld(gamepad2.b, 500)
                         || y1.isHeld(gamepad1.y, 500) || y2.isHeld(gamepad2.y, 500)
                         || x1.isHeld(gamepad1.x, 500) || x2.isHeld(gamepad2.x, 500)) { // Off
                     flywheelOn = false;
@@ -146,8 +151,9 @@ public class Teleop extends LinearOpMode {
                 }
             } else {
                 x1.isClicked(gamepad1.x);
+                x2.isClicked(gamepad2.x);
 
-                if (b1.isClicked(gamepad1.b)) {
+                if (y1.isClicked(gamepad1.y) || y2.isClicked(gamepad2.y)) {
                     robot.shooter.reqAim(true);
                 }
 
@@ -161,7 +167,7 @@ public class Teleop extends LinearOpMode {
                     confirmation = true;
                 }
 
-                if (y1.isClicked(gamepad1.y)) {
+                if (rt1.isClicked(gamepad1.right_trigger > triggerThresh) || b1.isClicked(gamepad1.b) || b2.isClicked(gamepad2.b)) {
                     robot.shooter.reqStop(true);
                 }
 
@@ -172,6 +178,12 @@ public class Teleop extends LinearOpMode {
                         robot.shooter.reqShoot(true);
                     }
                 }
+            }
+
+            if (gamepad1.left_stick_button && gamepad1.right_stick_button) {
+                gamepad1.rumble(1000);
+                gamepad2.rumble(1000);
+                robot.drivetrain.setPoseEstimate(new Pose2d(72 - 6, (72 - 6) * (isRed ? -1 : 1), Math.PI));
             }
 
             robot.drivetrain.drive(gamepad1);
@@ -185,7 +197,7 @@ public class Teleop extends LinearOpMode {
             telemetry.addData("flywheel target velocity", robot.shooter.getTargetVelocity());
             telemetry.addData("flywheelAtVel", robot.shooter.atVel());
             telemetry.addData("shooter state", robot.shooter.state.toString());
-            telemetry.addData("Robot position", ROBOT_POSITION.x + ", " + ROBOT_POSITION.y + ", " + ROBOT_POSITION.heading);
+            telemetry.addData("Robot position (deg)", String.format(Locale.US, "(%.2f, %.2f, %.2f)", ROBOT_POSITION.x, ROBOT_POSITION.y, Math.toDegrees(ROBOT_POSITION.heading)));
 
             telemetry.update();
         }
