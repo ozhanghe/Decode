@@ -12,9 +12,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Drivetrain;
+import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
+import org.firstinspires.ftc.teamcode.utils.AngleUtil;
 import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
+import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
+import org.firstinspires.ftc.teamcode.vision.Vision;
 
 @Config
 public class MergeLocalizer extends Localizer {
@@ -39,8 +43,8 @@ public class MergeLocalizer extends Localizer {
 
     // Limelight
     private LLResult result = null;
-    private boolean limelightToggle = false;
-    private double lastStaleness = 100.0;
+    private Pose2d globalLLEstimate = null;
+    public static boolean useLimelight = false;
 
     public void update() {
         long currentTime = System.nanoTime();
@@ -102,35 +106,34 @@ public class MergeLocalizer extends Localizer {
         }
 
         // LIMELIGHT
-        /*
-        if (limelightToggle) {
+
+        if (useLimelight) {
             drivetrain.vision.update();
             result = drivetrain.vision.getResult();
 
-            if (result != null && result.isValid() && result.getStaleness() < lastStaleness) {
-                lastStaleness = result.getStaleness();
+            // Assume 90FPS, essentially must be most recent frame
+            if (result != null && result.isValid() && result.getStaleness() < 0.006) {
+                double D = (Globals.tagHeight - Vision.cameraHeight) / Math.tan(Math.toRadians(0.97 - 0.729 * result.getTx() + 9.37 * 0.001 * result.getTx() * result.getTx()));
+                double thetaLime = AngleUtil.clipAngle(Globals.ROBOT_POSITION.heading - Math.toRadians(2.88 + 0.249 * result.getTy() + 0.0325 * result.getTy() * result.getTy()));
+                Pose2d tag = (result.getFiducialResults().get(0).getFiducialId() == 24) ? Globals.redTag.clone() : Globals.blueTag.clone();
 
-                int index = 0;
-                while (index < Shooter.nanoTimes.size() && Shooter.nanoTimes.get(index) - timeStamp > 0) {
-                    index++;
-                }
-
-                // TODO: Derive math again, there is monkey business afoot
-                // TODO: Also translate ts to the center of the robot
-                double D = (Globals.tagHeight - drivetrain.vision.cameraHeight) / Math.tan(drivetrain.vision.cameraAngle + Math.toRadians(result.getTx()));
-
-                Pose2d globalLimelightEstimate = new Pose2d (
-                        (Globals.isRed ? Globals.redTag.x : Globals.blueTag.x) - D * Math.cos(Shooter.turretHistory.get(index) + poseHistory.get(index).heading - Math.toRadians(result.getTy())),
-                        (Globals.isRed ? Globals.redTag.y : Globals.blueTag.y) - D * Math.sin(Shooter.turretHistory.get(index) + poseHistory.get(index).heading - Math.toRadians(result.getTy())),
-                        Shooter.turretHistory.get(index) + poseHistory.get(index).heading - Math.toRadians(result.getTy())
+                Pose2d estimatedLLPose = new Pose2d(
+                        tag.x - D * Math.cos(thetaLime),
+                        tag.y - D * Math.sin(thetaLime),
+                        Math.atan2(tag.y - D * Math.sin(thetaLime), tag.x - D * Math.cos(thetaLime))
                 );
 
-                currentPose.x = currentPose.x * 0.8 + globalLimelightEstimate.x * 0.2;
-                currentPose.y = currentPose.y * 0.8 + globalLimelightEstimate.y * 0.2;
-                currentPose.heading = currentPose.heading * 0.8 + globalLimelightEstimate.heading * 0.2;
+                globalLLEstimate = new Pose2d(
+                        estimatedLLPose.x - 6.4 * Math.cos(estimatedLLPose.heading) + 5.5 * Math.sin(estimatedLLPose.heading),
+                        estimatedLLPose.y - 6.4 * Math.sin(estimatedLLPose.heading) + 5.5 * Math.cos(estimatedLLPose.heading),
+                        estimatedLLPose.heading
+                );
+
+                currentPose.x = currentPose.x * 0.5 + globalLLEstimate.x * 0.5;
+                currentPose.y = currentPose.y * 0.5 + globalLLEstimate.y * 0.5;
+                currentPose.heading = currentPose.heading * 0.5 + globalLLEstimate.heading * 0.5;
             }
         }
-        */
 
         x = currentPose.x;
         y = currentPose.y;
@@ -148,11 +151,8 @@ public class MergeLocalizer extends Localizer {
     public void setPoseEstimate(Pose2d pose) {
         super.setPoseEstimate(pose);
         pinpoint.setPosition(new Pose2D (DistanceUnit.INCH, pose.x, pose.y, AngleUnit.RADIANS, pose.heading));
-        lastPinpointPose = pose.clone();
-        lastPinpointMergePose = pose.clone();
+        lastPinpointPose = lastPinpointMergePose = pose.clone();
     }
-
-    public void setLimelightToggle (boolean toggle) { limelightToggle = toggle; }
 
     public double getInstantaneousAngularVel () { return poseHistory.size() >= 2 ? (poseHistory.get(0).heading - poseHistory.get(1).heading) / (nanoTimes.get(0) - nanoTimes.get(1)) : 0; }
 
@@ -164,6 +164,12 @@ public class MergeLocalizer extends Localizer {
         TelemetryUtil.packet.put("Pinpoint x", pinpoint.getPosX());
         TelemetryUtil.packet.put("Pinpoint y", pinpoint.getPosY());
         TelemetryUtil.packet.put("Pinpoint heading", pinpoint.getHeading());
+
+        if (globalLLEstimate != null) {
+            TelemetryUtil.packet.put("Limelight x", globalLLEstimate.x);
+            TelemetryUtil.packet.put("Limelight y", globalLLEstimate.y);
+            TelemetryUtil.packet.put("Limelight heading", globalLLEstimate.heading);
+        }
 
         Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
         DashboardUtil.drawRobot(fieldOverlay, getPoseEstimate(), this.color);

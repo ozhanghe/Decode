@@ -28,8 +28,8 @@ public class Vision {
 
     public Vision (HardwareMap hardwareMap) {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.setPollRateHz(100);
-        limelight.pipelineSwitch(2);
+        limelight.setPollRateHz(200);
+        limelight.pipelineSwitch(0);
     }
 
     public void update(){

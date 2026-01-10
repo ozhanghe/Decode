@@ -91,6 +91,8 @@ public class Drivetrain {
 
         localizer = new Localizer (sensors, this, "#ff0000", "#ffffff");
         mergeLocalizer = new MergeLocalizer (hardwareMap, sensors, this, "#0000ff", "#ff00ff");
+        mergeLocalizer = new MergeLocalizer (hardwareMap, sensors, this, "#0000ff", "#ffffff");
+        if (vision != null) vision.start();
     }
 
     public void configureMotors() {
