@@ -33,6 +33,7 @@ public class Globals {
 
         for (int i = 72; i >= -72; i -= 4) {
             rp.add(new RepulsionPoint(i, 0, 4));
+        }
 
         // Prevent slamming into the gate too hard (58 on y axis)
         rp.add(new RepulsionPoint(0, (isRed ? 1 : -1) * 60, 2.5));
