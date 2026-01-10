@@ -8,6 +8,7 @@ import org.firstinspires.ftc.teamcode.subsystems.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Path;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.utils.Globals;
+import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 
 @Autonomous(name = "Red Goal")
@@ -16,6 +17,7 @@ public class RedGoal extends LinearOpMode {
 
     public void runOpMode() {
         Robot robot = new Robot(hardwareMap);
+        LogUtil.init();
 
         // Location of turret center
         robot.drivetrain.setPoseEstimate(new Pose2d(-66, 42, 0));
@@ -24,10 +26,11 @@ public class RedGoal extends LinearOpMode {
             robot.sensors.update();
         }
 
+        // Preload
         robot.shooter.reqAim(true);
-        Path path = new Path(new Pose2d(-66, 42, 0), Globals.getMidline())
+        Path path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
                 .addPoint(new Pose2d(-48, 24, Math.PI * 0.5))
-                .addPoint(new Pose2d(-24, 24, Math.PI * 0.75))
+                .addPoint(new Pose2d(-6, 6, Math.PI * 0.75))
                 .setDecel(true);
         robot.drivetrain.setPath(path);
         robot.update();
@@ -41,23 +44,27 @@ public class RedGoal extends LinearOpMode {
         robot.shooter.reqStop(true);
         robot.update();
 
+        // Goal side spikes + gate
         robot.intake.reqIntake(true);
-        path = new Path(new Pose2d(-12, 30, Math.PI * 0.5), Globals.getMidline())
+        path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
                 .setDecel(true)
+                .addPoint(new Pose2d(-12, 30, Math.PI * 0.5))
                 .addPoint(new Pose2d(-12, 37.5, Math.PI * 0.5));
         robot.drivetrain.setPath(path);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
         robot.intake.reqOff(true);
-        path = new Path(new Pose2d(-4, 58, 0), Globals.getMidline())
-                .setDecel(true);
+        path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
+                .setDecel(true)
+                .addPoint(new Pose2d(-4, 58, 0));
         robot.drivetrain.setPath(path);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
         robot.shooter.reqAim(true);
-        path = new Path(new Pose2d(-6, 6, Math.PI * 0.75), Globals.getMidline());
+        path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
+                .addPoint(new Pose2d(-6, 6, Math.PI * 0.75));
         robot.drivetrain.setPath(path);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT && robot.shooter.state != Shooter.State.READY);
@@ -70,17 +77,21 @@ public class RedGoal extends LinearOpMode {
         robot.shooter.reqStop(true);
         robot.update();
 
+        // Middle spikes
         robot.intake.reqIntake(true);
-        path = new Path(new Pose2d(12, 30, Math.PI * 0.5), Globals.getMidline())
+        path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
                 .setDecel(true)
+                .addPoint(new Pose2d(12, 30, Math.PI * 0.5))
                 .addPoint(new Pose2d(12, 37.5, Math.PI * 0.5));
         robot.drivetrain.setPath(path);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
-        robot.intake.reqIntake(true);
+        robot.intake.reqOff(true);
         robot.shooter.reqAim(true);
-        path = new Path(new Pose2d(-6, 6, Math.PI * 0.75), Globals.getMidline());
+        path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
+                .setDecel(true)
+                .addPoint(new Pose2d(-6, 6, Math.PI * 0.75));
         robot.drivetrain.setPath(path);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT && robot.shooter.state != Shooter.State.READY);
@@ -93,15 +104,37 @@ public class RedGoal extends LinearOpMode {
         robot.shooter.reqStop(true);
         robot.update();
 
+        // Intake tunnel side spikes
         robot.intake.reqIntake(true);
-        path = new Path(new Pose2d(36, 30, Math.PI * 0.5), Globals.getMidline())
+        path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
                 .setDecel(true)
+                .addPoint(new Pose2d(36, 30, Math.PI * 0.5))
                 .addPoint(new Pose2d(36, 37.5, Math.PI * 0.5));
         robot.drivetrain.setPath(path);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
-        path = new Path(new Pose2d(12, 24, Math.PI / 2), Globals.getMidline());
+        robot.intake.reqOff(true);
+        robot.shooter.reqAim(true);
+        path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
+                .setDecel(true)
+                .addPoint(new Pose2d(-6, 6, Math.PI * 0.75));
+        robot.drivetrain.setPath(path);
+        robot.update();
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT && robot.shooter.state != Shooter.State.READY);
+
+        robot.shooter.reqShoot(true);
+        delay = System.currentTimeMillis();
+        robot.update();
+        robot.waitWhile(() -> (System.currentTimeMillis() - delay) < 1500);
+
+        robot.shooter.reqStop(true);
+        robot.update();
+
+        // Park
+        path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
+                .setDecel(true)
+                .addPoint(new Pose2d(12, 24, Math.PI / 2));
         robot.drivetrain.setPath(path);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
