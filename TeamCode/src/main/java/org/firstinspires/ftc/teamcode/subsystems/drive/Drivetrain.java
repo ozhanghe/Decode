@@ -88,6 +88,7 @@ public class Drivetrain {
         setMinPowersToOvercomeFriction(1.0);
 
         mergeLocalizer = new MergeLocalizer (hardwareMap, sensors, this, "#0000ff", "#ffffff");
+        if (vision != null) vision.start();
     }
 
     public void configureMotors() {
