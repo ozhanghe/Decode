@@ -15,7 +15,7 @@ import org.firstinspires.ftc.teamcode.utils.RunMode;
 @Config
 @TeleOp(group = "Test")
 public class AutoaimTester extends LinearOpMode {
-    public static double rollerPower = 0.8, feedPower = 0.6, minV0FactorClose = Shooter.minV0factorClose, minV0FactorFar = Shooter.minV0factorFar, minV0SuperThresh = 0.0;
+    public static double rollerPower = 0.8, feedPower = 0.6, minV0FactorClose = Shooter.minV0factorClose, minV0FactorFar = Shooter.minV0factorFar, minV0SuperThresh = 0.0, flywheelEfficiency = 0.63, flywheelEfficiencyConstantFarAddition = -0.05;
     public static boolean latchBlock = false, aimReq = false, shootReq = false, stopReq = false;
 
     public void runOpMode() {
@@ -34,19 +34,23 @@ public class AutoaimTester extends LinearOpMode {
             robot.intake.roller.setTargetPower(rollerPower);
             robot.intake.feed.setTargetPower(feedPower);
             robot.shooter.minV0Superthresh = minV0SuperThresh;
-            robot.shooter.minV0factorClose = minV0FactorClose;
-            robot.shooter.minV0factorFar = minV0FactorFar;
+            Shooter.minV0factorClose = minV0FactorClose;
+            Shooter.minV0factorFar = minV0FactorFar;
+            Shooter.flywheelEfficiency = flywheelEfficiency;
+            Shooter.flywheelEfficiencyConstantFarAddition = flywheelEfficiencyConstantFarAddition;
             robot.shooter.setShooterBlocker(latchBlock);
-            robot.shooter.reqAim(aimReq);
-            if (aimReq) aimReq = false;
-            robot.shooter.reqShoot(shootReq);
-            if (shootReq) shootReq = false;
-            robot.shooter.reqStop(stopReq);
-            if (stopReq) stopReq = false;
 
             if (aimReq) {
                 robot.shooter.reqShoot(aimReq);
                 aimReq = false;
+            }
+            if (shootReq) {
+                robot.shooter.reqShoot(shootReq);
+                shootReq = false;
+            }
+            if (stopReq) {
+                robot.shooter.reqShoot(stopReq);
+                stopReq = false;
             }
 
             robot.update();

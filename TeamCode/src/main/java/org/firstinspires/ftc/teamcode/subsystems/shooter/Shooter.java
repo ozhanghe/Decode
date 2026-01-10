@@ -76,16 +76,15 @@ public class Shooter {
     public double minV0 = 0.0, minFlywheelVelocity = 0.0;
     public double minV0Superthresh = 0.0; // TODO: need to tune this, controls how much over minV0 we make the v0 strive for pre mult
     public double minV0factor = 1.07;
-    public static double minV0factorClose = 1.108; // TODO: tune this so that triple fire works; without this, 2nd & 3rd balls don't go in
-    public static double minV0factorFar = 1.17; // TODO: tune this so that triple fire works; without this, 2nd & 3rd balls don't go in
+    public static double minV0factorClose = 1.07; // TODO: tune this so that triple fire works; without this, 2nd & 3rd balls don't go in
+    public static double minV0factorFar = 1.19; // TODO: tune this so that triple fire works; without this, 2nd & 3rd balls don't go in
     public static double flywheelEfficiency = 0.63;
     public static double flywheelEfficiencyConstantFarAddition = -0.05;
     public double targetTurretAngle = 0.0;
     public double targetHoodAngle = 0.0;
     public static double hoodSweep = Math.toRadians(34.0);
     public static double hoodGearRatio = 48.0 / 30.0;
-    private final double c1 = (58.3414785 + 72) / (55.6424675 - 48);
-    private final double c2 = c1 * 48 - 72;
+    private final double c1 = (58.3414785 + 72) / (55.6424675 - 48); // needs to be deleted
     private int moves;
     private boolean index;
 
@@ -345,13 +344,12 @@ public class Shooter {
 
     public boolean turretTrackTarget() {
         if (ROBOT_POSITION == null || ROBOT_VELOCITY == null) return false;
-        // targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - ROBOT_POSITION.heading);
-        // above works
-        // below needs testing
+        // for +-180 turret
         targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - ROBOT_POSITION.heading);
         return true;
     }
 
+    // outdated
     public void updateAimingConstants() {
         if (ROBOT_POSITION == null || ROBOT_VELOCITY == null) return;
         P = new Vector3(ballTarget); // we'll figure out whether we need to change this target based on distance
@@ -370,6 +368,7 @@ public class Shooter {
 
     }
 
+    // outdated
     public boolean calcMinFlywheelVelocity() {
         if (ROBOT_POSITION == null || ROBOT_VELOCITY == null) return false;
         List<Double> tRoots = Polynomial.findRealRoots(new double[]{1, 0.0, 0.0, -d/(2 * a), -e/a}, 1e-4);
@@ -388,6 +387,7 @@ public class Shooter {
         return true;
     }
 
+    // outdated
     public boolean calcStaticShotAngles() {
         if (!turretTrackTarget()) return false;
         if (v0 > (minV0 / minV0factor - minV0Superthresh) * 0.97) { // makes sure v0 is at least 97% of true minV0
@@ -442,6 +442,7 @@ public class Shooter {
         } else return false;
     }
 
+    // outdated
     public boolean calcDynamicShotAngles() {
         if (!turretTrackTarget()) return false;
         if (v0 > (minV0 / minV0factor - minV0Superthresh) * 0.97) { // makes sure v0 is at least 97% of true minV0
@@ -505,6 +506,7 @@ public class Shooter {
         } else return false;
     }
 
+    // in use
     public boolean aimLauncherV8() {
         if (ROBOT_POSITION == null || ROBOT_VELOCITY == null) return false;
         Log.i("Points", "Starting aimLauncherV8");
@@ -717,7 +719,7 @@ public class Shooter {
             Log.i("Points", "Phis are cooked, phis[" + tRoots.size() + "] = 100");
             return false;
         }
-        targetHoodAngle = (phis[tRoots.size()] - hoodSweep) * hoodGearRatio; // first part converts angle from vertical to angle from horizontal && then subtracts the sweep of the hood
+        targetHoodAngle = (phis[tRoots.size()] - hoodSweep) * hoodGearRatio; // subtracts the sweep of the hood
         Log.i("Points", "The shot is possible and we're returning true!!");
         return true;
     }
