@@ -76,8 +76,8 @@ public class Shooter {
     public double minV0 = 0.0, minFlywheelVelocity = 0.0;
     public double minV0Superthresh = 0.0; // TODO: need to tune this, controls how much over minV0 we make the v0 strive for pre mult
     public double minV0factor = 1.07;
-    public static double minV0factorClose = 1.108; // TODO: tune this so that triple fire works; without this, 2nd & 3rd balls don't go in
-    public static double minV0factorFar = 1.17; // TODO: tune this so that triple fire works; without this, 2nd & 3rd balls don't go in
+    public static double minV0factorClose = 1; // TODO: tune this so that triple fire works; without this, 2nd & 3rd balls don't go in
+    public static double minV0factorFar = 1; // TODO: tune this so that triple fire works; without this, 2nd & 3rd balls don't go in
     public static double flywheelEfficiency = 0.63;
     public static double flywheelEfficiencyConstantFarAddition = -0.05;
     public double targetTurretAngle = 0.0;
