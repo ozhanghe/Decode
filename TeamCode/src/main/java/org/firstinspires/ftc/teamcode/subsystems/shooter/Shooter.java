@@ -2,9 +2,11 @@ package org.firstinspires.ftc.teamcode.subsystems.shooter;
 
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_VELOCITY;
+import static org.firstinspires.ftc.teamcode.utils.Globals.isRed;
 
 import android.util.Log;
 
+import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -18,7 +20,6 @@ import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.Polynomial;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
-import org.firstinspires.ftc.teamcode.utils.Utils;
 import org.firstinspires.ftc.teamcode.utils.Vector3;
 import org.firstinspires.ftc.teamcode.utils.priority.PriorityCRServo;
 import org.firstinspires.ftc.teamcode.utils.priority.PriorityMotor;
@@ -46,9 +47,9 @@ public class Shooter {
 
     private boolean aimRequest = false, shootRequest = false, stopRequest = false, indexRequest = false;
 
-    public static PID turretPID = new PID (0.4, 0.3, 0.008);
-    public static double turretMinPow = 0.2;
-    public static double turretIntegralThresh = Math.toRadians(20);
+    public static PID turretPID = new PID (0.2, 0.0, 0.02);
+    public static double turretMinPow = 0.1;
+    public static double turretIntegralThresh = Math.toRadians(40);
 
     // velocity is in inches / second
     public static PID velocityPID = new PID (0.0, 0.0002, 0.0001);
@@ -76,9 +77,9 @@ public class Shooter {
     public double minV0 = 0.0, minFlywheelVelocity = 0.0;
     public double minV0Superthresh = 0.0; // TODO: need to tune this, controls how much over minV0 we make the v0 strive for pre mult
     public double minV0factor = 1.07;
-    public static double minV0factorClose = 1.115; // TODO: tune for triple shot
-    public static double minV0factorFar = 1.2235; // TODO: tune for triple shot
-    public static double flywheelEfficiency = 0.63;
+    public static double minV0factorClose = 1.17; // TODO: tune for triple shot
+    public static double minV0factorFar = 1.17; // TODO: tune for triple shot
+    public static double flywheelEfficiency = 0.65;
     public static double flywheelEfficiencyConstantFarAddition = -0.02;
     public double targetTurretAngle = 0.0;
     public double targetHoodAngle = 0.0;
@@ -149,7 +150,8 @@ public class Shooter {
             case IDLE:
                 stopRequest = false;
 
-                turretTrackTarget(this.P == null);
+                //turretTrackTarget(this.P == null);
+                setTurretAngle(0.0);
                 setTargetVelocity(0.0);
                 setHoodAngle(0.0);
                 setShooterBlocker(true);
@@ -185,7 +187,7 @@ public class Shooter {
                 aimRequest = false;
 
                 setShooterBlocker(true);
-                if (aimLauncherV8() && hood.inPosition() && Math.abs(targetTurretAngle - Sensors.turretAngleClip(robot.sensors.getTurretAngle())) <= Math.toRadians(4 * (P.x * P.x + P.y * P.y <= 1296 ? 2.5 : 1))) {
+                if (aimLauncherV8() && hood.inPosition() && Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(4 * (P.x * P.x + P.y * P.y <= 1296 ? 2.5 : 2))) {
                     state = State.READY;
                 }
                 setTargetVelocity(minFlywheelVelocity);
@@ -201,7 +203,10 @@ public class Shooter {
             case READY:
                 setShooterBlocker(true);
 
-                aimLauncherV8();
+                if (aimLauncherV8()) {
+                    robot.sensors.light0G.setState(false);
+                    robot.sensors.light0P.setState(false);
+                }
                 setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
 
@@ -281,7 +286,7 @@ public class Shooter {
         if (Math.abs(turretError) <= turretIntegralThresh) turretPID.resetIntegral();
         else turretPID.clipIntegral(-1, 1);
         double turretPow = turretPID.update(turretError, -1, 1) + turretMinPow * Math.signum(turretError);
-        if (Math.abs(turretError) < Math.toRadians(4)) turretPow = 0;
+        if (Math.abs(turretError) < Math.toRadians(2)) turretPow = turretMinPow * turretError / Math.toRadians(2);
         else if (P != null && P.x * P.x + P.y * P.y <= 1296 && Math.abs(turretError) < Math.toRadians(10)) turretPow = 0;
         turret.setTargetPower(turretPow);
 
@@ -296,6 +301,13 @@ public class Shooter {
         LogUtil.shooterState.set(this.state.toString());
         LogUtil.turretTarget.set(targetTurretAngle);
         LogUtil.hoodAngle.set(hood.getTargetAngle());
+        Canvas canvas = TelemetryUtil.packet.fieldOverlay();
+        canvas.setStroke("#808080");
+        canvas.setStrokeWidth(1);
+        canvas.strokeLine(ballTarget.x, ballTarget.y, ROBOT_POSITION.x, ROBOT_POSITION.y);
+        canvas.setStroke(isRed ? "#ff0000" : "#0000ff");
+        canvas.setStrokeWidth(2);
+        canvas.strokeCircle(ballTarget.x, ballTarget.y, 2.5);
     }
 
     public void reqShoot (boolean req) { shootRequest = req; }
@@ -331,7 +343,8 @@ public class Shooter {
     public void setShooterBlocker(boolean active) { flywheelBlocker.setTargetAngle(active ? latchBlockAngle : -0.2);}
 
     public void updateBallTarget() {
-        ballTarget = new Vector3(-70.5, 60 * (Globals.isRed ? 1 : -1), 38.75);
+        //ballTarget = new Vector3(-70.5, 60 * (Globals.isRed ? 1 : -1), 38.75);
+        ballTarget = new Vector3(-67, 63 * (Globals.isRed ? 1 : -1), 40);
     }
 
     public int calcIndexPosition(int greenPos, int motifPos){
@@ -585,6 +598,7 @@ public class Shooter {
                 phis = new double[tRoots.size() + 1];
                 thetas = new double[phis.length];
 
+                double dist = Math.sqrt(dist2);
                 for (int i = 0; i < tRoots.size(); i++) {
                     if (Math.abs(tRoots.get(i) - 0.5) <= 0.5) {
                         phis[i] = Math.asin(Math.sqrt(tRoots.get(i)));
@@ -594,8 +608,6 @@ public class Shooter {
 
                     double vel = Math.pow(ROBOT_VELOCITY.y + v0 * Math.sin(thetas[i]) * Math.sin(phis[i]), 2) + Math.pow(ROBOT_VELOCITY.x + v0 * Math.cos(thetas[i]) * Math.sin(phis[i]), 2);
                     vel = Math.sqrt(vel);
-                    double dist = Math.pow(-60 - ROBOT_POSITION.x, 2) + Math.pow(ballTarget.y - ROBOT_POSITION.y, 2);
-                    dist = Math.sqrt(dist);
                     double t = dist / vel;
                     if (t <= 0) {
                         phis[i] = 100; // this makes sure the ball goes into the target through the restricted diagonal plane
@@ -743,7 +755,7 @@ public class Shooter {
 
     // further separation :)
     // bootleg LM1 strat being used in LM2 code
-    public static double closeAngle = 0.1, closeVel = 630, midAngle = 0.65, midVel  = 750, farAngle = 0.5, farVel = 840;
+    public static double closeAngle = 0.15, closeVel = 630, midAngle = 0.45, midVel  = 780, farAngle = 0.5, farVel = 870;
 
     public enum Dist {
         CLOSE(closeAngle, closeVel),

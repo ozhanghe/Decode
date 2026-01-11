@@ -10,9 +10,11 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
+import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.REVColorSensorV3;
+import org.firstinspires.ftc.teamcode.utils.RunMode;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.utils.RelativeEncoder;
 import org.firstinspires.ftc.teamcode.utils.Utils;
@@ -34,7 +36,7 @@ public class Sensors {
     public RelativeEncoder parkEncoder;
     public AnalogInput turretEncoder;
     private double turretEncoderVoltage, turretAngle, lastTurretAngle;
-    public static double turretEncoderOffset = Math.toRadians(187);
+    public static double turretEncoderOffset = Math.toRadians(182);
     public static double turretAngleFilter = 0.4;
     public static double turretLimitLeft = Math.toRadians(120), turretLimitRight = Math.toRadians(-180), turretWrapMid = Math.toRadians(-45);
 
@@ -43,7 +45,7 @@ public class Sensors {
     private boolean isGreen = false, isPurple = false;
 
     private double voltage;
-    private final double voltageUpdateTime = 5000, colorSensorUpdateTime = 500;
+    public static long voltageUpdateTime = 5000, colorSensorUpdateTime = 500;
     private long lastVoltageUpdatedTime = System.currentTimeMillis();
     private long lastColorSensorUpdatedTime = System.currentTimeMillis();
 
@@ -104,17 +106,17 @@ public class Sensors {
         //TelemetryUtil.packet.put("Intake : Color RGBA", Arrays.toString(color));
         //TelemetryUtil.packet.put("Intake : Color Raw", Arrays.toString(colorRaw));
 
-        if (System.currentTimeMillis() - lastColorSensorUpdatedTime > colorSensorUpdateTime) {
+        if (Globals.RUNMODE != RunMode.AUTO && System.currentTimeMillis() - lastColorSensorUpdatedTime > colorSensorUpdateTime) {
             float red = colorSensor0.readLSRed();
             float green = colorSensor0.readLSGreen();
             float blue = colorSensor0.readLSBlue();
-            isPurple = red > 0.05 && blue > 0.075;
-            isGreen = green > 0.1 && red < 0.05;
+            isPurple = red > 0.06 && blue > 0.08;
+            isGreen = green > 0.1 && red <= 0.06;
             light0G.setState(!isGreen);
             light0P.setState(!isPurple);
-            //TelemetryUtil.packet.put("Intake : Color Red", red);
-            //TelemetryUtil.packet.put("Intake : Color Green", green);
-            //TelemetryUtil.packet.put("Intake : Color Blue", blue);
+            TelemetryUtil.packet.put("Intake : Color0 1Blue", blue);
+            TelemetryUtil.packet.put("Intake : Color0 2Red", red);
+            TelemetryUtil.packet.put("Intake : Color0 3Green", green);
             lastColorSensorUpdatedTime = System.currentTimeMillis();
         }
 

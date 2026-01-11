@@ -10,14 +10,17 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
+import org.firstinspires.ftc.teamcode.utils.RunMode;
 
 @Autonomous(name = "Red Goal")
 public class RedGoal extends LinearOpMode {
     long delay;
 
     public void runOpMode() {
+        Globals.isRed = true;
+        Globals.RUNMODE = RunMode.AUTO;
         Robot robot = new Robot(hardwareMap);
-        LogUtil.init();
+        robot.setStopChecker(this::isStopRequested);
 
         // Location of turret center
         robot.drivetrain.setPoseEstimate(new Pose2d(-66, 42, 0));
@@ -25,6 +28,9 @@ public class RedGoal extends LinearOpMode {
         while (opModeInInit()) {
             robot.sensors.update();
         }
+
+        if (!isStopRequested()) LogUtil.init();
+        LogUtil.drivePositionReset = true;
 
         // Preload
         robot.shooter.reqAim(true);
@@ -34,7 +40,7 @@ public class RedGoal extends LinearOpMode {
                 .setDecel(true);
         robot.drivetrain.setPath(path);
         robot.update();
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT && robot.shooter.state != Shooter.State.READY);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY);
 
         robot.shooter.reqShoot(true);
         delay = System.currentTimeMillis();
@@ -67,7 +73,7 @@ public class RedGoal extends LinearOpMode {
                 .addPoint(new Pose2d(-6, 6, Math.PI * 0.75));
         robot.drivetrain.setPath(path);
         robot.update();
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT && robot.shooter.state != Shooter.State.READY);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY);
 
         robot.shooter.reqShoot(true);
         delay = System.currentTimeMillis();
@@ -94,7 +100,7 @@ public class RedGoal extends LinearOpMode {
                 .addPoint(new Pose2d(-6, 6, Math.PI * 0.75));
         robot.drivetrain.setPath(path);
         robot.update();
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT && robot.shooter.state != Shooter.State.READY);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY);
 
         robot.shooter.reqShoot(true);
         delay = System.currentTimeMillis();
@@ -121,7 +127,7 @@ public class RedGoal extends LinearOpMode {
                 .addPoint(new Pose2d(-6, 6, Math.PI * 0.75));
         robot.drivetrain.setPath(path);
         robot.update();
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT && robot.shooter.state != Shooter.State.READY);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY);
 
         robot.shooter.reqShoot(true);
         delay = System.currentTimeMillis();
@@ -139,6 +145,10 @@ public class RedGoal extends LinearOpMode {
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
-        while(opModeIsActive()) { Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone(); }
+        Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
+        robot.waitWhile(() -> {
+            Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
+            return true;
+        });
     }
 }

@@ -55,6 +55,8 @@ public class Robot {
     public void update() {
         START_LOOP();
 
+        if (this.stopChecker != null && this.stopChecker.getAsBoolean()) return;
+
         sensors.update();
 
         drivetrain.update();

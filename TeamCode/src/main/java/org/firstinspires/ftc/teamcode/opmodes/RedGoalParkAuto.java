@@ -12,6 +12,7 @@ import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.utils.Globals;
+import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
 
@@ -30,9 +31,16 @@ public class RedGoalParkAuto extends LinearOpMode {
 
         while (opModeInInit()) { robot.update(); }
 
+        if (!isStopRequested()) LogUtil.init();
+        LogUtil.drivePositionReset = true;
+
         robot.drivetrain.goToPoint(new Pose2d(-32, 52, 0), 1.0);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
-        do { AUTO_ENDING_POSE = ROBOT_POSITION.clone(); } while (!isStopRequested());
+        Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
+        robot.waitWhile(() -> {
+            Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
+            return true;
+        });
     }
 }

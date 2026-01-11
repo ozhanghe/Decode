@@ -33,6 +33,10 @@ public class MergeLocalizer extends Localizer {
         pinpoint.setOffsets(74, -80, DistanceUnit.MM);
         pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+
+        pinpoint.update();
+        lastPinpointMergePose = currentPose.clone();
+        lastPinpointPose = new Pose2d(pinpoint.getPosX(), pinpoint.getPosY(), pinpoint.getHeading());
     }
 
     // Pinpoint
@@ -40,6 +44,7 @@ public class MergeLocalizer extends Localizer {
     private Pose2d lastPinpointPose = null, lastPinpointMergePose = null;
     public static boolean constantCorrection = false;
     public static boolean usePinpoint = true;
+    public static double pinpointPollDist = 6;
 
     // Limelight
     private LLResult result = null;
@@ -73,7 +78,7 @@ public class MergeLocalizer extends Localizer {
 
         // PINPOINT
 
-        if ((usePinpoint && lastPinpointPose != null && currentPose.getDistanceFromPoint(lastPinpointPose) >= 24.0) || constantCorrection) {
+        if ((usePinpoint && lastPinpointPose != null && currentPose.getDistanceFromPoint(lastPinpointPose) >= pinpointPollDist) || constantCorrection) {
             Log.i("Localization Test", "pinpoint in use");
             pinpoint.update();
 

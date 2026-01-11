@@ -91,7 +91,6 @@ public class Drivetrain {
 
         localizer = new Localizer (sensors, this, "#ff0000", "#ffffff");
         mergeLocalizer = new MergeLocalizer (hardwareMap, sensors, this, "#0000ff", "#ff00ff");
-        mergeLocalizer = new MergeLocalizer (hardwareMap, sensors, this, "#0000ff", "#ffffff");
         if (vision != null) vision.start();
     }
 
@@ -382,12 +381,12 @@ public class Drivetrain {
 //        TelemetryUtil.packet.put("Drivetrain : PID hError", hError);
 
         LogUtil.driveState.set(state.toString());
-        LogUtil.drivePath.set(String.format(Locale.US, "%.2f %.2f %.2f", targetPoint.x, targetPoint.y, targetPoint.heading)); // TODO Log spline
 
         Canvas canvas = TelemetryUtil.packet.fieldOverlay();
         if (path != null) {
             DashboardUtil.drawRobot(canvas, new Pose2d(ROBOT_POSITION.x + sensors.loopTime * pd.vel.x, ROBOT_POSITION.y + sensors.loopTime * pd.vel.y, Math.atan2(pd.vel.y, pd.vel.x)), "#8000ff");
             Spline s = path.pathSegments.get(pd.index).spline;
+            LogUtil.drivePath.set(s.toString());
 
             double n = 100;
             double step = 1/n;
@@ -398,6 +397,9 @@ public class Drivetrain {
             for (RepulsionPoint repel : path.repel) {
                 canvas.fillCircle(repel.x, repel.y, 0.5);
             }
+        } else {
+            DashboardUtil.drawRobot(canvas, targetPoint, "#8000ff");
+            LogUtil.drivePath.set(String.format(Locale.US, "%.3f %.3f %.3f", targetPoint.x, targetPoint.y, targetPoint.heading));
         }
     }
 }

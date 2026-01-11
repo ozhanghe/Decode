@@ -30,7 +30,7 @@ public class Teleop extends LinearOpMode {
         Robot robot = new Robot(hardwareMap);
         robot.setStopChecker(this::isStopRequested);
 
-        //robot.shooter.state = Shooter.State.TEST;
+        robot.shooter.state = Shooter.State.TEST;
 
         robot.drivetrain.setPoseEstimate(AUTO_ENDING_POSE);
 
@@ -64,7 +64,6 @@ public class Teleop extends LinearOpMode {
         }
 
         if (!isStopRequested()) LogUtil.init();
-
         LogUtil.drivePositionReset = true;
 
         while (!isStopRequested()) {
@@ -177,12 +176,8 @@ public class Teleop extends LinearOpMode {
                     robot.shooter.reqStop(true);
                 }
 
-                if (rb1.isClicked(gamepad1.right_bumper)) {
-                    if (robot.shooter.state != Shooter.State.READY) {
-                        robot.shooter.reqStop(true);
-                    } else {
-                        robot.shooter.reqShoot(true);
-                    }
+                if (rb1.isClicked(gamepad1.right_bumper) && robot.shooter.state == Shooter.State.READY) {
+                    robot.shooter.reqShoot(true);
                 }
             }
 
@@ -205,7 +200,7 @@ public class Teleop extends LinearOpMode {
             telemetry.addData("shooter state", robot.shooter.state.toString());
             telemetry.addData("flywheelOn", flywheelOn);
             telemetry.addData("flywheelAtVel", robot.shooter.atVel());
-            telemetry.addData("turretInPosition", Math.abs(robot.shooter.targetTurretAngle - Sensors.turretAngleClip(robot.sensors.getTurretAngle())) <= Math.toRadians(2.0) ? "yes" : "aw no its not happy yet");
+            telemetry.addData("turretInPosition", Math.abs(robot.shooter.targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(2.0) ? "yes" : "aw no its not happy yet");
             telemetry.addData("Robot position (deg)", String.format(Locale.US, "(%.2f, %.2f, %.2f)", ROBOT_POSITION.x, ROBOT_POSITION.y, Math.toDegrees(ROBOT_POSITION.heading)));
 
             telemetry.update();

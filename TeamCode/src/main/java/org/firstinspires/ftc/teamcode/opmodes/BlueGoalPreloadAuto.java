@@ -7,47 +7,77 @@ import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.utils.Globals;
+import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
 
-@Autonomous(name = "BlueGoalPreloadAuto")
+@Autonomous(name = "BlueGoalPreloadAuto", group = "Auto")
 public class BlueGoalPreloadAuto extends LinearOpMode {
     private Robot robot;
-    private double shooterTimer = System.currentTimeMillis();
+    private double timer = System.currentTimeMillis();
 
     public void runOpMode() {
         Globals.isRed = false;
         Globals.RUNMODE = RunMode.AUTO;
         robot = new Robot(hardwareMap);
         robot.setStopChecker(this::isStopRequested);
-        robot.drivetrain.setPoseEstimate(new Pose2d(-72 + Globals.ROBOT_LENGTH / 2, -48 + Globals.ROBOT_WIDTH / 2, 0));
+        robot.drivetrain.setPoseEstimate(new Pose2d(-65, -28, 0));
 
         robot.shooter.state = Shooter.State.TEST;
         robot.shooter.setShooterBlocker(true);
 
-        while (opModeInInit()) { robot.update(); }
+        while (opModeInInit()) {
+            robot.update();
+            robot.sensors.light0P.setState(System.currentTimeMillis() % 500 < 250);
+        }
+        robot.sensors.light0P.setState(true);
+
+        if (!isStopRequested()) LogUtil.init();
+        LogUtil.drivePositionReset = true;
 
         robot.drivetrain.goToPoint(new Pose2d(-40, -40, 0), 1.0);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
-        robot.drivetrain.goToPoint(new Pose2d(-34, -34, Math.atan2(Globals.blueTag.y + 34, Globals.blueTag.x + 34)), 1.0);
         robot.shooter.setShooter(Shooter.Dist.CLOSE);
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel());
-
-        robot.shooter.setShooterBlocker(false);
-        robot.waitWhile(() -> !robot.shooter.flywheelBlocker.inPosition(0.1));
-
-        shooterTimer = System.currentTimeMillis();
-        robot.intake.reqShoot(true);
-        robot.waitWhile(() -> System.currentTimeMillis() - shooterTimer <= 3000);
-
-        robot.drivetrain.goToPoint(new Pose2d(-32, -52, Math.toRadians(-150)), 1.0);
+        shoot();
+        intake(-11, -48);
+        shoot();
+        intake(13, -54);
+        shoot();
         robot.shooter.setShooter(Shooter.Dist.OFF);
-        robot.intake.reqOff(true);
+        robot.drivetrain.goToPoint(new Pose2d(0, -36, 0), 1.0);
 
+        Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
         robot.waitWhile(() -> {
             Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
             return true;
         });
+    }
+
+    private void shoot() {
+        robot.drivetrain.goToPoint(new Pose2d(-28, -28, Math.atan2(-60 + 28, -63 + 28)), 1.0);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel());
+
+        robot.shooter.setShooterBlocker(false);
+        timer = System.currentTimeMillis();
+        robot.intake.reqShoot(true);
+        robot.waitWhile(() -> System.currentTimeMillis() - timer <= 1500);
+
+        robot.shooter.setShooterBlocker(true);
+        robot.intake.reqOff(true);
+    }
+
+    private void intake(double x, double y) {
+        robot.drivetrain.goToPoint(new Pose2d(x, -18, Math.toRadians(-90)), 1.0);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+        robot.intake.reqIntake(true);
+
+        timer = System.currentTimeMillis();
+        robot.drivetrain.goToPoint(new Pose2d(x, y, Math.toRadians(-90)), 0.2);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT && System.currentTimeMillis() - timer <= 3000);
+
+        robot.drivetrain.goToPoint(new Pose2d(x, -30, Math.toRadians(-90)), 1.0);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+        robot.intake.reqOff(true);
     }
 }
