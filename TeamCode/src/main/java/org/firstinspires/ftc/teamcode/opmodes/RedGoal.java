@@ -35,8 +35,7 @@ public class RedGoal extends LinearOpMode {
         // Preload
         robot.shooter.reqAim(true);
         Path path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
-                .addPoint(new Pose2d(-48, 24, Math.PI * 0.5))
-                .addPoint(new Pose2d(-6, 6, Math.PI * 0.75))
+                .addPoint(new Pose2d(-24, 24, Math.PI * 0.75))
                 .setDecel(true);
         robot.drivetrain.setPath(path);
         robot.update();
@@ -54,8 +53,8 @@ public class RedGoal extends LinearOpMode {
         robot.intake.reqIntake(true);
         path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
                 .setDecel(true)
-                .addPoint(new Pose2d(-12, 30, Math.PI * 0.5))
-                .addPoint(new Pose2d(-12, 37.5, Math.PI * 0.5));
+                .addPoint(new Pose2d(-12, 24, Math.PI * 0.5))
+                .addPoint(new Pose2d(-12, 42, Math.PI * 0.5));
         robot.drivetrain.setPath(path);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
@@ -63,14 +62,14 @@ public class RedGoal extends LinearOpMode {
         robot.intake.reqOff(true);
         path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
                 .setDecel(true)
-                .addPoint(new Pose2d(-4, 58, 0));
+                .addPoint(new Pose2d(0, 50, 0));
         robot.drivetrain.setPath(path);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
         robot.shooter.reqAim(true);
         path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
-                .addPoint(new Pose2d(-6, 6, Math.PI * 0.75));
+                .addPoint(new Pose2d(-12, 12, Math.PI * 0.75));
         robot.drivetrain.setPath(path);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY);
@@ -87,8 +86,8 @@ public class RedGoal extends LinearOpMode {
         robot.intake.reqIntake(true);
         path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
                 .setDecel(true)
-                .addPoint(new Pose2d(12, 30, Math.PI * 0.5))
-                .addPoint(new Pose2d(12, 37.5, Math.PI * 0.5));
+                .addPoint(new Pose2d(12, 24, Math.PI * 0.5))
+                .addPoint(new Pose2d(12, 42, Math.PI * 0.5));
         robot.drivetrain.setPath(path);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
@@ -97,7 +96,7 @@ public class RedGoal extends LinearOpMode {
         robot.shooter.reqAim(true);
         path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
                 .setDecel(true)
-                .addPoint(new Pose2d(-6, 6, Math.PI * 0.75));
+                .addPoint(new Pose2d(-12, 12, Math.PI * 0.75));
         robot.drivetrain.setPath(path);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY);
@@ -114,8 +113,8 @@ public class RedGoal extends LinearOpMode {
         robot.intake.reqIntake(true);
         path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
                 .setDecel(true)
-                .addPoint(new Pose2d(36, 30, Math.PI * 0.5))
-                .addPoint(new Pose2d(36, 37.5, Math.PI * 0.5));
+                .addPoint(new Pose2d(36, 24, Math.PI * 0.5))
+                .addPoint(new Pose2d(36, 42, Math.PI * 0.5));
         robot.drivetrain.setPath(path);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
@@ -124,7 +123,7 @@ public class RedGoal extends LinearOpMode {
         robot.shooter.reqAim(true);
         path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
                 .setDecel(true)
-                .addPoint(new Pose2d(-6, 6, Math.PI * 0.75));
+                .addPoint(new Pose2d(-12, 12, Math.PI * 0.75));
         robot.drivetrain.setPath(path);
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY);
