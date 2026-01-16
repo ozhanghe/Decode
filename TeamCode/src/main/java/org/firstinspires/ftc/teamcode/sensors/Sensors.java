@@ -7,6 +7,7 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
@@ -48,12 +49,14 @@ public class Sensors {
     public static long voltageUpdateTime = 5000, colorSensorUpdateTime = 500;
     private long lastVoltageUpdatedTime = System.currentTimeMillis();
     private long lastColorSensorUpdatedTime = System.currentTimeMillis();
+    private final VoltageSensor voltageSensor;
 
     public Sensors(Robot robot) {
         this.robot = robot;
 
         currentTime = System.nanoTime();
-        voltage = robot.hardwareMap.voltageSensor.iterator().next().getVoltage();
+        voltageSensor = robot.hardwareMap.voltageSensor.iterator().next();
+        voltage = voltageSensor.getVoltage();
 
         //parkEncoder = new RelativeEncoder(robot.hardwareMap, "park_encoder");
         turretEncoder = robot.hardwareMap.get(AnalogInput.class, "turret_encoder");
@@ -82,9 +85,9 @@ public class Sensors {
         odoWheelPositions[1] = robot.drivetrain.rightFront.motor[0].getCurrentPosition();
         odoWheelPositions[2] = robot.drivetrain.leftRear.motor[0].getCurrentPosition();
 
-        double flywheelPos = robot.drivetrain.rightRear.motor[0].getCurrentPosition();
+        //double flywheelPos = robot.drivetrain.rightRear.motor[0].getCurrentPosition();
         // (flywheelPos - flywheelLastPos) / 28.0 = delta revolutions
-        flywheelAngularVel = robot.drivetrain.rightRear.motor[0].getVelocity() / 28.0;
+        flywheelAngularVel = robot.drivetrain.rightRear.motor[0].getVelocity() / 28.0 * 12.0 / 20.0;
         flywheelVelocity = flywheelAngularVel * 96.0 * Math.PI / 25.4;
 
         robot.drivetrain.localizer.updateEncoders(odoWheelPositions);
@@ -121,7 +124,7 @@ public class Sensors {
         }
 
         if (System.currentTimeMillis() - lastVoltageUpdatedTime > voltageUpdateTime) {
-            voltage = robot.hardwareMap.voltageSensor.iterator().next().getVoltage();
+            voltage = voltageSensor.getVoltage();
             lastVoltageUpdatedTime = System.currentTimeMillis();
         }
 

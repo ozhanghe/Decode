@@ -53,14 +53,15 @@ public class Shooter {
 
     // velocity is in inches / second
     public static PID velocityPID = new PID (0.0, 0.0002, 0.0001);
-    public static double velocityFFm = 0.000838827;
-    public static double velocityFFb = 0.0530646;
+    public static double velocityFFm = 0.00143241;
+    public static double velocityFFb = 0.080616;
     public static double velocityFilterLow = 0.05;
     public static double velocityFilterHigh = 0.5;
-    public static double velocityFilterThresh = 100;
-    public static double velocityHighPowerThresh = 25;
-    public static double velocityNoSkipThresh = 400;
+    public static double velocityFilterThresh = 60;
+    public static double velocityHighPowerThresh = 15;
+    public static double velocityNoSkipThresh = 200;
     public static double velocityNoSkipAccel = 0.8;
+    public static double flywheelScaleVoltage = 12;
     public static double atVelThresh = 15;
     public static double latchBlockAngle = 2.5;
     private double targetVelocity = 0.0;
@@ -70,7 +71,7 @@ public class Shooter {
     // auto-aim
     public final double dLauncher = Math.sqrt(66.632 * 66.632 + 229.61 * 229.61) / 25.4;
     public final double g = 9.805 * 100 / 2.54;
-    public final double launcherHeight = 330.14203 / 25.4;
+    public final double launcherHeight = 13.5;
     public Vector3 ballTarget, P, V;
     public double a = g * g / 4, c, d, e;
     public double v0, cv0;
@@ -79,7 +80,7 @@ public class Shooter {
     public double minV0factor = 1.07;
     public static double minV0factorClose = 1.17; // TODO: tune for triple shot
     public static double minV0factorFar = 1.17; // TODO: tune for triple shot
-    public static double flywheelEfficiency = 0.65;
+    public static double flywheelEfficiency = 1;
     public static double flywheelEfficiencyConstantFarAddition = -0.02;
     public double targetTurretAngle = 0.0;
     public double targetHoodAngle = 0.0;
@@ -272,7 +273,7 @@ public class Shooter {
         else velocityPID.clipIntegral(-1, 1);
         double pidpow = velocityPID.update(error, -1.0, 1.0);
         double ffpow = targetVelocity * velocityFFm + velocityFFb;
-        double pow = Math.max(0, pidpow + ffpow);
+        double pow = Math.max(0, pidpow + ffpow) * flywheelScaleVoltage / robot.sensors.getVoltage();
         if (error > velocityHighPowerThresh) pow = 1;
         if (filteredVelocity < velocityNoSkipThresh) {
             pow = Math.min(pow, prevPow + velocityNoSkipAccel * robot.sensors.loopTime);
@@ -344,7 +345,7 @@ public class Shooter {
 
     public void updateBallTarget() {
         //ballTarget = new Vector3(-70.5, 60 * (Globals.isRed ? 1 : -1), 38.75);
-        ballTarget = new Vector3(-67, 63 * (Globals.isRed ? 1 : -1), 40);
+        ballTarget = new Vector3(-67, 63 * (Globals.isRed ? 1 : -1), 41);
     }
 
     public int calcIndexPosition(int greenPos, int motifPos){
@@ -755,7 +756,7 @@ public class Shooter {
 
     // further separation :)
     // bootleg LM1 strat being used in LM2 code
-    public static double closeAngle = 0.15, closeVel = 630, midAngle = 0.45, midVel  = 780, farAngle = 0.5, farVel = 870;
+    public static double closeAngle = 0.15, closeVel = 400, midAngle = 0.5, midVel  = 480, farAngle = 0.5, farVel = 530;
 
     public enum Dist {
         CLOSE(closeAngle, closeVel),
