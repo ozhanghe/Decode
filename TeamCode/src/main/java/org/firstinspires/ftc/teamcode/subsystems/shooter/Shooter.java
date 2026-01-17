@@ -53,8 +53,8 @@ public class Shooter {
 
     // velocity is in inches / second
     public static PID velocityPID = new PID (0.0, 0.0002, 0.0001);
-    public static double velocityFFm = 0.00143241;
-    public static double velocityFFb = 0.080616;
+    public static double velocityFFm = 0.00124492;
+    public static double velocityFFb = 0.0866734;
     public static double velocityFilterLow = 0.05;
     public static double velocityFilterHigh = 0.5;
     public static double velocityFilterThresh = 60;
@@ -756,7 +756,7 @@ public class Shooter {
 
     // further separation :)
     // bootleg LM1 strat being used in LM2 code
-    public static double closeAngle = 0.15, closeVel = 400, midAngle = 0.5, midVel  = 480, farAngle = 0.5, farVel = 530;
+    public static double closeAngle = 0.0, closeVel = 470, midAngle = 0.5, midVel = 550, farAngle = 0.5, farVel = 600;
 
     public enum Dist {
         CLOSE(closeAngle, closeVel),

@@ -87,7 +87,7 @@ public class Sensors {
 
         //double flywheelPos = robot.drivetrain.rightRear.motor[0].getCurrentPosition();
         // (flywheelPos - flywheelLastPos) / 28.0 = delta revolutions
-        flywheelAngularVel = robot.drivetrain.rightRear.motor[0].getVelocity() / 28.0 * 12.0 / 20.0;
+        flywheelAngularVel = robot.drivetrain.rightRear.motor[0].getVelocity() / 28.0 * 14.0 / 20.0;
         flywheelVelocity = flywheelAngularVel * 96.0 * Math.PI / 25.4;
 
         robot.drivetrain.localizer.updateEncoders(odoWheelPositions);
@@ -156,6 +156,7 @@ public class Sensors {
     private void updateTelemetry() {
         TelemetryUtil.packet.put("Voltage", voltage);
         //TelemetryUtil.packet.put("Shooter : Flywheel Angular Velocity", flywheelAngularVel);
+        TelemetryUtil.packet.put("Shooter : Flywheel RPM", flywheelAngularVel * 60);
         TelemetryUtil.packet.put("Shooter : Flywheel Current Velocity", flywheelVelocity);
         TelemetryUtil.packet.put("Shooter : Turret angle (deg)", Math.toDegrees(turretAngle));
         TelemetryUtil.packet.put("Shooter : Hood top angle (deg)", Math.toDegrees(robot.shooter.hood.getCurrentAngle()) * 30 / 48 + 34);
