@@ -21,6 +21,7 @@ import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.Polynomial;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
+import org.firstinspires.ftc.teamcode.utils.Utils;
 import org.firstinspires.ftc.teamcode.utils.Vector2;
 import org.firstinspires.ftc.teamcode.utils.Vector3;
 import org.firstinspires.ftc.teamcode.utils.priority.PriorityCRServo;
@@ -373,7 +374,7 @@ public class Shooter {
                 (halfFieldWidth * (Globals.isRed ? 1 : -1) - ROBOT_POSITION.y) * (halfFieldWidth * (Globals.isRed ? 1 : -1) - ROBOT_POSITION.y));
         if (dist >= 102) ballTarget = new Vector3(-69.5, 63, 41);
         else {
-            double k = dist / 102;
+            double k = Utils.minMaxClip(dist - 17, 0, 102) / 102;
             ballTarget = new Vector3(-69.5, 63 * k + 69.5 * (1 - k), 38.75 * k + 48.25 * (1 - k));
         }
     }
