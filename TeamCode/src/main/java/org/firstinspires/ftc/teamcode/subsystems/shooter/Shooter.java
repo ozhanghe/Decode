@@ -49,9 +49,8 @@ public class Shooter {
 
     private boolean aimRequest = false, shootRequest = false, stopRequest = false, indexRequest = false;
 
-    public static PID turretPID = new PID (0.2, 0.0, 0.02);
+    public static PID turretPID = new PID (0.25, 0.0, 0.03);
     public static double turretMinPow = 0.1;
-    public static double turretIntegralThresh = Math.toRadians(40);
 
     // velocity is in inches / second
     public static PID velocityPID = new PID (0.0, 0.0002, 0.0001);
@@ -86,7 +85,7 @@ public class Shooter {
     public double minV0factor = 1.07;
     public static double minV0factorClose = 1.17; // TODO: tune for triple shot
     public static double minV0factorFar = 1.17; // TODO: tune for triple shot
-    public static double flywheelEfficiency = 1;
+    public static double flywheelEfficiency = 0.92;
     public static double flywheelEfficiencyConstantFarAddition = -0.02;
     public double targetTurretAngle = 0.0;
     public double targetHoodAngle = 0.0;
@@ -199,7 +198,12 @@ public class Shooter {
                 aimRequest = false;
 
                 setShooterBlocker(true);
-                if (aimLauncherV8() && hood.inPosition(Math.toRadians(0.5)) && Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(P.x * P.x + P.y * P.y <= 1296 ? 10 : 4)) {
+                TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
+                boolean aimResult = aimLauncherV8();
+                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(P.x * P.x + P.y * P.y <= 1296 ? 10 : 4);
+                TelemetryUtil.packet.put("Aim: aimResult", aimResult);
+                TelemetryUtil.packet.put("Aim: turretResult", turretResult);
+                if (aimResult && hood.inPosition() && turretResult) {
                     state = State.READY;
                 }
                 setTargetVelocity(minFlywheelVelocity);
@@ -232,7 +236,6 @@ public class Shooter {
 
                 if (stopRequest) {
                     stopRequest = false;
-                    aimRequest = false;
                     shootRequest = false;
                     state = State.IDLE;
                     setTargetVelocity(0.0);
@@ -260,7 +263,6 @@ public class Shooter {
 
                 if (stopRequest) {
                     stopRequest = false;
-                    aimRequest = false;
                     shootRequest = false;
                     state = State.IDLE;
                     setTargetVelocity(0.0);
@@ -301,13 +303,11 @@ public class Shooter {
         flywheel.setTargetPower(pow);
         prevPow = pow;
 
-        // Turret PIDF
+        // Turret PID
         targetTurretAngle = Sensors.turretAngleClip(targetTurretAngle);
         double turretError = targetTurretAngle - Sensors.turretAngleClip(robot.sensors.getTurretAngle());
-        if (Math.abs(turretError) <= turretIntegralThresh) turretPID.resetIntegral();
-        else turretPID.clipIntegral(-1, 1);
         double turretPow = turretPID.update(turretError, -1, 1) + turretMinPow * Math.signum(turretError);
-        if (Math.abs(turretError) < Math.toRadians(2)) turretPow = turretMinPow * turretError / Math.toRadians(2);
+        if (Math.abs(turretError) < Math.toRadians(2)) turretPow = 0; // turretMinPow * turretError / Math.toRadians(2)
         else if (P != null && P.x * P.x + P.y * P.y <= 1296 && Math.abs(turretError) < Math.toRadians(10)) turretPow = 0;
         turret.setTargetPower(turretPow);
 
@@ -411,7 +411,10 @@ public class Shooter {
 
     // in use
     public boolean aimLauncherV8() {
-        if (ROBOT_POSITION == null || ROBOT_VELOCITY == null) return false;
+        if (ROBOT_POSITION == null || ROBOT_VELOCITY == null) {
+            TelemetryUtil.packet.put("Aim: aimLauncherV8", "no position");
+            return false;
+        }
         Log.i("Points", "Starting aimLauncherV8");
         updateBallTargetInterpolate();
         Vector3 P;
@@ -440,6 +443,7 @@ public class Shooter {
         Log.i("MinV0", tRoots.size() + "");
         if (tRoots.isEmpty()) {
             Log.i("Points", "Shot dies in MinV0, tRoots is empty");
+            TelemetryUtil.packet.put("Aim: aimLauncherV8", "Shot dies in MinV0, tRoots is empty");
             return false;
         }
         Log.i("MinV0", "tRoots[0]: " + tRoots.get(0));
@@ -473,6 +477,7 @@ public class Shooter {
                 Log.i("Static", "Root count: " + tRoots.size() + ", for polynomial [" + A + ", " + B + ", " + C + "]");
                 if (tRoots.isEmpty()) {
                     Log.i("Points", "Shot dies in Static, tRoots is empty");
+                    TelemetryUtil.packet.put("Aim: aimLauncherV8", "Shot dies in Static, tRoots is empty");
                     return false;
                 }
                 StringBuilder roots = new StringBuilder();
@@ -564,6 +569,7 @@ public class Shooter {
                 }
                 if (tRoots.isEmpty()) {
                     Log.i("Points", "Shot dies in Dynamic, tRoots is empty");
+                    TelemetryUtil.packet.put("Aim: aimLauncherV8", "Shot dies in Dynamic, tRoots is empty");
                     return false;
                 }
                 StringBuilder roots = new StringBuilder("[");
@@ -635,17 +641,19 @@ public class Shooter {
                 }
             }
         } else {
-            Log.i("Points", "Shot isn't possible, v0 is sub-36 in/s");
+            Log.i("Points", "Shot isn't possible, v0 is sub-120 in/s");
+            TelemetryUtil.packet.put("Aim: aimLauncherV8", "Shot isn't possible, v0 is sub-120 in/s");
             return false;
         }
 
-
         if (phis[tRoots.size()] == -100) {
             Log.i("Points", "Phis are cooked, phis[" + tRoots.size() + "] = -100");
+            TelemetryUtil.packet.put("Aim: aimLauncherV8", "Phis are cooked, phis[" + tRoots.size() + "] = -100");
             return false;
         }
         targetHoodAngle = (phis[tRoots.size()] - hoodSweep) * hoodGearRatio; // subtracts the sweep of the hood
         Log.i("Points", "The shot is possible and we're returning true!!");
+        TelemetryUtil.packet.put("Aim: aimLauncherV8", "The shot is possible and we're returning true!!");
         return true;
     }
 
@@ -667,7 +675,7 @@ public class Shooter {
 
     // further separation :)
     // bootleg LM1 strat being used in LM2 code
-    public static double closeAngle = 0.0, closeVel = 470, midAngle = 0.5, midVel = 550, farAngle = 0.5, farVel = 600;
+    public static double closeAngle = 0.2, closeVel = 470, midAngle = 0.5, midVel = 550, farAngle = 0.5, farVel = 600;
 
     public enum Dist {
         CLOSE(closeAngle, closeVel),
@@ -682,13 +690,9 @@ public class Shooter {
             this.flywheelVel = flywheelVel;
         }
 
-        public static void setHoodAngle(Dist dist, double angle) {
-            dist.hoodAngle = angle;
-        }
+        public static void setHoodAngle(Dist dist, double angle) { dist.hoodAngle = angle; }
 
-        public static void setFlywheelVel(Dist dist, double vel) {
-            dist.flywheelVel = vel;
-        }
+        public static void setFlywheelVel(Dist dist, double vel) { dist.flywheelVel = vel; }
     }
 
     public void setShooter(Dist mode) {
