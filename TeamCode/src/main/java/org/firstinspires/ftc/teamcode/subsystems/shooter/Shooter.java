@@ -84,8 +84,8 @@ public class Shooter {
     public double minV0 = 0.0, minFlywheelVelocity = 0.0;
     public double minV0Superthresh = 0.0; // TODO: need to tune this, controls how much over minV0 we make the v0 strive for pre mult
     public double minV0factor = 1.07;
-    public static double minV0factorClose = 1.17; // TODO: tune for triple shot
-    public static double minV0factorFar = 1.17; // TODO: tune for triple shot
+    public static double minV0factorClose = 1.13; // TODO: tune for triple shot
+    public static double minV0factorFar = 1.11; // TODO: tune for triple shot
     public static double flywheelEfficiency = 0.92;
     public static double flywheelEfficiencyConstantFarAddition = -0.04;
     public double targetTurretAngle = 0.0;
@@ -172,7 +172,7 @@ public class Shooter {
                 setShooterBlocker(true);
                 TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
                 boolean aimResult = aimLauncherV8();
-                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(P.x * P.x + P.y * P.y <= 1296 ? 8 : 3);
+                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 8 : 2);
                 TelemetryUtil.packet.put("Aim: aimResult", aimResult);
                 TelemetryUtil.packet.put("Aim: turretResult", turretResult);
                 if (aimResult && hood.inPosition() && turretResult) {
@@ -329,11 +329,10 @@ public class Shooter {
     }
 
     public void updateBallTargetInterpolate() {
-        double dist = Math.hypot(-halfFieldWidth - ROBOT_POSITION.x, halfFieldWidth * (Globals.isRed ? 1 : -1) - ROBOT_POSITION.y);
         if (ROBOT_POSITION.x >= 24) ballTarget = new Vector3(-69.5, 67 * (Globals.isRed ? 1 : -1), 46);
         else {
-            double k = Utils.minMaxClip(dist, 0, 144) / 144;
-            ballTarget = new Vector3(-69.5, (60 * k + 69.5 * (1 - k)) * (Globals.isRed ? 1 : -1), 38.75 * k + 48.25 * (1 - k));
+            double k = Utils.minMaxClip(Math.hypot(-halfFieldWidth - ROBOT_POSITION.x, halfFieldWidth * (Globals.isRed ? 1 : -1) - ROBOT_POSITION.y), 0, 126) / 126;
+            ballTarget = new Vector3(-69.5, (60 * k + 69.5 * (1 - k)) * (Globals.isRed ? 1 : -1), 38.75 * k + 48.25 * (1 - k) - 2);
         }
     }
 
@@ -349,7 +348,7 @@ public class Shooter {
         // for +-180 turret
         updateBallTargetInterpolate();
         Vector3 P;
-        if (ROBOT_POSITION.x >= ROBOT_POSITION.y * (Globals.isRed ? -1 : 1)) P = new Vector3(ballTarget);
+        if (ROBOT_POSITION.x + 6 >= ROBOT_POSITION.y * (Globals.isRed ? -1 : 1)) P = new Vector3(ballTarget);
         else P = new Vector3(ballTarget.y * (Globals.isRed ? -1 : 1), ballTarget.x * (Globals.isRed ? -1 : 1), ballTarget.z); // invert target along y = x or y = -x
         P.subtract(new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight));
         this.P = P;
@@ -364,6 +363,8 @@ public class Shooter {
         }
         Log.i("Points", "Starting aimLauncherV8");
         turretTrackTarget();
+        Vector3 V = new Vector3(-ROBOT_VELOCITY.x, -ROBOT_VELOCITY.y, 0);
+        V.subtract(Vector3.cross(new Vector3(0, 0, currHeadingVel), new Vector3(dLauncher * Math.cos(currHeadingPos), dLauncher * Math.sin(currHeadingPos), 0)));
         Log.i("Points", "Set target turret angle & Starting MinV0");
 
         double a = g * g / 4;
@@ -442,12 +443,12 @@ public class Shooter {
                 yAtWall /= wallM - P.y / P.x;
                 double t = (yAtWall - ROBOT_POSITION.y) / (v0 * Math.sin(phis[i]) * Math.sin(thetas[i]) + V.y);
                 if (t <= 0) {
-                    phis[i] = 100; // this makes sure the ball goes into the target through the restricted diagonal plane
+                    phis[i] = -100; // this makes sure the ball goes into the target through the restricted diagonal plane
                     Log.i("Dynamic", "Point 2: i = " + i + ", t = " + t);
                 } else {
                     double heightAtWall = launcherHeight + v0 * Math.cos(phis[i]) * t - g * t * t / 2;
                     if (heightAtWall < 38.75 + 3) {
-                        phis[i] = 100;
+                        phis[i] = -100;
                         Log.i("Dynamic", "Point 3: i = " + i + ", t = " + t + ", height at wall = " + heightAtWall);
                     }
                 }
