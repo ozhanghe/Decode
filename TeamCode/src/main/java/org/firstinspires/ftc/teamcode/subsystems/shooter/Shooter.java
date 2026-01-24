@@ -84,16 +84,18 @@ public class Shooter {
     public double minV0 = 0.0, minFlywheelVelocity = 0.0;
     public double minV0Superthresh = 0.01; // TODO: need to tune this, controls how much over minV0 we make the v0 strive for pre mult
     public double minV0factor = 1.07;
-    public static double minV0factorClose = 1.13; // TODO: tune for triple shot
-    public static double minV0factorFar = 1.09; // TODO: tune for triple shot
+    public static double minV0factorClose = 1.09; // TODO: tune for triple shot
+    public static double minV0factorFar = 1.13  ; // TODO: tune for triple shot
     public static double flywheelEfficiency = 0.92;
     public static double flywheelEfficiencyConstantFarAddition = -0.03;
     public double targetTurretAngle = 0.0;
     public double targetHoodAngle = 0.0;
     public static double hoodSweep = Math.toRadians(34.0);
     public static double hoodGearRatio = 48.0 / 30.0;
-    private double lastHeadingPos = 0, lastHeadingVel = 0, lastHeadingAccel = 0;
-    private double currHeadingPos = 0, currHeadingVel = 0, currHeadingAccel = 0, currHeadingJerk = 0;
+    public static double lastHeadingPos = 0, lastHeadingVel = 0, lastHeadingAccel = 0;
+    public static double currHeadingPos = 0, currHeadingVel = 0, currHeadingAccel = 0, currHeadingJerk = 0;
+    private Pose2d lastPos, currVel, lastVel;
+    public static double posFilter = 0.2;
     public static double turretHeadingPredictTime = 0.0;
     private final double wallM = (58.3414785 - thirdFieldWidth) / (-55.6424675 + halfFieldWidth);
     private final double wallB = wallM * halfFieldWidth + thirdFieldWidth;
@@ -149,6 +151,8 @@ public class Shooter {
 
         updateBallTarget();
         lastHeadingPos = currHeadingPos = ROBOT_POSITION.heading;
+        lastVel = currVel = ROBOT_VELOCITY.clone();
+        lastPos = ROBOT_POSITION.clone();
     }
 
     public void update() {
@@ -172,7 +176,7 @@ public class Shooter {
                 setShooterBlocker(true);
                 TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
                 boolean aimResult = aimLauncherV8();
-                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 8 : 1.5);
+                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 4 : 1.5);
                 TelemetryUtil.packet.put("Aim: aimResult", aimResult);
                 TelemetryUtil.packet.put("Aim: turretResult", turretResult);
                 if (aimResult && hood.inPosition() && turretResult) {
@@ -244,6 +248,16 @@ public class Shooter {
         lastHeadingPos = currHeadingPos;
         lastHeadingVel = currHeadingVel;
         lastHeadingAccel = currHeadingAccel;
+
+        lastVel = currVel.clone();
+        currVel = ROBOT_POSITION.clone();
+        currVel.subtract(lastPos);
+        currVel.mult(1 / robot.sensors.loopTime);
+        currVel.mult(posFilter);
+        lastVel.mult(1 - posFilter);
+        currVel = Pose2d.add(currVel, lastVel);
+        lastVel.mult(1 / (1 - posFilter));
+        lastPos = ROBOT_POSITION.clone();
 
         // Flywheel Velocity PIDF
         double actualVelocity = robot.sensors.getFlywheelVelocity();
@@ -358,7 +372,6 @@ public class Shooter {
         targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - nextHeadingPrediction(turretHeadingPredictTime));
     }
 
-    // in use
     public boolean aimLauncherV8() {
         if (ROBOT_POSITION == null || ROBOT_VELOCITY == null) {
             TelemetryUtil.packet.put("Aim: aimLauncherV8", "no position");
@@ -366,7 +379,7 @@ public class Shooter {
         }
         Log.i("Points", "Starting aimLauncherV8");
         turretTrackTarget();
-        Vector3 V = new Vector3(-ROBOT_VELOCITY.x, -ROBOT_VELOCITY.y, 0);
+        Vector3 V = new Vector3(-currVel.x, -currVel.y, 0);
         V.subtract(Vector3.cross(new Vector3(0, 0, currHeadingVel), new Vector3(dLauncher * Math.cos(currHeadingPos), dLauncher * Math.sin(currHeadingPos), 0)));
         this.V = V;
         Log.i("Points", "Set target turret angle & Starting MinV0");
