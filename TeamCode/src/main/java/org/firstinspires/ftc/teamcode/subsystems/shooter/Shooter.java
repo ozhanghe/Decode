@@ -39,8 +39,6 @@ public class Shooter {
         AIMING,
         READY,
         SHOOT,
-        INDEX,
-        INDEXING,
         TEST
     } public State state = State.IDLE;
 
@@ -50,7 +48,7 @@ public class Shooter {
     public nPriorityServo hood, flywheelBlocker, net, kicker;
     public PriorityCRServo turret;
 
-    private boolean aimRequest = false, shootRequest = false, stopRequest = false, indexRequest = false;
+    private boolean aimRequest = false, shootRequest = false, stopRequest = false;
 
     public static PID turretPID = new PID (0.25, 0.0, 0.03);
     public static double turretMinPow = 0.1;
@@ -94,12 +92,12 @@ public class Shooter {
     public double targetHoodAngle = 0.0;
     public static double hoodSweep = Math.toRadians(34.0);
     public static double hoodGearRatio = 48.0 / 30.0;
-    public double lastHeadingPos = 0, lastHeadingVel = 0, lastHeadingAccel = 0;
-    public double currHeadingPos = 0, currHeadingVel = 0, currHeadingAccel = 0, currHeadingJerk = 0;
+    private double lastHeadingPos = 0, lastHeadingVel = 0, lastHeadingAccel = 0;
+    private double currHeadingPos = 0, currHeadingVel = 0, currHeadingAccel = 0, currHeadingJerk = 0;
+    public static double turretHeadingPredictTime = 0.0;
     private final double wallM = (58.3414785 - thirdFieldWidth) / (-55.6424675 + halfFieldWidth);
     private final double wallB = wallM * halfFieldWidth + thirdFieldWidth;
     private int moves;
-    private boolean index;
 
     public Shooter(Robot robot) {
         this.robot = robot;
@@ -153,17 +151,12 @@ public class Shooter {
         lastHeadingPos = currHeadingPos = ROBOT_POSITION.heading;
     }
 
-    // FSM needs to be upgraded to allow for indexing, we won't need it till lm4+, but we be working on it
-    // idle -> aim req -> accel -> shoot
-    // idle -> index req -> accel -> index
-    // should be able to cancel into stop -> idle anytime
-    // should be able to cancel into aim req or index req within accel
     public void update() {
         switch (state) {
             case IDLE:
                 stopRequest = false;
 
-                turretTrackTarget(true);
+                turretTrackTarget();
                 setTargetVelocity(0.0);
                 setHoodAngle(0.0);
                 setShooterBlocker(true);
@@ -172,28 +165,6 @@ public class Shooter {
                     aimRequest = false;
                     state = State.AIMING;
                 }
-                if (indexRequest) {
-                    indexRequest = false;
-                    state = State.INDEX;
-                }
-                break;
-            case INDEX:
-                calcIndexPosition(0,0); // get values from LL
-                state = State.INDEXING;
-                break;
-            case INDEXING:
-                indexRequest = false;
-
-                setShooterBlocker(true);
-                // have the feeder and whatever contraption push balls forward
-                if(moves > 0){
-                    moves--;
-                    index = true;
-                    state = State.SHOOT;
-                    break;
-                }
-                reqIndex(false);
-                state = State.IDLE;
                 break;
             case AIMING:
                 aimRequest = false;
@@ -248,19 +219,9 @@ public class Shooter {
                 shootRequest = false;
 
                 setShooterBlocker(false);
-                if (index) {
-                    setTargetVelocity(60); //test optimal
-                    setHoodAngle(0.8); //test optimal
-                    setKicker(4.0); //test optimal
-                    index = false;
-                    if(kicker.inPosition()){
-                        state = State.INDEXING;
-                    }
-                } else {
-                    aimLauncherV8();
-                    setTargetVelocity(minFlywheelVelocity);
-                    setHoodAngle(targetHoodAngle);
-                }
+                aimLauncherV8();
+                setTargetVelocity(minFlywheelVelocity);
+                setHoodAngle(targetHoodAngle);
 
                 if (stopRequest) {
                     stopRequest = false;
@@ -276,7 +237,7 @@ public class Shooter {
         }
 
         // Predictive Heading Stuff
-        currHeadingPos = robot.drivetrain.mergeLocalizer.heading;
+        currHeadingPos = ROBOT_POSITION.heading;
         currHeadingVel = (currHeadingPos - lastHeadingPos) / robot.sensors.loopTime;
         currHeadingAccel = (currHeadingVel - lastHeadingVel) / robot.sensors.loopTime;
         currHeadingJerk = (currHeadingAccel - lastHeadingAccel) / robot.sensors.loopTime;
@@ -316,10 +277,10 @@ public class Shooter {
         TelemetryUtil.packet.put("Shooter : Flywheel Power Applied", pow * 100);
         TelemetryUtil.packet.put("Shooter : Flywheel Target Velocity", targetVelocity);
         TelemetryUtil.packet.put("Shooter : Flywheel Filtered Velocity", filteredVelocity);
-        TelemetryUtil.packet.put("Shooter : Turret Target", Math.toDegrees(targetTurretAngle));
+        TelemetryUtil.packet.put("Shooter : Turret Target (deg)", Math.toDegrees(targetTurretAngle));
         TelemetryUtil.packet.put("Shooter : Hood Target (deg)", Math.toDegrees(hood.getTargetAngle()));
         TelemetryUtil.packet.put("Shooter : Turret Power PID", turretPow * 100);
-        TelemetryUtil.packet.put("Shooter : Predicted Next Heading (deg)", Math.toDegrees(nextHeadingPrediction()));
+        TelemetryUtil.packet.put("Shooter : Predicted Next Heading (deg)", Math.toDegrees(nextHeadingPrediction(turretHeadingPredictTime)));
         LogUtil.flywheelTarget.set(targetVelocity);
         LogUtil.shooterState.set(this.state.toString());
         LogUtil.turretTarget.set(targetTurretAngle);
@@ -349,8 +310,6 @@ public class Shooter {
         }
     }
 
-    public void reqIndex (boolean req) { indexRequest = req; }
-
     public void setTurretAngle (double targetAngle) {
         targetTurretAngle = targetAngle;
     }
@@ -370,54 +329,31 @@ public class Shooter {
     }
 
     public void updateBallTargetInterpolate() {
-        double dist = Math.sqrt((-halfFieldWidth - ROBOT_POSITION.x) * (-halfFieldWidth - ROBOT_POSITION.x) +
-                (halfFieldWidth * (Globals.isRed ? 1 : -1) - ROBOT_POSITION.y) * (halfFieldWidth * (Globals.isRed ? 1 : -1) - ROBOT_POSITION.y));
-        if (ROBOT_POSITION.x >= 24) ballTarget = new Vector3(-69.5, 67, 46);
+        double dist = Math.hypot(-halfFieldWidth - ROBOT_POSITION.x, halfFieldWidth * (Globals.isRed ? 1 : -1) - ROBOT_POSITION.y);
+        if (ROBOT_POSITION.x >= 24) ballTarget = new Vector3(-69.5, 67 * (Globals.isRed ? 1 : -1), 46);
         else {
             double k = Utils.minMaxClip(dist, 0, 144) / 144;
-            ballTarget = new Vector3(-69.5, 60 * k + 69.5 * (1 - k), 38.75 * k + 48.25 * (1 - k));
+            ballTarget = new Vector3(-69.5, (60 * k + 69.5 * (1 - k)) * (Globals.isRed ? 1 : -1), 38.75 * k + 48.25 * (1 - k));
         }
     }
 
-    public double nextHeadingPrediction() {
-        return AngleUtil.clipAngle(ROBOT_POSITION.heading +
-                currHeadingVel * robot.sensors.loopTime +
-                currHeadingAccel * robot.sensors.loopTime * robot.sensors.loopTime / 2 +
-                currHeadingJerk * robot.sensors.loopTime * robot.sensors.loopTime * robot.sensors.loopTime / 6);
-    }
-
     public double nextHeadingPrediction(double timeAhead) {
-        return AngleUtil.clipAngle(robot.drivetrain.mergeLocalizer.heading +
+        return AngleUtil.clipAngle(ROBOT_POSITION.heading +
                 currHeadingVel * timeAhead +
                 currHeadingAccel * timeAhead * timeAhead / 2 +
                 currHeadingJerk * timeAhead * timeAhead * timeAhead / 6);
     }
 
-    public int calcIndexPosition(int greenPos, int motifPos){
-        moves = (motifPos - greenPos)%3;
-        return moves;
-    }
-
-    public boolean turretTrackTarget() {
-        if (ROBOT_POSITION == null || ROBOT_VELOCITY == null) return false;
-        // for +-180 turret
-        updateBallTargetInterpolate();
-        targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - nextHeadingPrediction());
-        return true;
-    }
-
-    public boolean turretTrackTarget(boolean updateP) {
-        if (!updateP) return turretTrackTarget();
-        if (ROBOT_POSITION == null || ROBOT_VELOCITY == null) return false;
+    public void turretTrackTarget() {
+        if (ROBOT_POSITION == null || ROBOT_VELOCITY == null) return;
         // for +-180 turret
         updateBallTargetInterpolate();
         Vector3 P;
-        if (Math.atan2(halfFieldWidth * (Globals.isRed ? 1 : -1) - ROBOT_POSITION.y, -halfFieldWidth - ROBOT_POSITION.x) <= Math.PI / 4) P = new Vector3(ballTarget);
-        else P = new Vector3(-Math.abs(ballTarget.y), Math.abs(ballTarget.x) * (Globals.isRed ? 1 : -1), ballTarget.z); // invert target along y = x or y = -x
+        if (ROBOT_POSITION.x >= ROBOT_POSITION.y * (Globals.isRed ? -1 : 1)) P = new Vector3(ballTarget);
+        else P = new Vector3(ballTarget.y * (Globals.isRed ? -1 : 1), ballTarget.x * (Globals.isRed ? -1 : 1), ballTarget.z); // invert target along y = x or y = -x
         P.subtract(new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight));
         this.P = P;
-        targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - ROBOT_POSITION.heading);
-        return true;
+        targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - nextHeadingPrediction(turretHeadingPredictTime));
     }
 
     // in use
@@ -427,16 +363,7 @@ public class Shooter {
             return false;
         }
         Log.i("Points", "Starting aimLauncherV8");
-        updateBallTargetInterpolate();
-        Vector3 P;
-        if (Math.atan2(halfFieldWidth * (Globals.isRed ? 1 : -1) - ROBOT_POSITION.y, -halfFieldWidth - ROBOT_POSITION.x) <= Math.PI / 4) P = new Vector3(ballTarget);
-        else P = new Vector3(-Math.abs(ballTarget.y), Math.abs(ballTarget.x) * (Globals.isRed ? 1 : -1), ballTarget.z); // invert target along y = x or y = -x
-        P.subtract(new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight));
-        this.P = P;
-        Vector3 V = new Vector3(-ROBOT_VELOCITY.x, -ROBOT_VELOCITY.y, 0);
-        V.subtract(Vector3.cross(new Vector3(0, 0, currHeadingVel), new Vector3(dLauncher * Math.cos(currHeadingPos), dLauncher * Math.sin(currHeadingPos), 0)));
-
-        targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - nextHeadingPrediction());
+        turretTrackTarget();
         Log.i("Points", "Set target turret angle & Starting MinV0");
 
         double a = g * g / 4;
@@ -555,7 +482,7 @@ public class Shooter {
                         thetas[tRoots.size()] = thetas[i];
                     }
                 }
-                targetTurretAngle = AngleUtil.clipAngle(thetas[tRoots.size()] - nextHeadingPrediction());
+                targetTurretAngle = AngleUtil.clipAngle(thetas[tRoots.size()] - nextHeadingPrediction(turretHeadingPredictTime));
                 Log.i("Dynamic", "High Phi: " + phis[i]);
                 Log.i("Points", "Leaving Dynamic");
             }

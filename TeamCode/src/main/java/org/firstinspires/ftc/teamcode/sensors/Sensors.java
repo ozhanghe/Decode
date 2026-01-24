@@ -8,6 +8,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.hardware.lynx.LynxModule;
 
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
@@ -19,6 +20,8 @@ import org.firstinspires.ftc.teamcode.utils.RunMode;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.utils.RelativeEncoder;
 import org.firstinspires.ftc.teamcode.utils.Utils;
+
+import java.util.List;
 
 @Config
 public class Sensors {
@@ -69,6 +72,12 @@ public class Sensors {
         light0P.setMode(DigitalChannel.Mode.OUTPUT);
         light0G.setState(true);
         light0P.setState(true);
+
+        List<LynxModule> allHubs = robot.hardwareMap.getAll(LynxModule.class);
+
+        for (LynxModule hub : allHubs) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
     }
 
     public void update() {
@@ -163,7 +172,7 @@ public class Sensors {
         Pose2d currentPose = ROBOT_POSITION;
         TelemetryUtil.packet.put("Robot position", currentPose.toString());
         Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
-        DashboardUtil.drawRobot(fieldOverlay, currentPose, "#00ff00", turretAngle, "#008000");
+        DashboardUtil.drawRobot(fieldOverlay, currentPose, "#00ff00", turretAngle, "#00ff0080", robot.shooter.targetTurretAngle, "#8000ff");
 
         LogUtil.turretAngle.set(turretAngle);
         LogUtil.flywheelVelocity.set(flywheelVelocity);
