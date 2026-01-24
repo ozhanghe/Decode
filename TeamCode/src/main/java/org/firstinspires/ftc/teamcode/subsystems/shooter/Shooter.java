@@ -50,7 +50,7 @@ public class Shooter {
 
     private boolean aimRequest = false, shootRequest = false, stopRequest = false;
 
-    public static PID turretPID = new PID (0.25, 0.0, 0.03);
+    public static PID turretPID = new PID (0.2, 0.0, 0.02);
     public static double turretMinPow = 0.1;
 
     // velocity is in inches / second
@@ -349,7 +349,7 @@ public class Shooter {
         if (ROBOT_POSITION.x >= 24) ballTarget = new Vector3(-69.5, 67 * (Globals.isRed ? 1 : -1), 46);
         else {
             double k = Utils.minMaxClip(Math.hypot(-halfFieldWidth - ROBOT_POSITION.x, halfFieldWidth * (Globals.isRed ? 1 : -1) - ROBOT_POSITION.y), 0, 126) / 126;
-            ballTarget = new Vector3(-69.5, (60 * k + 69.5 * (1 - k)) * (Globals.isRed ? 1 : -1), 38.75 * k + 48.25 * (1 - k) - 2);
+            ballTarget = new Vector3(-69.5, (60 * k + 69.5 * (1 - k)) * (Globals.isRed ? 1 : -1), 38.75 * k + 46 * (1 - k));
         }
     }
 
@@ -464,7 +464,7 @@ public class Shooter {
                     Log.i("Dynamic", "Point 2: i = " + i + ", t = " + t);
                 } else {
                     double heightAtWall = launcherHeight + v0 * Math.cos(phis[i]) * t - g * t * t / 2;
-                    if (heightAtWall < 38.75 + 3) {
+                    if (heightAtWall < 38.75 + 2.5) {
                         phis[i] = -100;
                         Log.i("Dynamic", "Point 3: i = " + i + ", t = " + t + ", height at wall = " + heightAtWall);
                     }

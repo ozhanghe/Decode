@@ -94,16 +94,16 @@ public class DashboardUtil {
         canvas.strokeLine(rx1, ry1, rx2, ry2);
 
         canvas.setStroke(turretColor1);
-        canvas.setStrokeWidth(4);
+        canvas.setStrokeWidth(5);
         double t1dx = Math.cos(pose.heading + turretAngle1), t1dy = Math.sin(pose.heading + turretAngle1);
-        double t1x1 = pose.x + t1dx * 72, t1y1 = pose.y + t1dy * 72;
+        double t1x1 = pose.x + t1dx * 96, t1y1 = pose.y + t1dy * 96;
         canvas.strokeLine(pose.x, pose.y, t1x1, t1y1);
 
         canvas.setStroke(turretColor2);
         canvas.setStrokeWidth(1);
         double t2dx = Math.cos(pose.heading + turretAngle2), t2dy = Math.sin(pose.heading + turretAngle2);
-        double t2x1 = pose.x + t2dx * 6, t2y1 = pose.y + t2dy * 6;
-        double t2x2 = pose.x + t2dx * 72, t2y2 = pose.y + t2dy * 72;
+        double t2x1 = pose.x + t2dx * ROBOT_RADIUS, t2y1 = pose.y + t2dy * ROBOT_RADIUS;
+        double t2x2 = pose.x + t2dx * 96, t2y2 = pose.y + t2dy * 96;
         canvas.strokeLine(t2x1, t2y1, t2x2, t2y2);
 
         canvas.setStrokeWidth(2);

@@ -50,8 +50,8 @@ public class Sensors {
 
     private double voltage;
     public static long voltageUpdateTime = 5000, colorSensorUpdateTime = 200;
-    private long lastVoltageUpdatedTime = System.currentTimeMillis();
-    private long lastColorSensorUpdatedTime = System.currentTimeMillis();
+    private long lastVoltageUpdatedTime = 0;
+    private long lastColorSensorUpdatedTime = 0;
     private final VoltageSensor voltageSensor;
 
     public Sensors(Robot robot) {
@@ -113,7 +113,7 @@ public class Sensors {
         //TelemetryUtil.packet.put("Intake : Color RGBA", Arrays.toString(color));
         //TelemetryUtil.packet.put("Intake : Color Raw", Arrays.toString(colorRaw));
 
-        if (Globals.RUNMODE != RunMode.AUTO && System.currentTimeMillis() - lastColorSensorUpdatedTime > colorSensorUpdateTime) {
+        if (Globals.RUNMODE != RunMode.AUTO && currentTime - lastColorSensorUpdatedTime > colorSensorUpdateTime * 1e6) {
             double lightSensorRawVoltage = lightSensor0.getVoltage();
             lightSensorFilteredVoltage = lightSensorFilteredVoltage * (1 - lightSensorFilter) + lightSensorRawVoltage * lightSensorFilter;
             isGreen = lightSensorFilteredVoltage > 0.009;
@@ -124,12 +124,12 @@ public class Sensors {
             TelemetryUtil.packet.put("Intake : Light Filtered Voltage", lightSensorFilteredVoltage);
             TelemetryUtil.packet.put("Intake : Light Voltage Green Thresh", 0.009);
             TelemetryUtil.packet.put("Intake : Light Voltage Purple Thresh", 0.004);
-            lastColorSensorUpdatedTime = System.currentTimeMillis();
+            lastColorSensorUpdatedTime = currentTime;
         }
 
-        if (System.currentTimeMillis() - lastVoltageUpdatedTime > voltageUpdateTime) {
+        if (currentTime - lastVoltageUpdatedTime > voltageUpdateTime * 1e6) {
             voltage = voltageSensor.getVoltage();
-            lastVoltageUpdatedTime = System.currentTimeMillis();
+            lastVoltageUpdatedTime = currentTime;
         }
 
         updateTelemetry();
@@ -172,7 +172,7 @@ public class Sensors {
         Pose2d currentPose = ROBOT_POSITION;
         TelemetryUtil.packet.put("Robot position", currentPose.toString());
         Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
-        DashboardUtil.drawRobot(fieldOverlay, currentPose, "#00ff00", turretAngle, "#00ff0080", robot.shooter.targetTurretAngle, "#8000ff");
+        DashboardUtil.drawRobot(fieldOverlay, currentPose, "#00ff00", turretAngle, "#00e000c0", robot.shooter.targetTurretAngle, "#8000ff");
 
         LogUtil.turretAngle.set(turretAngle);
         LogUtil.flywheelVelocity.set(flywheelVelocity);

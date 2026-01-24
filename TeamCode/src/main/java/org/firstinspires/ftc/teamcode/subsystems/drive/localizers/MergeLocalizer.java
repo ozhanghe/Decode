@@ -112,7 +112,7 @@ public class MergeLocalizer extends Localizer {
 
         // LIMELIGHT
 
-        if (useLimelight) {
+        if (useLimelight && drivetrain.vision != null) {
             drivetrain.vision.update();
             result = drivetrain.vision.getResult();
 
