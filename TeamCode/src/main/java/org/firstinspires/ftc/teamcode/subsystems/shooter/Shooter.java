@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.google.ar.core.Pose;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -20,6 +21,7 @@ import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.Polynomial;
+import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.utils.Utils;
 import org.firstinspires.ftc.teamcode.utils.Vector2;
@@ -96,7 +98,6 @@ public class Shooter {
     public double currHeadingPos = 0, currHeadingVel = 0, currHeadingAccel = 0, currHeadingJerk = 0;
     private final double wallM = (58.3414785 - thirdFieldWidth) / (-55.6424675 + halfFieldWidth);
     private final double wallB = wallM * halfFieldWidth + thirdFieldWidth;
-    private final double c1 = (58.3414785 + halfFieldWidth) / (55.6424675 - thirdFieldWidth); // needs to be deleted
     private int moves;
     private boolean index;
 
@@ -507,8 +508,6 @@ public class Shooter {
                 thetas[i] = pf.theta();
                 phis[i] = pf.phi();
 
-                // TODO: needs testing
-                /*
                 Vector3 peakPos = new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight);
                 // [ -P.y / P.x, 1 ][ x ] = [ ROBOT_POSITION.y - P.y * ROBOT_POSITION.x / P.x ]
                 // [ -wallM    , 1 ][ y ] = [ wallB                                           ]
@@ -525,10 +524,9 @@ public class Shooter {
                         Log.i("Dynamic", "Point 3: i = " + i + ", t = " + t + ", height at wall = " + heightAtWall);
                     }
                 }
-                */
 
                 // approximation version, works
-                /**/
+                /*
                 double vel = Math.pow(ROBOT_VELOCITY.y + v0 * Math.sin(thetas[i]) * Math.sin(phis[i]), 2) + Math.pow(ROBOT_VELOCITY.x + v0 * Math.cos(thetas[i]) * Math.sin(phis[i]), 2);
                 vel = Math.sqrt(vel);
                 double t = Math.sqrt(dist2) / vel;
@@ -542,6 +540,7 @@ public class Shooter {
                         Log.i("Dynamic", "Point 3: i = " + i + ", t = " + t + ", height at wall = " + heightAtWall);
                     }
                 }
+                */
 
                 if (phis[i] != -100 && phis[i] - hoodSweep < 0) {
                     Log.i("Dynamic", "Point 4: i = " + i + ", phis[i] = " + phis[i]);

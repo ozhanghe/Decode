@@ -19,7 +19,7 @@ public class Pose2d implements Cloneable {
         this.heading = heading;
     }
 
-    public void add(Pose2d p1){
+    public void add(Pose2d p1) {
         this.x += p1.x;
         this.y += p1.y;
         this.heading += p1.heading;
