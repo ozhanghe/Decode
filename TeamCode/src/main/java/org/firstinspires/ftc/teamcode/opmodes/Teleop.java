@@ -73,7 +73,6 @@ public class Teleop extends LinearOpMode {
 
             if (back2.isClicked(gamepad2.back)) {
                 isRed = !isRed;
-                robot.shooter.updateBallTarget();
             }
 
             // INTAKE

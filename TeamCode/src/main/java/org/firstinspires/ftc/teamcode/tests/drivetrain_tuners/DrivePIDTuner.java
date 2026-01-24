@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 
-@TeleOp
+@TeleOp(group = "tests")
 @Config
 public class DrivePIDTuner extends LinearOpMode {
     private Robot robot;
