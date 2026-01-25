@@ -38,7 +38,7 @@ public class Sensors {
     public RelativeEncoder parkEncoder;
     public AnalogInput turretEncoder;
     private double turretEncoderVoltage, turretAngle, lastTurretAngle;
-    public static double turretEncoderOffset = Math.toRadians(182);
+    public static double turretEncoderOffset = Math.toRadians(175);
     public static double turretAngleFilter = 0.4;
     public static double turretLimitLeft = Math.toRadians(105), turretLimitRight = Math.toRadians(-180), turretWrapMid = Math.toRadians(-45);
 

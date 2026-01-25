@@ -57,7 +57,7 @@ public class LogUtil {
 
     private static int loopCountBeforeWrite;
 
-    public static boolean DISABLED = true;
+    public static boolean DISABLED = false;
     public static boolean stateTransition = false;
     public static boolean drivePositionReset = false;
 
@@ -111,7 +111,7 @@ public class LogUtil {
         if (loopCountBeforeWrite <= 0 || stateTransition || drivePositionReset) {
             if (drivePositionReset) driveState.set("[reset]");
             datalogger.writeLine();
-            loopCountBeforeWrite = 5;
+            loopCountBeforeWrite = 10;
             stateTransition = false;
             drivePositionReset = false;
             TelemetryUtil.packet.put("LogUtil : stateTransition", "[ none ]");

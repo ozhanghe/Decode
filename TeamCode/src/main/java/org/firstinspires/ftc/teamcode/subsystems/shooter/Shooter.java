@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.subsystems.shooter;
 
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_VELOCITY;
-import static org.firstinspires.ftc.teamcode.utils.Globals.isRed;
 
 import android.util.Log;
 
@@ -51,7 +50,7 @@ public class Shooter {
     private boolean aimRequest = false, shootRequest = false, stopRequest = false;
 
     public static PID turretPID = new PID (0.2, 0.0, 0.02);
-    public static double turretMinPow = 0.1;
+    public static double turretMinPow = 0.05;
 
     // velocity is in inches / second
     public static PID velocityPID = new PID (0.0, 0.0002, 0.0001);
@@ -286,9 +285,9 @@ public class Shooter {
         if (Math.abs(turretError) < Math.toRadians(2)) turretPow = 0; // turretMinPow * turretError / Math.toRadians(2)
         else if (P != null && P.x * P.x + P.y * P.y <= 1296 && Math.abs(turretError) < Math.toRadians(10)) turretPow = 0;
         turret.setTargetPower(turretPow);
-        if(this.V != null){
+        if (this.V != null) {
             Log.i("Shooter","Robot Velocity" + this.V.getMag());
-            TelemetryUtil.packet.put("Robot Velocity", (this.V).getMag());
+            TelemetryUtil.packet.put("Robot Velocity", this.V.getMag());
         }
         TelemetryUtil.packet.put("Shooter : state", this.state);
         TelemetryUtil.packet.put("Shooter : Flywheel Power Applied", pow * 100);
@@ -306,7 +305,7 @@ public class Shooter {
         canvas.setStroke("#808080");
         canvas.setStrokeWidth(1);
         canvas.strokeLine(ballTarget.x, ballTarget.y, ROBOT_POSITION.x, ROBOT_POSITION.y);
-        canvas.setStroke(isRed ? "#ff0000" : "#0000ff");
+        canvas.setStroke(Globals.isRed ? "#ff0000" : "#0000ff");
         canvas.setStrokeWidth(2);
         canvas.strokeCircle(ballTarget.x, ballTarget.y, 2.5);
     }
@@ -456,9 +455,11 @@ public class Shooter {
                 Vector3 peakPos = new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight);
                 // [ -P.y / P.x, 1 ][ x ] = [ ROBOT_POSITION.y - P.y * ROBOT_POSITION.x / P.x ]
                 // [ -wallM    , 1 ][ y ] = [ wallB                                           ]
-                double yAtWall = wallM * (ROBOT_POSITION.y - P.y * ROBOT_POSITION.x / P.x) - P.y / P.x * wallB;
-                yAtWall /= wallM - P.y / P.x;
+                int flip = Globals.isRed ? 1 : -1;
+                double yAtWall = wallM * flip * (ROBOT_POSITION.y - P.y * ROBOT_POSITION.x / P.x) - P.y / P.x * wallB * flip;
+                yAtWall /= wallM * flip - P.y / P.x;
                 double t = (yAtWall - ROBOT_POSITION.y) / (v0 * Math.sin(phis[i]) * Math.sin(thetas[i]) + V.y);
+                Log.i("Dynamic", "Point  : i = " + i + ", t = " + t + ", yAtWall = " + yAtWall);
                 if (t <= 0) {
                     phis[i] = -100; // this makes sure the ball goes into the target through the restricted diagonal plane
                     Log.i("Dynamic", "Point 2: i = " + i + ", t = " + t);
