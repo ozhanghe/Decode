@@ -353,6 +353,7 @@ public class Shooter {
     }
 
     public double nextHeadingPrediction(double timeAhead) {
+        if (Math.abs(timeAhead) <= 1e-5) return AngleUtil.clipAngle(ROBOT_POSITION.heading);
         return AngleUtil.clipAngle(ROBOT_POSITION.heading +
                 currHeadingVel * timeAhead +
                 currHeadingAccel * timeAhead * timeAhead / 2 +
