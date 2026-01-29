@@ -32,13 +32,13 @@ public class Intake {
 
         roller = new PriorityMotor(
             new DcMotorEx[] {robot.hardwareMap.get(DcMotorEx.class, "roller")},
-            "roller", 2, 5,
+            "roller", 2, 4,
             new double[] {1}, robot.sensors
         );
 
         feed = new PriorityMotor(
             new DcMotorEx[] {robot.hardwareMap.get(DcMotorEx.class, "feed")},
-            "feed", 2, 5,
+            "feed", 2, 4,
             new double[] {1}, robot.sensors
         );
 

@@ -7,14 +7,12 @@ import android.util.Log;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.google.ar.core.Pose;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
-import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.MergeLocalizer;
 import org.firstinspires.ftc.teamcode.utils.AngleUtil;
 import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
@@ -43,14 +41,15 @@ public class Shooter {
 
     private Robot robot;
     private DcMotorEx ms1, ms2;
-    public PriorityMotor flywheel;
-    public nPriorityServo hood, flywheelBlocker, net, kicker;
-    public PriorityCRServo turret;
+    public final PriorityMotor flywheel;
+    public final nPriorityServo hood, flywheelBlocker;
+    public final PriorityCRServo turret;
 
     private boolean aimRequest = false, shootRequest = false, stopRequest = false;
 
     public static PID turretPID = new PID (0.4, 0.0, 0.02);
-    public static double turretMinPow = 0.05;
+    public static double turretKStatic = 0.05;
+    public static double turretVelFactor = 0.2;
 
     // velocity is in inches / second
     public static PID velocityPID = new PID (0.0, 0.0002, 0.0001);
@@ -111,38 +110,22 @@ public class Shooter {
             2, 5
         );
 
-        kicker = new nPriorityServo(
-            new Servo[]{robot.hardwareMap.get(Servo.class, "kicker")},
-            "kicker", nPriorityServo.ServoType.AXON_MICRO,
-            0.027, 0.4, 0.03,
-            new boolean[] {false},
-            2, 5
-        );
-
         flywheelBlocker = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "flywheelBlocker")},
             "flywheelBlocker", nPriorityServo.ServoType.AXON_MICRO,
             0, 0.7, 0.1,
             new boolean[] {false},
-            2, 5
-        );
-
-        net = new nPriorityServo(
-            new Servo[] {robot.hardwareMap.get(Servo.class, "net")},
-            "net", nPriorityServo.ServoType.AXON_MINI,
-            0.42, 0.95, 0.5,
-            new boolean [] {false},
-            2, 5
+            2, 4
         );
 
         turret = new PriorityCRServo(
                 new CRServo[] {robot.hardwareMap.get(CRServo.class, "turret1"), robot.hardwareMap.get(CRServo.class, "turret2")},
                 "turret", PriorityCRServo.ServoType.AXON_MINI,
                 new boolean[] {false, false},
-                3, 5
+                4, 6
         );
 
-        robot.hardwareQueue.addDevices(flywheel, hood, turret, flywheelBlocker, net);
+        robot.hardwareQueue.addDevices(flywheel, hood, turret, flywheelBlocker);
 
         updateBallTarget();
         lastVel = currVel = ROBOT_VELOCITY.clone();
@@ -236,14 +219,19 @@ public class Shooter {
 
         // Filtering velocity
         lastVel = currVel.clone();
-        currVel = ROBOT_POSITION.clone();
-        currVel.subtract(lastPos);
-        currVel.mult(1 / robot.sensors.loopTime);
+        currVel = ROBOT_VELOCITY.clone();
         currVel.mult(posFilter);
         lastVel.mult(1 - posFilter);
         currVel = Pose2d.add(currVel, lastVel);
         lastVel.mult(1 / (1 - posFilter));
         lastPos = ROBOT_POSITION.clone();
+        if (currVel.mag() < 2) {
+            currVel.x = 0;
+            currVel.y = 0;
+        }
+        if (Math.abs(currVel.heading) < Math.toRadians(1)) {
+            currVel.heading = 0;
+        }
 
         // Flywheel Velocity PIDF
         double actualVelocity = robot.sensors.getFlywheelVelocity();
@@ -267,14 +255,20 @@ public class Shooter {
 
         // Turret PID
         targetTurretAngle = Sensors.turretAngleClip(targetTurretAngle);
-        double turretError = targetTurretAngle - Sensors.turretAngleClip(robot.sensors.getTurretAngle());
-        double turretPow = turretPID.update(turretError, -1, 1) + turretMinPow * Math.signum(turretError);
-        if (Math.abs(turretError) < Math.toRadians(1)) turretPow = 0; // turretMinPow * turretError / Math.toRadians(2)
-        turretPow -= currVel.heading / (turret.servoType.speed); // meant to account for robot rotating
+        double turretAngle = robot.sensors.getTurretAngle();
+        double turretError = targetTurretAngle - Sensors.turretAngleClip(turretAngle);
+        double turretPow = turretPID.update(turretError, -1, 1) + turretKStatic * Math.signum(turretError);
+        if (Math.abs(turretError) < Math.toRadians(1) && Math.abs(currVel.heading) < Math.toRadians(3)) turretPow = 0; // turretMinPow * turretError / Math.toRadians(2)
+        turretPow -= currVel.heading / (turret.servoType.speed) * turretVelFactor; // meant to account for robot rotating
+        if (turretAngle >= Sensors.turretLimitLeft) turretPow = Math.min(turretPow, -turretKStatic);
+        if (turretAngle <= Sensors.turretLimitRight) turretPow = Math.max(turretPow, turretKStatic);
         turret.setTargetPower(turretPow);
 
         Log.i("Shooter","Robot Velocity" + (this.V != null ? this.V.getMag() : 0));
         TelemetryUtil.packet.put("Shooter : Robot Velocity", (this.V != null ? this.V.getMag() : 0));
+        TelemetryUtil.packet.put("Shooter : currVel x", currVel.x);
+        TelemetryUtil.packet.put("Shooter : currVel y", currVel.y);
+        TelemetryUtil.packet.put("Shooter : currVel heading", currVel.heading);
         TelemetryUtil.packet.put("Shooter : state", this.state);
         TelemetryUtil.packet.put("Shooter : Flywheel Power Applied", pow * 100);
         TelemetryUtil.packet.put("Shooter : Flywheel Target Velocity", targetVelocity);
@@ -524,10 +518,6 @@ public class Shooter {
     public void setShooter(Dist mode) {
         setTargetVelocity(mode.flywheelVel);
         setHoodAngle(targetHoodAngle = mode.hoodAngle);
-    }
-
-    public void setKicker(double angle){
-        kicker.setTargetAngle(angle);
     }
 
     public boolean atVel() { return Math.abs(targetVelocity - filteredVelocity) <= atVelThresh; }
