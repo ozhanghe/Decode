@@ -23,6 +23,7 @@ public class ShooterTester extends LinearOpMode {
     public void runOpMode() {
         Globals.RUNMODE = RunMode.TESTER;
         Robot robot = new Robot(hardwareMap);
+        robot.setStopChecker(this::isStopRequested);
 
         robot.intake.state = Intake.State.TEST;
         robot.shooter.state = Shooter.State.TEST;

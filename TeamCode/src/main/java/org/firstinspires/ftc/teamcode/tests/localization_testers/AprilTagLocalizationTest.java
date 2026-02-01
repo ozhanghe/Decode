@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -18,6 +19,7 @@ import org.firstinspires.ftc.teamcode.vision.Vision;
 
 @TeleOp
 @Config
+@Disabled
 public class AprilTagLocalizationTest extends LinearOpMode {
     private Vision vision;
     private LLResult result = null;
@@ -26,6 +28,8 @@ public class AprilTagLocalizationTest extends LinearOpMode {
 
     @SuppressLint("DefaultLocale")
     public void runOpMode() {
+        TelemetryUtil.setup();
+
         vision = new Vision(hardwareMap);
 
         while (opModeInInit()) {
@@ -68,10 +72,9 @@ public class AprilTagLocalizationTest extends LinearOpMode {
                 TelemetryUtil.packet.put("LL globalLimelightEstimate x", String.format("%.5f", globalLimelightEstimate.x));
                 TelemetryUtil.packet.put("LL globalLimelightEstimate y", String.format("%.5f", globalLimelightEstimate.y));
                 TelemetryUtil.packet.put("LL globalLimelightEstimate heading", String.format("%.5f",globalLimelightEstimate.heading));
-            }
 
-            TelemetryUtil.setup();
-            TelemetryUtil.sendTelemetry();
+                TelemetryUtil.sendTelemetry();
+            }
         }
     }
 }

@@ -15,7 +15,6 @@ import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
 import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
-import org.firstinspires.ftc.teamcode.utils.REVColorSensorV3;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.utils.RelativeEncoder;
@@ -26,21 +25,24 @@ import java.util.List;
 @Config
 public class Sensors {
     private final Robot robot;
+    private final List<LynxModule> allHubs;
 
     public double loopTime;
-    private long currentTime, lastTime;
+    private long currentTime, lastTime, initialTime;
 
     private final int[] odoWheelPositions = {0, 0, 0};
 
     // Enocder Resolution: 28 PPR
-    private double flywheelAngularVel = 0, flywheelVelocity = 0;
+    private double flywheelVelocity = 0;
 
     public RelativeEncoder parkEncoder;
-    public AnalogInput turretEncoder;
-    private double turretEncoderVoltage, turretAngle, lastTurretAngle;
-    public static double turretEncoderOffset = Math.toRadians(175);
+    public AnalogInput turretAnalogEncoder;
+    private double turretAngle;
+    private double turretAngleEncoderOffset, turretAngleEncoderPosition;
+    public static double turretAnalogEncoderOffset = Math.toRadians(182);
     public static double turretAngleFilter = 0.4;
     public static double turretLimitLeft = Math.toRadians(105), turretLimitRight = Math.toRadians(-180), turretWrapMid = Math.toRadians(-45);
+    public static boolean resetTurretAngleEncoder = true;
 
     private double lightSensorFilteredVoltage = 0;
     public static double lightSensorFilter = 0.3;
@@ -49,7 +51,7 @@ public class Sensors {
     private boolean isGreen = false, isPurple = false;
 
     private double voltage;
-    public static long voltageUpdateTime = 5000, colorSensorUpdateTime = 200;
+    public static long voltageUpdateTime = 5000, colorSensorUpdateTime = 250;
     private long lastVoltageUpdatedTime = 0;
     private long lastColorSensorUpdatedTime = 0;
     private final VoltageSensor voltageSensor;
@@ -57,13 +59,13 @@ public class Sensors {
     public Sensors(Robot robot) {
         this.robot = robot;
 
-        currentTime = System.nanoTime();
+        initialTime = currentTime = System.nanoTime();
         voltageSensor = robot.hardwareMap.voltageSensor.iterator().next();
         voltage = voltageSensor.getVoltage();
 
         //parkEncoder = new RelativeEncoder(robot.hardwareMap, "park_encoder");
-        turretEncoder = robot.hardwareMap.get(AnalogInput.class, "turret_encoder");
-        lastTurretAngle = turretAngle = 0;
+        turretAnalogEncoder = robot.hardwareMap.get(AnalogInput.class, "turret_encoder");
+        turretAngleEncoderOffset = turretAngleEncoderPosition = turretAngle = 0;
 
         lightSensor0 = robot.hardwareMap.get(AnalogInput.class, "lightSensor0");
         light0G = robot.hardwareMap.get(DigitalChannel.class, "light0G");
@@ -73,10 +75,10 @@ public class Sensors {
         light0G.setState(true);
         light0P.setState(true);
 
-        List<LynxModule> allHubs = robot.hardwareMap.getAll(LynxModule.class);
+        allHubs = robot.hardwareMap.getAll(LynxModule.class);
 
         for (LynxModule hub : allHubs) {
-            hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
     }
 
@@ -85,13 +87,17 @@ public class Sensors {
         currentTime = System.nanoTime();
         loopTime = (currentTime - lastTime) / 1e9;
 
+        for (LynxModule module : allHubs) {
+            module.clearBulkCache();
+        }
+
         odoWheelPositions[0] = robot.drivetrain.leftFront.motor[0].getCurrentPosition();
         odoWheelPositions[1] = robot.drivetrain.rightFront.motor[0].getCurrentPosition();
         odoWheelPositions[2] = robot.drivetrain.leftRear.motor[0].getCurrentPosition();
 
         //double flywheelPos = robot.drivetrain.rightRear.motor[0].getCurrentPosition();
         // (flywheelPos - flywheelLastPos) / 28.0 = delta revolutions
-        flywheelAngularVel = robot.drivetrain.rightRear.motor[0].getVelocity() / 28.0 * 14.0 / 20.0;
+        double flywheelAngularVel = robot.drivetrain.rightRear.motor[0].getVelocity() / 28.0 * 14.0 / 20.0;
         flywheelVelocity = flywheelAngularVel * 96.0 * Math.PI / 25.4;
 
         robot.drivetrain.localizer.updateEncoders(odoWheelPositions);
@@ -103,10 +109,18 @@ public class Sensors {
 
         //parkEncoder.update();
 
-        lastTurretAngle = turretAngle;
-        turretEncoderVoltage = turretEncoder.getVoltage();
-        if (turretEncoderVoltage > 0.1) turretAngle = turretAngle * (1 - turretAngleFilter)
-                + (Utils.headingClip(RelativeEncoder.normalizeVoltage(turretEncoderVoltage) - turretEncoderOffset - turretWrapMid) + turretWrapMid) * turretAngleFilter;
+        if (currentTime - initialTime < 200_000_000) resetTurretAngleEncoder = true;
+        turretAngleEncoderPosition = robot.intake.feed.motor[0].getCurrentPosition() / -2.0 * Math.PI / 8192;
+        double newTurretAngle = turretAngleEncoderPosition - turretAngleEncoderOffset;
+        if (resetTurretAngleEncoder) {
+            double turretAnalogEncoderVoltage = turretAnalogEncoder.getVoltage();
+            if (turretAnalogEncoderVoltage > 0.1) {
+                newTurretAngle = Utils.headingClip(RelativeEncoder.normalizeVoltage(turretAnalogEncoderVoltage) - turretAnalogEncoderOffset - turretWrapMid) + turretWrapMid;
+                turretAngleEncoderOffset = turretAngleEncoderPosition - newTurretAngle;
+                resetTurretAngleEncoder = false;
+            }
+        }
+        turretAngle = turretAngle * (1 - turretAngleFilter) + newTurretAngle * turretAngleFilter;
 
         //float[] color = colorSensor0.readLSRGBA();
         //int[] colorRaw = colorSensor0.readLSRGBRAW();
@@ -122,8 +136,8 @@ public class Sensors {
             light0P.setState(!isPurple);
             TelemetryUtil.packet.put("Intake : Light Raw Voltage", lightSensorRawVoltage);
             TelemetryUtil.packet.put("Intake : Light Filtered Voltage", lightSensorFilteredVoltage);
-            TelemetryUtil.packet.put("Intake : Light Voltage Green Thresh", 0.009);
-            TelemetryUtil.packet.put("Intake : Light Voltage Purple Thresh", 0.004);
+            //TelemetryUtil.packet.put("Intake : Light Voltage Green Thresh", 0.009);
+            //TelemetryUtil.packet.put("Intake : Light Voltage Purple Thresh", 0.004);
             lastColorSensorUpdatedTime = currentTime;
         }
 
@@ -164,13 +178,14 @@ public class Sensors {
         TelemetryUtil.packet.put("Shooter : Flywheel Current Velocity", flywheelVelocity);
         TelemetryUtil.packet.put("Shooter : Turret angle (deg)", Math.toDegrees(turretAngle));
         TelemetryUtil.packet.put("Shooter : Hood top angle (deg)", Math.toDegrees(robot.shooter.hood.getCurrentAngle()) * 30 / 48 + 34);
-        TelemetryUtil.packet.put("Shooter : Turret encoder voltage", turretEncoderVoltage);
+        //TelemetryUtil.packet.put("Shooter : Turret analog encoder voltage", turretAnalogEncoderVoltage);
+        //TelemetryUtil.packet.put("Shooter : Turret angle encoder position (deg)", Math.toDegrees(turretAngleEncoderPosition));
         //TelemetryUtil.packet.put("Park : Servo angle", parkEncoder.getAngleTraveled());
 
         TelemetryUtil.packet.put("Intake : Color", isPurple ? "purple" : isGreen ? "green" : "none");
 
         Pose2d currentPose = ROBOT_POSITION;
-        TelemetryUtil.packet.put("Robot position", currentPose.toString());
+        //TelemetryUtil.packet.put("Robot position", currentPose.toString());
         Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
         DashboardUtil.drawRobot(fieldOverlay, currentPose, "#00ff00", turretAngle, "#00e000c0", robot.shooter.targetTurretAngle, "#8000ff");
 

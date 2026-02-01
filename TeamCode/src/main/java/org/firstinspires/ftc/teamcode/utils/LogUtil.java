@@ -22,7 +22,7 @@ public class LogUtil {
 
         public void set(String newValue) {
             if (!newValue.equals(value)) {
-                TelemetryUtil.packet.put("LogUtil : stateTransition", name + "," + value);
+                //TelemetryUtil.packet.put("LogUtil : stateTransition", name + "," + value);
                 LogUtil.stateTransition = true;
             }
             value = newValue;
@@ -55,9 +55,9 @@ public class LogUtil {
     public static Datalogger.GenericField parkState = new Datalogger.GenericField("parkState");
     public static Datalogger.GenericField parkAngle = new Datalogger.GenericField("parkAngle");
 
-    private static int loopCountBeforeWrite;
+    private static long timeAtNextWrite;
 
-    public static boolean DISABLED = true;
+    public static boolean DISABLED = false;
     public static boolean stateTransition = false;
     public static boolean drivePositionReset = false;
 
@@ -68,13 +68,13 @@ public class LogUtil {
     }
 
     public static void init() {
-        loopCountBeforeWrite = 0;
+        timeAtNextWrite = 0;
 
         long timeNow = System.currentTimeMillis();
         String fileName = "Log_" + timeNow + "_"
             + new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US).format(new Date(timeNow))
             + "_CAT4_Decode_" + Globals.RUNMODE.toString();
-        TelemetryUtil.packet.put("LogUtil : filename", fileName);
+        //TelemetryUtil.packet.put("LogUtil : filename", fileName);
 
         if (datalogger != null) throw new IllegalStateException("LogUtil was already initialized");
         if (DISABLED) return;
@@ -107,11 +107,11 @@ public class LogUtil {
 
     public static void send() {
         if (datalogger == null) return;
-        --loopCountBeforeWrite;
-        if (loopCountBeforeWrite <= 0 || stateTransition || drivePositionReset) {
+        long timeNow = System.nanoTime();
+        if (timeNow >= timeAtNextWrite || stateTransition || drivePositionReset) {
             if (drivePositionReset) driveState.set("[reset]");
             datalogger.writeLine();
-            loopCountBeforeWrite = 10;
+            timeAtNextWrite = timeNow + 150_000_000;
             stateTransition = false;
             drivePositionReset = false;
             TelemetryUtil.packet.put("LogUtil : stateTransition", "[ none ]");

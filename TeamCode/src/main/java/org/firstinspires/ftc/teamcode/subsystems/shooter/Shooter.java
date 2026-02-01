@@ -47,9 +47,16 @@ public class Shooter {
 
     private boolean aimRequest = false, shootRequest = false, stopRequest = false;
 
-    public static PID turretPID = new PID (0.4, 0.0, 0.02);
+    public static PID turretPID = new PID (0.2, 0.0, 0.015);
     public static double turretKStatic = 0.05;
     public static double turretVelFactor = 0.1;
+    private double lastTurretTarget = 0.0;
+    public double targetTurretAngle = 0.0;
+    private double targetTurretAngleVel = 0.0;
+    public static double targetTurretAngleVelFilter = 0.5;
+    public double targetHoodAngle = 0.0;
+    public static double hoodSweep = Math.toRadians(34.0);
+    public static double hoodGearRatio = 48.0 / 30.0;
 
     // velocity is in inches / second
     public static PID velocityPID = new PID (0.0, 0.0002, 0.0001);
@@ -60,9 +67,9 @@ public class Shooter {
     public static double velocityFilterThresh = 60;
     public static double velocityHighPowerThresh = 15;
     public static double velocityNoSkipThresh = 200;
-    public static double velocityNoSkipAccel = 0.8;
+    public static double velocityNoSkipAccel = 0.9;
     public static double flywheelScaleVoltage = 12;
-    public static double atVelThresh = 20;
+    public static double atVelThresh = 15;
     public static double latchBlockAngle = 2.5;
     private double targetVelocity = 0.0;
     private double filteredVelocity = 0.0;
@@ -86,10 +93,6 @@ public class Shooter {
     public static double minV0factorFar = 1.13  ; // TODO: tune for triple shot
     public static double flywheelEfficiency = 0.92;
     public static double flywheelEfficiencyConstantFarAddition = -0.03;
-    public double targetTurretAngle = 0.0;
-    public double targetHoodAngle = 0.0;
-    public static double hoodSweep = Math.toRadians(34.0);
-    public static double hoodGearRatio = 48.0 / 30.0;
     private Pose2d lastPos, currVel, lastVel;
     public static double posFilter = 0.9;
     private final double wallM = (58.3414785 - thirdFieldWidth) / (-55.6424675 + halfFieldWidth);
@@ -247,6 +250,7 @@ public class Shooter {
         double ffpow = targetVelocity * velocityFFm + velocityFFb;
         double pow = Math.max(0, pidpow + ffpow) * flywheelScaleVoltage / robot.sensors.getVoltage();
         if (error > velocityHighPowerThresh) pow = 1;
+        else if (error < -velocityHighPowerThresh) pow = 0;
         if (filteredVelocity < velocityNoSkipThresh) {
             pow = Math.min(pow, prevPow + velocityNoSkipAccel * robot.sensors.loopTime);
         }
@@ -254,14 +258,19 @@ public class Shooter {
         prevPow = pow;
 
         // Turret PID
+        //double unclippedTargetTurretAngle = targetTurretAngle;
         targetTurretAngle = Sensors.turretAngleClip(targetTurretAngle);
+        targetTurretAngleVel = targetTurretAngleVel * (1 - targetTurretAngleVelFilter) + (targetTurretAngle - lastTurretTarget) / robot.sensors.loopTime * targetTurretAngleVelFilter;
+        targetTurretAngleVel = Utils.minMaxClip(targetTurretAngleVel, -150, 150);
+        lastTurretTarget = targetTurretAngle;
         double turretAngle = robot.sensors.getTurretAngle();
-        double turretError = targetTurretAngle - Sensors.turretAngleClip(turretAngle);
+        double turretError = targetTurretAngle - Sensors.turretAngleClip(turretAngle) + targetTurretAngleVel * turretVelFactor;
         double turretPow = turretPID.update(turretError, -1, 1) + turretKStatic * Math.signum(turretError);
-        if (Math.abs(turretError) < Math.toRadians(1) && Math.abs(currVel.heading) < Math.toRadians(5)) turretPow = 0; // turretMinPow * turretError / Math.toRadians(2)
-        turretPow -= currVel.heading / (turret.servoType.speed) * turretVelFactor; // meant to account for robot rotating
+        if (Math.abs(turretError) < Math.toRadians(2)) turretPow = 0;
+        turretPow += targetTurretAngleVel / (turret.servoType.speed) * turretVelFactor; // meant to account for robot rotating
         if (turretAngle >= Sensors.turretLimitLeft) turretPow = Math.min(turretPow, -turretKStatic);
         if (turretAngle <= Sensors.turretLimitRight) turretPow = Math.max(turretPow, turretKStatic);
+        turretPow = Utils.minMaxClip(turretPow, -1, 1);
         turret.setTargetPower(turretPow);
 
         Log.i("Shooter","Robot Velocity" + (this.V != null ? this.V.getMag() : 0));
@@ -269,13 +278,14 @@ public class Shooter {
         TelemetryUtil.packet.put("Shooter : currVel x", currVel.x);
         TelemetryUtil.packet.put("Shooter : currVel y", currVel.y);
         TelemetryUtil.packet.put("Shooter : currVel heading (deg)", Math.toDegrees(currVel.heading));
+        TelemetryUtil.packet.put("Shooter : targetAngleVel (deg)", Math.toDegrees(targetTurretAngleVel));
         TelemetryUtil.packet.put("Shooter : state", this.state);
         TelemetryUtil.packet.put("Shooter : Flywheel Power Applied", pow * 100);
         TelemetryUtil.packet.put("Shooter : Flywheel Target Velocity", targetVelocity);
         TelemetryUtil.packet.put("Shooter : Flywheel Filtered Velocity", filteredVelocity);
         TelemetryUtil.packet.put("Shooter : Turret Target (deg)", Math.toDegrees(targetTurretAngle));
         TelemetryUtil.packet.put("Shooter : Hood Target (deg)", Math.toDegrees(hood.getTargetAngle()));
-        TelemetryUtil.packet.put("Shooter : Turret Power PID", turretPow * 100);
+        TelemetryUtil.packet.put("Shooter : Turret Power Applied", turretPow * 100);
         LogUtil.flywheelTarget.set(targetVelocity);
         LogUtil.shooterState.set(this.state.toString());
         LogUtil.turretTarget.set(targetTurretAngle);
@@ -336,7 +346,7 @@ public class Shooter {
         // for +-180 turret
         updateBallTargetInterpolate();
         Vector3 P;
-        if (ROBOT_POSITION.x + 6 >= ROBOT_POSITION.y * (Globals.isRed ? -1 : 1)) P = new Vector3(ballTarget);
+        if (ROBOT_POSITION.x + 12 >= ROBOT_POSITION.y * (Globals.isRed ? -1 : 1)) P = new Vector3(ballTarget);
         else P = new Vector3(ballTarget.y * (Globals.isRed ? -1 : 1), ballTarget.x * (Globals.isRed ? -1 : 1), ballTarget.z); // invert target along y = x or y = -x
         P.subtract(new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight));
         this.P = P;
@@ -495,7 +505,7 @@ public class Shooter {
 
     // further separation :)
     // bootleg LM1 strat being used in LM2 & LM3 code
-    public static double closeAngle = 0.2, closeVel = 470, midAngle = 0.5, midVel = 550, farAngle = 0.50, farVel = 625;
+    public static double closeAngle = 0.2, closeVel = 470, midAngle = 0.5, midVel = 550, farAngle = 0.45, farVel = 625;
 
     public enum Dist {
         CLOSE(closeAngle, closeVel),

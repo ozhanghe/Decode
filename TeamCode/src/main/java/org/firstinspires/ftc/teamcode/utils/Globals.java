@@ -22,8 +22,9 @@ public class Globals {
     // drivetrain
     public static boolean DRIVETRAIN_ENABLED = true;
     public static double TRACK_WIDTH = 11.0;
-    public static double ROBOT_WIDTH = 13.9;
+    public static double ROBOT_WIDTH = 13;
     public static double ROBOT_LENGTH = 18.0;
+    public static double ROBOT_BACK_LENGTH = 6.2;
     public static Pose2d ROBOT_POSITION = new Pose2d(0,0,0);
     public static Pose2d ROBOT_VELOCITY = new Pose2d(0,0,0);
     public static Pose2d AUTO_ENDING_POSE = new Pose2d(0,0,0);

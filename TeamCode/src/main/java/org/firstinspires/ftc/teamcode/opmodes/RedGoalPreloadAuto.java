@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
+import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_BACK_LENGTH;
+import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_WIDTH;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
@@ -21,7 +24,7 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         Globals.RUNMODE = RunMode.AUTO;
         robot = new Robot(hardwareMap);
         robot.setStopChecker(this::isStopRequested);
-        robot.drivetrain.setPoseEstimate(new Pose2d(-72 + 6, 24 + 6.5, 0));
+        robot.drivetrain.setPoseEstimate(new Pose2d(-72 + ROBOT_BACK_LENGTH, 24 + ROBOT_WIDTH / 2, 0));
 
         robot.shooter.state = Shooter.State.TEST;
         robot.shooter.setShooterBlocker(true);
@@ -40,14 +43,15 @@ public class RedGoalPreloadAuto extends LinearOpMode {
 
         robot.shooter.setShooter(Shooter.Dist.CLOSE);
         shoot(Math.PI / 4);
-        intake(-12, 48);
+        intake(-12, 50);
         shoot(Math.PI);
-        intake(12, 54);
+        intake(12, 56);
         shoot(Math.PI);
-        intake(36, 54);
+        intake(36, 56);
         shoot(Math.PI);
         robot.shooter.setShooter(Shooter.Dist.OFF);
-        robot.drivetrain.goToPoint(new Pose2d(0, 36, Math.PI), 1.0);
+        robot.shooter.targetTurretAngle = 0.0;
+        robot.drivetrain.goToPoint(new Pose2d(0, 45, Math.PI), 1.0);
 
         Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
         robot.waitWhile(() -> {
@@ -60,7 +64,7 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         robot.drivetrain.goToPoint(new Pose2d(-28, 28, heading), 1.0);
         robot.waitWhile(() -> {
             robot.shooter.turretTrackTarget();
-            return robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel() || Math.abs(robot.shooter.targetTurretAngle - robot.sensors.getTurretAngle()) > 10;
+            return robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel() || Math.abs(robot.shooter.targetTurretAngle - robot.sensors.getTurretAngle()) > 4;
         });
 
         robot.shooter.setShooterBlocker(false);
@@ -81,11 +85,14 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         robot.intake.reqIntake(true);
 
         timer = System.currentTimeMillis();
-        robot.drivetrain.goToPoint(new Pose2d(x, y, Math.toRadians(90)), 0.3);
+        robot.drivetrain.goToPoint(new Pose2d(x, y, Math.toRadians(90)), 0.6);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT && System.currentTimeMillis() - timer <= 3500);
 
         robot.drivetrain.goToPoint(new Pose2d(x, 48, Math.toRadians(90)), 1.0, true);
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+        robot.waitWhile(() -> {
+            robot.shooter.turretTrackTarget();
+            return robot.drivetrain.state != Drivetrain.State.WAIT;
+        });
         robot.intake.reqOff(true);
     }
 }
