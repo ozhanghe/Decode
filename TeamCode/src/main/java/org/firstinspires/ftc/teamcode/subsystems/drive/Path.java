@@ -55,6 +55,16 @@ public class Path {
     int lastReachedIndex = 0;
     Pose2d lastPose;
 
+    public Path (Pose2d p) {
+        this.repel = new ArrayList <>();
+        pathSegments = new ArrayList <>();
+        reversed = false;
+        decel = false;
+        completed = false;
+        power = 1.0;
+        lastPose = p.clone();
+    }
+
     public Path (Pose2d p, ArrayList<RepulsionPoint> repel) {
         this.repel = repel;
         pathSegments = new ArrayList <>();
