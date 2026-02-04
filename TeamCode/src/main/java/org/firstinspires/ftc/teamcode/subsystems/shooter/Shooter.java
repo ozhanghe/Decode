@@ -49,6 +49,8 @@ public class Shooter {
 
     public static PID turretPID = new PID (0.32, 0.0, 0.12);
     public static double turretKStatic = 0.11;
+    public static double turretKStaticLeft = 0.06;
+    public static double turretKStaticRight = -0.12;
     public static double turretDeadzone = 2;
     public static double turretVelFactor = 0.2;
     private double lastTurretTarget = 0.0;
@@ -77,11 +79,10 @@ public class Shooter {
     private double prevPow = 0;
 
     // auto-aim
-    public final double fieldWidth = 144.0;
+    public final double fieldWidth = 141.0;
     public final double halfFieldWidth = fieldWidth/2.0;
     public final double thirdFieldWidth = fieldWidth/3.0;
-    public final Vector2 distLauncherToRobotCenter = new Vector2(66.632, 229.61); // TODO: needs to change
-    public final double dLauncher = distLauncherToRobotCenter.mag() / 25.4;
+    public final double dLauncher = 3.6 / 2.54;
     public final double g = 9.805 * 100 / 2.54; // gravitational accel in in/s/s
     public final double launcherHeight = 13.5;
     public Vector3 ballTarget, P, V;
@@ -90,16 +91,16 @@ public class Shooter {
     public double minV0 = 0.0, minFlywheelVelocity = 0.0;
     public static double minV0Superthresh = 5; // TODO: need to tune this, controls how much over minV0 we make the v0 strive for pre mult
     public double minV0factor = 1.07;
-    public static double minV0factorClose = 1.13; // TODO: tune for triple shot
+    public static double minV0factorClose = 1.17; // TODO: tune for triple shot
     public static double voltageV0factor = 12.3;
     public static double ballInterpolateYFar = 63;
     public static double ballInterpolateZFar = 44;
-    public static double ballInterpolateZCloseB = 45;
-    public static double ballInterpolateYCloseB = 69.5;
+    public static double ballInterpolateZCloseB = 44;
+    public static double ballInterpolateYCloseB = 68;
     public static double ballInterpolateZCloseS = 38.75;
     public static double ballInterpolateYCloseS = 60;
     public static double minV0factorFar = 1.13  ; // TODO: tune for triple shot
-    public static double flywheelEfficiency = 0.97;
+    public static double flywheelEfficiency = 0.95;
     public static double flywheelEfficiencyConstantFarAddition = -0.03;
     private Pose2d lastPos, currVel, lastVel;
     public static double posFilter = 0.9;
@@ -273,8 +274,10 @@ public class Shooter {
         lastTurretTarget = targetTurretAngle;
         double turretAngle = robot.sensors.getTurretAngle();
         double turretError = targetTurretAngle - Sensors.turretAngleClip(turretAngle);
-        if(turretError > 60) {turretPID.updatePID(0.6,0,0);} else {turretPID.updatePID(0.32,0,0.12);}
-        double turretPow = turretPID.update(turretError, -1, 1) + turretKStatic * Math.signum(turretError);
+        if(Math.abs(turretError) > 60) {turretPID.updatePID(0.6,0,0);} else {turretPID.updatePID(0.32,0,0.12);}
+        double turretPow = turretPID.update(turretError, -1, 1);
+        if (turretError > 0) turretPow += turretKStaticLeft;
+        else if (turretError < 0) turretPow += turretKStaticRight;
         if (Math.abs(turretError) < Math.toRadians(turretDeadzone)) turretPow = 0;
         turretPow += targetTurretAngleVel / (turret.servoType.speed) * turretVelFactor; // meant to account for robot rotating
         if (turretAngle >= Sensors.turretLimitLeft) turretPow = Math.min(turretPow, -turretKStatic);
@@ -343,10 +346,10 @@ public class Shooter {
     }
 
     public void updateBallTargetInterpolate() {
-        if (ROBOT_POSITION.x >= 24) ballTarget = new Vector3(-69.5, ballInterpolateYFar * (Globals.isRed ? 1 : -1), ballInterpolateZFar);
+        if (ROBOT_POSITION.x >= 24) ballTarget = new Vector3(-68, ballInterpolateYFar * (Globals.isRed ? 1 : -1), ballInterpolateZFar);
         else {
             double k = Utils.minMaxClip(Math.hypot(-halfFieldWidth - ROBOT_POSITION.x, halfFieldWidth * (Globals.isRed ? 1 : -1) - ROBOT_POSITION.y), 0, 126) / 126;
-            ballTarget = new Vector3(-69.5, (ballInterpolateYCloseS * k + ballInterpolateYCloseB * (1 - k)) * (Globals.isRed ? 1 : -1), ballInterpolateZCloseS * k + ballInterpolateZCloseB * (1 - k));
+            ballTarget = new Vector3(-68, (ballInterpolateYCloseS * k + ballInterpolateYCloseB * (1 - k)) * (Globals.isRed ? 1 : -1), ballInterpolateZCloseS * k + ballInterpolateZCloseB * (1 - k));
         }
     }
 
@@ -356,7 +359,7 @@ public class Shooter {
         updateBallTargetInterpolate();
         Vector3 P;
         if (ROBOT_POSITION.x + 12 >= ROBOT_POSITION.y * (Globals.isRed ? -1 : 1)) P = new Vector3(ballTarget);
-        else P = new Vector3(ballTarget.x, ballTarget.y * (Globals.isRed ? -1 : 1), ballTarget.z); // invert target along y = x or y = -x
+        else P = new Vector3(ballTarget.y * (Globals.isRed ? -1 : 1), ballTarget.x * (Globals.isRed ? -1 : 1), ballTarget.z); // invert target along y = x or y = -x
         P.subtract(new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight));
         this.P = P;
         targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - ROBOT_POSITION.heading);
@@ -398,11 +401,11 @@ public class Shooter {
         double dist2 = e - P.z * P.z; // 2D dist squared
         minV0 = (Math.sqrt(2 * a * tRoots.get(0) * tRoots.get(0) + c + d / 2 / tRoots.get(0)) + minV0Superthresh);
         if (ROBOT_POSITION.x >= 24) {
-            minV0 *= minV0factorFar * voltageV0factor/robot.sensors.getVoltage();
+            minV0 *= minV0factorFar;
             Log.i("MinV0", "minV0: " + minV0);
             minFlywheelVelocity = minV0 * 2 / (flywheelEfficiency + flywheelEfficiencyConstantFarAddition);
         } else {
-            minV0 *= minV0factorClose * voltageV0factor/robot.sensors.getVoltage();
+            minV0 *= minV0factorClose;
             Log.i("MinV0", "minV0: " + minV0);
             minFlywheelVelocity = minV0 * 2 / flywheelEfficiency;
         }
