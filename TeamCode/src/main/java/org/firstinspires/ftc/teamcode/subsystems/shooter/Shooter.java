@@ -91,12 +91,12 @@ public class Shooter {
     public double minV0 = 0.0, minFlywheelVelocity = 0.0;
     public static double minV0Superthresh = 5; // TODO: need to tune this, controls how much over minV0 we make the v0 strive for pre mult
     public double minV0factor = 1.07;
-    public static double minV0factorClose = 1.17; // TODO: tune for triple shot
+    public static double minV0factorClose = 1.18; // TODO: tune for triple shot
     public static double voltageV0factor = 12.3;
     public static double ballInterpolateYFar = 63;
     public static double ballInterpolateZFar = 44;
     public static double ballInterpolateZCloseB = 44;
-    public static double ballInterpolateYCloseB = 68;
+    public static double ballInterpolateYCloseB = 64;
     public static double ballInterpolateZCloseS = 38.75;
     public static double ballInterpolateYCloseS = 60;
     public static double minV0factorFar = 1.13  ; // TODO: tune for triple shot
@@ -342,7 +342,7 @@ public class Shooter {
     public void setShooterBlocker(boolean active) { flywheelBlocker.setTargetAngle(active ? latchBlockAngle : -0.2);}
 
     public void updateBallTarget() {
-        ballTarget = new Vector3(-69.5, 67 * (Globals.isRed ? 1 : -1), 46);
+        ballTarget = new Vector3(-68, 67 * (Globals.isRed ? 1 : -1), 46);
     }
 
     public void updateBallTargetInterpolate() {
