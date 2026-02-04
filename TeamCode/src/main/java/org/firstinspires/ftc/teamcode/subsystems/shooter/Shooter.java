@@ -47,7 +47,7 @@ public class Shooter {
 
     private boolean aimRequest = false, shootRequest = false, stopRequest = false;
 
-    public static PID turretPID = new PID (0.32, 0.0, 0.12);
+    public static PID turretPID = new PID (0.25, 0.0, 0.08);
     public static double turretKStatic = 0.11;
     public static double turretKStaticLeft = 0.06;
     public static double turretKStaticRight = -0.12;
@@ -91,16 +91,16 @@ public class Shooter {
     public double minV0 = 0.0, minFlywheelVelocity = 0.0;
     public static double minV0Superthresh = 5; // TODO: need to tune this, controls how much over minV0 we make the v0 strive for pre mult
     public double minV0factor = 1.07;
-    public static double minV0factorClose = 1.18; // TODO: tune for triple shot
-    public static double voltageV0factor = 12.3;
+    public static double minV0factorClose = 1.22; // TODO: tune for triple shot
+    public static double voltageV0factor = 12.4;
     public static double ballInterpolateYFar = 63;
-    public static double ballInterpolateZFar = 44;
-    public static double ballInterpolateZCloseB = 44;
+    public static double ballInterpolateZFar = 46;
+    public static double ballInterpolateZCloseB = 43;
     public static double ballInterpolateYCloseB = 64;
     public static double ballInterpolateZCloseS = 38.75;
     public static double ballInterpolateYCloseS = 60;
-    public static double minV0factorFar = 1.13  ; // TODO: tune for triple shot
-    public static double flywheelEfficiency = 0.95;
+    public static double minV0factorFar = 1.25  ; // TODO: tune for triple shot
+    public static double flywheelEfficiency = 0.94;
     public static double flywheelEfficiencyConstantFarAddition = -0.03;
     private Pose2d lastPos, currVel, lastVel;
     public static double posFilter = 0.9;
@@ -119,7 +119,7 @@ public class Shooter {
             "hood", nPriorityServo.ServoType.AXON_MINI,
             0.027, 0.4, 0.03,
             new boolean[] {false},
-            2, 5
+            3, 7
         );
 
         flywheelBlocker = new nPriorityServo(
@@ -127,14 +127,14 @@ public class Shooter {
             "flywheelBlocker", nPriorityServo.ServoType.AXON_MICRO,
             0, 0.7, 0.1,
             new boolean[] {false},
-            2, 4
+            2, 2
         );
 
         turret = new PriorityCRServo(
                 new CRServo[] {robot.hardwareMap.get(CRServo.class, "turret1"), robot.hardwareMap.get(CRServo.class, "turret2")},
                 "turret", PriorityCRServo.ServoType.AXON_MINI,
                 new boolean[] {false, false},
-                4, 6
+                5, 6
         );
 
         robot.hardwareQueue.addDevices(flywheel, hood, turret, flywheelBlocker);
@@ -190,8 +190,8 @@ public class Shooter {
                 }
                 setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
-
-                if (shootRequest) {
+                turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 3 : 1.5);
+                if (shootRequest && turretResult) {
                     setShooterBlocker(false);
                     if (flywheelBlocker.inPosition()) {
                         state = State.SHOOT;
@@ -274,7 +274,7 @@ public class Shooter {
         lastTurretTarget = targetTurretAngle;
         double turretAngle = robot.sensors.getTurretAngle();
         double turretError = targetTurretAngle - Sensors.turretAngleClip(turretAngle);
-        if(Math.abs(turretError) > 60) {turretPID.updatePID(0.6,0,0);} else {turretPID.updatePID(0.32,0,0.12);}
+        if(Math.abs(turretError) > 60) {turretPID.updatePID(0.6,0,0);} else {turretPID.updatePID(0.25,0,0.08);}
         double turretPow = turretPID.update(turretError, -1, 1);
         if (turretError > 0) turretPow += turretKStaticLeft;
         else if (turretError < 0) turretPow += turretKStaticRight;
