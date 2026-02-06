@@ -21,7 +21,6 @@ import org.firstinspires.ftc.teamcode.utils.Polynomial;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.utils.Utils;
-import org.firstinspires.ftc.teamcode.utils.Vector2;
 import org.firstinspires.ftc.teamcode.utils.Vector3;
 import org.firstinspires.ftc.teamcode.utils.priority.PriorityCRServo;
 import org.firstinspires.ftc.teamcode.utils.priority.PriorityMotor;
@@ -50,9 +49,9 @@ public class Shooter {
     public static PID turretPID = new PID (0.25, 0.0, 0.05);
     public static double turretKStatic = 0.08;
     public static double turretKStaticLeft = 0.08;
-    public static double turretKStaticRight = -0.8;
+    public static double turretKStaticRight = -0.08;
     public static double turretDeadzone = 2;
-    public static double turretVelFactor = 0.25;
+    public static double turretVelFactor = 0.2;
     private double lastTurretTarget = 0.0;
     public double targetTurretAngle = 0.0;
     private double targetTurretAngleVel = 0.0;
@@ -88,17 +87,18 @@ public class Shooter {
     public double minV0 = 0.0, minFlywheelVelocity = 0.0;
     public static double minV0Superthresh = 0; // perhaps eliminate
     public static double minV0factorClose = 1.243; // TODO: tune for triple shot
+    public static double ballInterpolateYCloseB = 68;
+    public static double ballInterpolateYCloseS = 64;
     public static double ballInterpolateYFar = 63;
+    public static double ballInterpolateZCloseB = 44;
+    public static double ballInterpolateZCloseS = 40;
     public static double ballInterpolateZFar = 46;
-    public static double ballInterpolateZCloseB = 43;
-    public static double ballInterpolateYCloseB = 64;
-    public static double ballInterpolateZCloseS = 38.75;
-    public static double ballInterpolateYCloseS = 60;
     public static double minV0factorFar = 1.25; // TODO: tune for triple shot
-    public static double flywheelEfficiency = 0.96;
+    public static double flywheelEfficiency = 0.955;
     public static double flywheelEfficiencyConstantFarAddition = -0.02;
     private Pose2d lastPos, currVel, lastVel;
     public static double posFilter = 0.9;
+    public static double arcDistThresh = 3200;
 
     /*
     (-71, 48)
@@ -462,6 +462,15 @@ public class Shooter {
                 thetas[i] = pf.theta();
                 phis[i] = pf.phi();
 
+                /*
+                if (ROBOT_POSITION.y + v0 * Math.sin(phis[i]) / g * (v0 * Math.sin(phis[i]) * Math.sin(thetas[i]) + V.y)
+                        > (Globals.isRed ? 1 : -1) * (wallM * (ROBOT_POSITION.x + v0 * Math.sin(phis[i]) / g * (v0 * Math.sin(phis[i]) * Math.cos(thetas[i]) + V.x)) + wallB)) {
+                    Log.i("Dynamic", "Point 5: i = " + i + ", peak of trajectory is behind the wall :(");
+                    phis[i] = -100;
+                }
+                */
+
+                /*
                 Vector3 peakPos = new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight);
                 // [ -P.y / P.x, 1 ][ x ] = [ ROBOT_POSITION.y - P.y * ROBOT_POSITION.x / P.x ]
                 // [ -wallM    , 1 ][ y ] = [ wallB                                           ]
@@ -484,18 +493,28 @@ public class Shooter {
                         Log.i("Dynamic", "Point 3: i = " + i + ", t = " + t + ", height at wall = " + heightAtWall);
                     }
                 }
+                */
 
-                if (phis[i] != -100 && phis[i] - hoodSweep < 0) {
+                int arcFlip = (dist2 < arcDistThresh ? 1 : -1);
+                Log.i("Dynamic", "Flip val = " + arcFlip + ", " + (arcFlip == 1 ? "flat shot" : "arc shot"));
+                if (phis[i] - hoodSweep <= 0) {
                     Log.i("Dynamic", "Point 4: i = " + i + ", phis[i] = " + phis[i]);
-                    phis[i] = -100;
+                    phis[i] = 100 * arcFlip;
                 }
                 if (i == 0) {
                     thetas[tRoots.size()] = thetas[0];
                     phis[tRoots.size()] = phis[0];
                 } else {
-                    if (phis[i] > phis[tRoots.size()]) {
-                        phis[tRoots.size()] = phis[i];
-                        thetas[tRoots.size()] = thetas[i];
+                    if (arcFlip == 1) {
+                        if (phis[i] < phis[tRoots.size()]) {
+                            phis[tRoots.size()] = phis[i];
+                            thetas[tRoots.size()] = thetas[i];
+                        }
+                    } else {
+                        if (phis[i] > phis[tRoots.size()]) {
+                            phis[tRoots.size()] = phis[i];
+                            thetas[tRoots.size()] = thetas[i];
+                        }
                     }
                 }
                 targetTurretAngle = AngleUtil.clipAngle(thetas[tRoots.size()] - ROBOT_POSITION.heading);
@@ -509,7 +528,7 @@ public class Shooter {
         }
 
         if (phis[tRoots.size()] == -100) {
-            Log.i("Points", "Phis are cooked, phis[" + tRoots.size() + "] = -100");
+            Log.i("Points", "Shot not possible; Phis are cooked, phis[" + tRoots.size() + "] = -100");
             TelemetryUtil.packet.put("Aim: aimLauncherV8", "Phis are cooked, phis[" + tRoots.size() + "] = -100");
             return false;
         }

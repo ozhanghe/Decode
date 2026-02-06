@@ -165,6 +165,11 @@ public class Teleop extends LinearOpMode {
                     robot.shooter.reqAim(true);
                 }
 
+                if (rb1.isClicked(gamepad1.right_bumper)) {
+                    if (robot.shooter.state == Shooter.State.READY) robot.shooter.reqShoot(true);
+                    else if (robot.shooter.state == Shooter.State.IDLE) robot.shooter.reqAim(true);
+                }
+
                 if (robot.shooter.state == Shooter.State.READY) {
                     if (confirmation) {
                         gamepad1.rumble(150);
@@ -177,10 +182,6 @@ public class Teleop extends LinearOpMode {
 
                 if (rt1.isClicked(gamepad1.right_trigger > triggerThresh) || b1.isClicked(gamepad1.b) || b2.isClicked(gamepad2.b)) {
                     robot.shooter.reqStop(true);
-                }
-
-                if (rb1.isClicked(gamepad1.right_bumper) && robot.shooter.state == Shooter.State.READY) {
-                    robot.shooter.reqShoot(true);
                 }
             }
 

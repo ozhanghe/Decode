@@ -130,7 +130,7 @@ public class Sensors {
         if (Globals.RUNMODE != RunMode.AUTO && currentTime - lastColorSensorUpdatedTime > colorSensorUpdateTime * 1e6) {
             double lightSensorRawVoltage = lightSensor0.getVoltage();
             lightSensorFilteredVoltage = lightSensorFilteredVoltage * (1 - lightSensorFilter) + lightSensorRawVoltage * lightSensorFilter;
-            isGreen = lightSensorFilteredVoltage > 0.009;
+            isGreen = lightSensorFilteredVoltage > 0.008;
             isPurple = !isGreen && lightSensorFilteredVoltage > 0.004;
             light0G.setState(!isGreen);
             light0P.setState(!isPurple);
