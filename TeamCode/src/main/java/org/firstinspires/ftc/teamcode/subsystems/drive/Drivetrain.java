@@ -198,6 +198,7 @@ public class Drivetrain {
 
                 if(path != null && path.completed) {
                     targetPoint = path.lastPose.clone();
+                    isWaypoint = false;
                     path = null;
                     state = State.PID_TO_POINT;
                     break;
@@ -240,8 +241,8 @@ public class Drivetrain {
                 calculateErrors();
                 PIDF();
 
-                if(atPoint()){
-                    state = State.BRAKE;
+                if (atPoint()) {
+                    state = isWaypoint ? State.WAIT : State.BRAKE;
                 }
                 break;
             case BRAKE:
@@ -249,7 +250,7 @@ public class Drivetrain {
                 state = State.WAIT;
                 break;
             case WAIT:
-                if(!atPoint()){
+                if (!atPoint()) {
                     state = State.PID_TO_POINT;
                 }
                 break;

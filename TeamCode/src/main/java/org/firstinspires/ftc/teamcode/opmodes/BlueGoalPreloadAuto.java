@@ -28,9 +28,9 @@ public class BlueGoalPreloadAuto extends LinearOpMode {
 
         while (opModeInInit()) {
             robot.update();
-            robot.sensors.light0P.setState(System.currentTimeMillis() % 500 < 250);
+            robot.sensors.light0P.set(System.currentTimeMillis() % 500 < 250);
         }
-        robot.sensors.light0P.setState(true);
+        robot.sensors.light0P.set(false);
 
         if (!isStopRequested()) LogUtil.init();
         LogUtil.drivePositionReset = true;

@@ -19,6 +19,7 @@ import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.Polynomial;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
+import org.firstinspires.ftc.teamcode.utils.RunMode;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.utils.Utils;
 import org.firstinspires.ftc.teamcode.utils.Vector3;
@@ -99,7 +100,6 @@ public class Shooter {
     private Pose2d lastPos, currVel, lastVel;
     public static double posFilter = 0.9;
     public static double arcDistThresh = 3200;
-    public static int arcFlip = 1;
 
     /*
     (-71, 48)
@@ -170,7 +170,7 @@ public class Shooter {
                 setShooterBlocker(true);
                 TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
                 boolean aimResult = aimLauncherV8();
-                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 4 : 1.5);
+                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 4 : 2);
                 TelemetryUtil.packet.put("Aim: aimResult", aimResult);
                 TelemetryUtil.packet.put("Aim: turretResult", turretResult);
                 if (aimResult && hood.inPosition() && turretResult) {
@@ -192,16 +192,16 @@ public class Shooter {
 
                 TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
                 boolean aimResult = aimLauncherV8();
-                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 4 : 1.5);
+                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 4 : 2);
                 TelemetryUtil.packet.put("Aim: aimResult", aimResult);
                 TelemetryUtil.packet.put("Aim: turretResult", turretResult);
-                if (aimResult) {
-                    robot.sensors.light0G.setState(false);
-                    robot.sensors.light0P.setState(false);
+                if (aimResult && Globals.RUNMODE != RunMode.AUTO) {
+                    robot.sensors.light0G.set(true);
+                    robot.sensors.light0P.set(true);
                 }
                 setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
-                if (shootRequest && turretResult) {
+                if (shootRequest) {
                     setShooterBlocker(false);
                     if (flywheelBlocker.inPosition()) {
                         state = State.SHOOT;
@@ -413,6 +413,7 @@ public class Shooter {
         Log.i("MinV0", "tRoots[0]: " + tRoots.get(0));
 
         double dist2 = e - P.z * P.z; // 2D dist squared
+        double arcFlip = (dist2 < arcDistThresh ? 1 : -1);
         minV0 = (Math.sqrt(2 * a * tRoots.get(0) * tRoots.get(0) + c + d / 2 / tRoots.get(0)) + minV0Superthresh);
         if (arcFlip == 1) minV0 *= minV0factorFlat;
         else minV0 *= minV0factorArc;
@@ -454,7 +455,6 @@ public class Shooter {
             Log.i("Dynamic", "Roots: " + roots.toString() + "]");
             phis = new double[tRoots.size() + 1];
             thetas = new double[phis.length];
-            arcFlip = (dist2 < arcDistThresh ? 1 : -1);
             for (int i = 0; i < tRoots.size(); i++) {
                 double t0 = tRoots.get(i);
                 Vector3 pf = new Vector3(P.x + V.x * t0, P.y + V.y * t0, P.z + g * t0 * t0 / 2);

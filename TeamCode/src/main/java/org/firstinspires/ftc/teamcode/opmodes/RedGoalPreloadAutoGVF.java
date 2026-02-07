@@ -36,9 +36,9 @@ public class RedGoalPreloadAutoGVF extends LinearOpMode {
 
         while (opModeInInit()) {
             robot.update();
-            robot.sensors.light0G.setState(System.currentTimeMillis() % 500 < 250);
+            robot.sensors.light0G.set(System.currentTimeMillis() % 500 < 250);
         }
-        robot.sensors.light0G.setState(true);
+        robot.sensors.light0G.set(false);
 
         if (!isStopRequested()) LogUtil.init();
         LogUtil.drivePositionReset = true;

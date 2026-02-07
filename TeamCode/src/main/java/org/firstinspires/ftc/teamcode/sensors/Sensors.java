@@ -13,6 +13,7 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
 import org.firstinspires.ftc.teamcode.utils.Globals;
+import org.firstinspires.ftc.teamcode.utils.LEDWrapper;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
@@ -47,7 +48,7 @@ public class Sensors {
     private double lightSensorFilteredVoltage = 0;
     public static double lightSensorFilter = 0.3;
     public AnalogInput lightSensor0;
-    public final DigitalChannel light0G, light0P;
+    public final LEDWrapper light0G, light0P;
     private boolean isGreen = false, isPurple = false;
 
     private double voltage;
@@ -66,14 +67,11 @@ public class Sensors {
         //parkEncoder = new RelativeEncoder(robot.hardwareMap, "park_encoder");
         turretAnalogEncoder = robot.hardwareMap.get(AnalogInput.class, "turret_encoder");
         turretAngleEncoderOffset = turretAngleEncoderPosition = turretAngle = 0;
+        resetTurretAngleEncoder = true;
 
         lightSensor0 = robot.hardwareMap.get(AnalogInput.class, "lightSensor0");
-        light0G = robot.hardwareMap.get(DigitalChannel.class, "light0G");
-        light0P = robot.hardwareMap.get(DigitalChannel.class, "light0P");
-        light0G.setMode(DigitalChannel.Mode.OUTPUT);
-        light0P.setMode(DigitalChannel.Mode.OUTPUT);
-        light0G.setState(true);
-        light0P.setState(true);
+        light0G = new LEDWrapper(robot.hardwareMap, "light0G");
+        light0P = new LEDWrapper(robot.hardwareMap, "light0P");
 
         allHubs = robot.hardwareMap.getAll(LynxModule.class);
 
@@ -132,8 +130,8 @@ public class Sensors {
             lightSensorFilteredVoltage = lightSensorFilteredVoltage * (1 - lightSensorFilter) + lightSensorRawVoltage * lightSensorFilter;
             isGreen = lightSensorFilteredVoltage > 0.008;
             isPurple = !isGreen && lightSensorFilteredVoltage > 0.004;
-            light0G.setState(!isGreen);
-            light0P.setState(!isPurple);
+            light0G.set(isGreen);
+            light0P.set(isPurple);
             TelemetryUtil.packet.put("Intake : Light Raw Voltage", lightSensorRawVoltage);
             TelemetryUtil.packet.put("Intake : Light Filtered Voltage", lightSensorFilteredVoltage);
             //TelemetryUtil.packet.put("Intake : Light Voltage Green Thresh", 0.009);

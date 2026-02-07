@@ -65,16 +65,37 @@ public class Robot {
 
         if (this.stopChecker != null && this.stopChecker.getAsBoolean()) return;
 
+        sensors.light0G.update();
+        sensors.light0P.update();
         hardwareQueue.update();
         this.updateTelemetry();
     }
 
+    /**
+     * Sets the condition that should stop waiting (waitWhile)
+     * @param func the function to check (return true to stop)
+     */
     public void setStopChecker(BooleanSupplier func) { this.stopChecker = func; }
 
+    /**
+     * Waits while a condition is true
+     * @param func the function to check
+     */
     public void waitWhile(BooleanSupplier func) {
         do {
             update();
         } while (!this.stopChecker.getAsBoolean() && func.getAsBoolean());
+    }
+
+    /**
+     * Waits for a duration
+     * @param duration the duration in milliseconds
+     */
+    public void waitFor(long duration) {
+        long start = System.currentTimeMillis();
+        do {
+            update();
+        } while (!this.stopChecker.getAsBoolean() && System.currentTimeMillis() - start < duration);
     }
 
     public void updateTelemetry() {
