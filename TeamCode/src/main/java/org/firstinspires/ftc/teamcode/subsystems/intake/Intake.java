@@ -17,7 +17,7 @@ public class Intake {
 
     private boolean requestIntake = false, requestShoot = false, requestOff = false, reversed = false;
 
-    public static double intakeRollerPower = 0.7, intakeFeedPower = 0.4, shootRollerPower = 1.0, shootFeedPower = 1.0;
+    public static double intakeRollerPower = 0.7, intakeFeedPower = 0.4, shootRollerPower = 1.0, shootFeedPower = 0.75;
 
     public enum State {
         IDLE,

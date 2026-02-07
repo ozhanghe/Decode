@@ -46,8 +46,9 @@ public class Shooter {
     public final PriorityCRServo turret;
 
     private boolean aimRequest = false, shootRequest = false, stopRequest = false;
+    public boolean turretTrackInManual = false;
 
-    public static PID turretPID = new PID (0.25, 0.0, 0.1);
+    public static PID turretPID = new PID (0.25, 0.0, 0.05);
     public static double turretKStatic = 0.08;
     public static double turretKStaticLeft = 0.08;
     public static double turretKStaticRight = -0.08;
@@ -69,10 +70,10 @@ public class Shooter {
     public static double velocityFilterHigh = 0.5;
     public static double velocityFilterThresh = 60;
     public static double velocityHighPowerThresh = 15;
-    public static double velocityNoSkipThresh = 200;
-    public static double velocityNoSkipAccel = 0.9;
+    public static double velocityNoSkipThresh = 180;
+    public static double velocityNoSkipAccel = 1.1;
     public static double flywheelScaleVoltage = 12;
-    public static double atVelThresh = 15;
+    public static double atVelThresh = 20;
     public static double latchBlockAngle = 2.5;
     private double targetVelocity = 0.0;
     private double filteredVelocity = 0.0;
@@ -238,6 +239,7 @@ public class Shooter {
                 break;
             }
             case TEST: { // LEAVE THIS EMPTY AT ALL TIMES
+                if (turretTrackInManual) turretTrackTarget();
                 break;
             }
         }
@@ -426,8 +428,6 @@ public class Shooter {
         double v0 = getBallExitSpd();
         Log.i("Points", "Got past MinV0, v0 = " + v0);
 
-        Canvas canvas = TelemetryUtil.packet.fieldOverlay();
-
         double[] thetas;
         double[] phis;
         double savedFlightTime = 0.0;
@@ -524,7 +524,7 @@ public class Shooter {
 
     // further separation :)
     // bootleg LM1 strat being used in LM2 & LM3 code
-    public static double closeAngle = 0.2, closeVel = 470, midAngle = 0.5, midVel = 550, farAngle = 0.45, farVel = 625;
+    public static double closeAngle = 0.2, closeVel = 470, midAngle = 0.45, midVel = 550, farAngle = 0.45, farVel = 625;
 
     public enum Dist {
         CLOSE(closeAngle, closeVel),

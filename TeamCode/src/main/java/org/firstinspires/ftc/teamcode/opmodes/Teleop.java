@@ -91,7 +91,7 @@ public class Teleop extends LinearOpMode {
                 //robot.sensors.light0P.setState(true);
             }
 
-            if (a1.isClicked(gamepad1.a)) {
+            if (a1.isClicked(gamepad1.a && !gamepad1.start)) {
                 intakeReversed = !intakeOn || !intakeReversed;
                 intakeOn = true;
                 robot.intake.reqIntake(true);
@@ -123,7 +123,7 @@ public class Teleop extends LinearOpMode {
                     flywheelOn = false;
                     robot.shooter.setShooter(Shooter.Dist.OFF);
                     atSpeedRumble = false;
-                } else if (b1.isClicked(gamepad1.b) || b2.isClicked(gamepad2.b)) { // Close
+                } else if (b1.isClicked(gamepad1.b) || b2.isClicked(gamepad2.b && !gamepad2.start)) { // Close
                     flywheelOn = true;
                     robot.shooter.setShooter(Shooter.Dist.CLOSE);
                     atSpeedRumble = true;
@@ -180,7 +180,7 @@ public class Teleop extends LinearOpMode {
                     confirmation = true;
                 }
 
-                if (rt1.isClicked(gamepad1.right_trigger > triggerThresh) || b1.isClicked(gamepad1.b) || b2.isClicked(gamepad2.b)) {
+                if (rt1.isClicked(gamepad1.right_trigger > triggerThresh) || b1.isClicked(gamepad1.b) || b2.isClicked(gamepad2.b && !gamepad2.start)) {
                     robot.shooter.reqStop(true);
                 }
             }

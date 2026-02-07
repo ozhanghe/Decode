@@ -17,7 +17,7 @@ import org.firstinspires.ftc.teamcode.utils.RunMode;
 
 import java.util.ArrayList;
 
-@Autonomous(name = "RedGoalPreloadAutoGVF", group = "Auto")
+@Autonomous(name = "RedGoalPreloadAutoGVF")
 public class RedGoalPreloadAutoGVF extends LinearOpMode {
     private Robot robot;
     private double timer = System.currentTimeMillis();
