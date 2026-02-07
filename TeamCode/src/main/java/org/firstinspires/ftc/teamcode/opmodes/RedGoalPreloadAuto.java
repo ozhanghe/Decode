@@ -14,6 +14,7 @@ import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
+import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 
 @Config
 @Autonomous(name = "RedGoalPreloadAuto", group = "Auto")
@@ -21,6 +22,7 @@ public class RedGoalPreloadAuto extends LinearOpMode {
     private Robot robot;
     public static long shootDuration = 1500, intakeDuration = 1500;
     private long timer = System.currentTimeMillis();
+    private long t = System.currentTimeMillis();
 
     public void runOpMode() {
         Globals.isRed = true;
@@ -45,6 +47,8 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         //robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
         //robot.shooter.setShooter(Shooter.Dist.CLOSE);
+
+        t = System.currentTimeMillis();
         robot.shooter.reqAim(true);
         shoot(Math.PI / 4, true);
         intake(12, 60);
@@ -57,6 +61,12 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         //robot.shooter.setShooter(Shooter.Dist.OFF);
         robot.shooter.targetTurretAngle = 0.0;
         robot.drivetrain.goToPoint(new Pose2d(0, 45, Math.PI / 2), 1.0);
+
+        long x = System.currentTimeMillis() - t;
+
+        TelemetryUtil.packet.put("Time : ", x);
+
+
 
         Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
         robot.waitWhile(() -> {

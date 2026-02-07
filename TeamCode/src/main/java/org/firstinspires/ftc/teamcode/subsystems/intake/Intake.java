@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
@@ -16,7 +17,7 @@ public class Intake {
 
     private boolean requestIntake = false, requestShoot = false, requestOff = false, reversed = false;
 
-    public static double intakeRollerPower = 0.7, intakeFeedPower = 0.4, shootRollerPower = 0.9, shootFeedPower = 0.7;
+    public static double intakeRollerPower = 0.7, intakeFeedPower = 0.4, shootRollerPower = 1.0, shootFeedPower = 1.0;
 
     public enum State {
         IDLE,
@@ -24,6 +25,8 @@ public class Intake {
         SHOOT_FEED,
         TEST
     }
+
+    public double intakeCurrent;
 
     public State state = State.IDLE;
 
@@ -115,7 +118,11 @@ public class Intake {
             }
         }
 
+        //intakeCurrent = roller.getCurrent();
+
         this.updateTelemetry();
+
+
     }
 
     public void reqIntake (boolean req) {
@@ -135,5 +142,8 @@ public class Intake {
         LogUtil.intakeState.set(this.state.toString());
         TelemetryUtil.packet.put("Intake : reversed", reversed);
         LogUtil.intakeReversed.set(reversed);
+        //TelemetryUtil.packet.put("Intake : current (AMPS)", intakeCurrent);
+        //LogUtil.intakeReversed.set(reversed);
+
     }
 }

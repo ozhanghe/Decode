@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.utils.priority;
 
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.utils.Utils;
 
@@ -89,6 +90,10 @@ public class PriorityMotor extends PriorityDevice {
 
     public double getVelocity() {
         return motor[0].getVelocity();
+    }
+
+    public double getCurrent() {
+        return motor[0].getCurrent(CurrentUnit.AMPS);
     }
 
     @Override

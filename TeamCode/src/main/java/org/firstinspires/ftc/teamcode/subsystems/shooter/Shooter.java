@@ -89,10 +89,10 @@ public class Shooter {
     public static double minV0Superthresh = 0; // perhaps eliminate
     public static double ballInterpolateYCloseB = 68;
     public static double ballInterpolateYCloseS = 64;
-    public static double ballInterpolateYFar = 63;
+    public static double ballInterpolateYFar = 66;
     public static double ballInterpolateZCloseB = 44;
     public static double ballInterpolateZCloseS = 40;
-    public static double ballInterpolateZFar = 46;
+    public static double ballInterpolateZFar = 45;
     public static double minV0factorArc = 1.17; // TODO: tune for triple shot
     public static double minV0factorFlat = 1.24; // TODO: tune for triple shot
     public static double flywheelEfficiency = 0.955;
