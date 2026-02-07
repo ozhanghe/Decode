@@ -23,6 +23,7 @@ public class RedGoalPreloadAuto extends LinearOpMode {
     public static long shootDuration = 1500, intakeDuration = 1500;
     private long timer = System.currentTimeMillis();
     private long t = System.currentTimeMillis();
+    private boolean firstShot = true;
 
     public void runOpMode() {
         Globals.isRed = true;
@@ -79,9 +80,13 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         //robot.drivetrain.goToPoint(new Pose2d(-12, 24, heading), 1.0, true);
         //robot.waitWhile(() ->  robot.drivetrain.state != Drivetrain.State.WAIT);
 
-        robot.drivetrain.goToPoint(new Pose2d(-24, 24, heading), 0.6);
+        robot.drivetrain.goToPoint(new Pose2d(-18, 18, heading), 0.6);
         robot.waitWhile(() ->  robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY);
-        robot.waitFor(200);
+        robot.waitFor(300);
+        if(firstShot){
+            robot.waitFor(300);
+            firstShot = false;
+        }
 
         robot.shooter.reqShoot(true);
         robot.update();
@@ -92,7 +97,7 @@ public class RedGoalPreloadAuto extends LinearOpMode {
     }
 
     private void intake(double x, double y) {
-        robot.drivetrain.goToPoint(new Pose2d(x, 22, Math.PI / 2), 1.0);
+        robot.drivetrain.goToPoint(new Pose2d(x, 22, Math.PI / 2), 0.5);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.intake.reqIntake(true);
 

@@ -47,7 +47,7 @@ public class Shooter {
 
     private boolean aimRequest = false, shootRequest = false, stopRequest = false;
 
-    public static PID turretPID = new PID (0.25, 0.0, 0.05);
+    public static PID turretPID = new PID (0.25, 0.0, 0.1);
     public static double turretKStatic = 0.08;
     public static double turretKStaticLeft = 0.08;
     public static double turretKStaticRight = -0.08;
@@ -93,13 +93,13 @@ public class Shooter {
     public static double ballInterpolateZCloseB = 44;
     public static double ballInterpolateZCloseS = 40;
     public static double ballInterpolateZFar = 45;
-    public static double minV0factorArc = 1.17; // TODO: tune for triple shot
+    public static double minV0factorArc = 1.25; // TODO: tune for triple shot
     public static double minV0factorFlat = 1.24; // TODO: tune for triple shot
     public static double flywheelEfficiency = 0.955;
     public static double flywheelEfficiencyConstantFarAddition = -0.02;
     private Pose2d lastPos, currVel, lastVel;
     public static double posFilter = 0.9;
-    public static double arcDistThresh = 3200;
+    public static double arcDistThresh = 5000;
 
     /*
     (-71, 48)
@@ -170,7 +170,7 @@ public class Shooter {
                 setShooterBlocker(true);
                 TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
                 boolean aimResult = aimLauncherV8();
-                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 4 : 2);
+                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 3 : 2);
                 TelemetryUtil.packet.put("Aim: aimResult", aimResult);
                 TelemetryUtil.packet.put("Aim: turretResult", turretResult);
                 if (aimResult && hood.inPosition() && turretResult) {
@@ -192,7 +192,7 @@ public class Shooter {
 
                 TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
                 boolean aimResult = aimLauncherV8();
-                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 4 : 2);
+                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 3 : 2);
                 TelemetryUtil.packet.put("Aim: aimResult", aimResult);
                 TelemetryUtil.packet.put("Aim: turretResult", turretResult);
                 if (aimResult && Globals.RUNMODE != RunMode.AUTO) {
@@ -415,7 +415,8 @@ public class Shooter {
         double dist2 = e - P.z * P.z; // 2D dist squared
         double arcFlip = (dist2 < arcDistThresh ? 1 : -1);
         minV0 = (Math.sqrt(2 * a * tRoots.get(0) * tRoots.get(0) + c + d / 2 / tRoots.get(0)) + minV0Superthresh);
-        if (arcFlip == 1) minV0 *= minV0factorFlat;
+        if (arcFlip == 1 && ROBOT_POSITION.x >= 24) minV0 *= minV0factorFlat;
+        //else if (arcFlip == 1) minV0*= minV0factorFlat; use if the close flat shot is jank to have 2 constants
         else minV0 *= minV0factorArc;
         if (ROBOT_POSITION.x >= 24) minFlywheelVelocity = minV0 * 2 / (flywheelEfficiency + flywheelEfficiencyConstantFarAddition);
         else minFlywheelVelocity = minV0 * 2 / flywheelEfficiency;

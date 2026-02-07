@@ -20,6 +20,7 @@ public class RedGoal18Ball extends LinearOpMode {
     private double timer = System.currentTimeMillis();
     long delay;
     private final long shootDuration = 900, intakeDuration = 1000;
+    private boolean firstShot = true;
 
     public void runOpMode() {
         Globals.isRed = true;
@@ -45,7 +46,7 @@ public class RedGoal18Ball extends LinearOpMode {
 
         robot.shooter.reqAim(true);
         shoot(Math.PI / 4, true);
-        intake(10, 56);
+        intake(10, 57);
         shoot(Math.PI, true);
         gate_intake();
         //shoot(Math.PI, true);
@@ -54,7 +55,7 @@ public class RedGoal18Ball extends LinearOpMode {
         shoot(Math.PI, true);
         intake(-14, 50);
         shoot(Math.PI, true);
-        intake(32, 56);
+        intake(32, 57);
         shoot(Math.PI, false);
 
         robot.shooter.targetTurretAngle = 0.0;
@@ -71,9 +72,13 @@ public class RedGoal18Ball extends LinearOpMode {
         //robot.drivetrain.goToPoint(new Pose2d(-12, 24, heading), 1.0, true);
         //robot.waitWhile(() ->  robot.drivetrain.state != Drivetrain.State.WAIT);
 
-        robot.drivetrain.goToPoint(new Pose2d(-24, 24, heading), 1.0);
+        robot.drivetrain.goToPoint(new Pose2d(-18, 18, heading), 1.0);
         robot.waitWhile(() ->  robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY);
-        //robot.waitFor(100);
+        robot.waitFor(400);
+        if(firstShot){
+            robot.waitFor(300);
+            firstShot = false;
+        }
 
         robot.shooter.reqShoot(true);
         robot.update();
@@ -84,11 +89,11 @@ public class RedGoal18Ball extends LinearOpMode {
     }
 
     private void intake(double x, double y) {
-        robot.drivetrain.goToPoint(new Pose2d(x, 22, Math.PI / 2), 1.0);
+        robot.drivetrain.goToPoint(new Pose2d(x, 22, Math.PI / 2), 0.7);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.intake.reqIntake(true);
 
-        robot.drivetrain.goToPoint(new Pose2d(x, y, Math.PI / 2), 0.5);
+        robot.drivetrain.goToPoint(new Pose2d(x, y, Math.PI / 2), 0.7);
         robot.waitFor(intakeDuration);
 
         robot.drivetrain.goToPoint(new Pose2d(x, 44, Math.PI / 2), 1.0, true);
@@ -121,27 +126,24 @@ public class RedGoal18Ball extends LinearOpMode {
         timer = System.currentTimeMillis();
 
         robot.drivetrain.goToPoint(new Pose2d(5,57, Math.toRadians(118)), 0.8, true);
-
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT && timer - System.currentTimeMillis() < 600);
+        robot.waitFor(200);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
         //timer = System.currentTimeMillis();
 
         //go behind the gate to intake the balls
 
         //start farther from the gate
+        robot.drivetrain.goToPoint(new Pose2d(21, 63, Math.toRadians(150)), 1.0);
 
-        timer = System.currentTimeMillis();
-        robot.drivetrain.goToPoint(new Pose2d(21, 63, Math.toRadians(170)), 0.8);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT && timer - System.currentTimeMillis() < 700);
-
-        robot.drivetrain.goToPoint(new Pose2d(13, 63, Math.toRadians(170)), 0.3);
-        robot.waitFor(1400);
+        robot.drivetrain.goToPoint(new Pose2d(13, 63, Math.toRadians(150)), 0.3);
 
         //robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || System.currentTimeMillis() - timer <= 2000);
 
 
-        robot.drivetrain.goToPoint(new Pose2d(13, 36, Math.toRadians(180)), 1.0);
+        robot.drivetrain.goToPoint(new Pose2d(13, 36, Math.toRadians(150)), 1.0);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
         robot.intake.reqOff(true);
