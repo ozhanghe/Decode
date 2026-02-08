@@ -48,31 +48,31 @@ public class Shooter {
     private boolean aimRequest = false, shootRequest = false, stopRequest = false;
     public boolean turretTrackInManual = false;
 
-    public static PID turretPID = new PID (0.25, 0.0, 0.05);
-    public static double turretKStatic = 0.08;
-    public static double turretKStaticLeft = 0.08;
-    public static double turretKStaticRight = -0.08;
-    public static double turretDeadzone = 2;
-    public static double turretVelFactor = 0.2;
+    public static PID turretPID = new PID (0.15, 0.0, 0.008);
+    public static double turretKStatic = 0.07;
+    public static double turretKStaticLeft = 0.07;
+    public static double turretKStaticRight = -0.07;
+    public static double turretDeadzone = 2.5;
+    public static double turretVelFactor = 0.3;
     private double lastTurretTarget = 0.0;
     public double targetTurretAngle = 0.0;
     private double targetTurretAngleVel = 0.0;
-    public static double targetTurretAngleVelFilter = 0.5;
+    public static double targetTurretAngleVelFilter = 0.9;
     public double targetHoodAngle = 0.0;
     public static double hoodSweep = Math.toRadians(34.0);
     public static double hoodGearRatio = 48.0 / 30.0;
 
     // velocity is in inches / second
     public static PID velocityPID = new PID (0.0, 0.0002, 0.0001);
-    public static double velocityFFm = 0.00124492;
-    public static double velocityFFb = 0.0866734;
+    public static double velocityFFm = 0.00114078;
+    public static double velocityFFb = 0.0644956;
     public static double velocityFilterLow = 0.05;
     public static double velocityFilterHigh = 0.5;
     public static double velocityFilterThresh = 60;
     public static double velocityHighPowerThresh = 15;
-    public static double velocityNoSkipThresh = 180;
-    public static double velocityNoSkipAccel = 1.1;
-    public static double flywheelScaleVoltage = 12;
+    public static double velocityNoSkipThresh = 150;
+    public static double velocityNoSkipAccel = 1.5;
+    public static double flywheelScaleVoltage = 12.8;
     public static double atVelThresh = 20;
     public static double latchBlockAngle = 2.5;
     private double targetVelocity = 0.0;
@@ -94,7 +94,7 @@ public class Shooter {
     public static double ballInterpolateZCloseB = 44;
     public static double ballInterpolateZCloseS = 40;
     public static double ballInterpolateZFar = 45;
-    public static double minV0factorArc = 1.25; // TODO: tune for triple shot
+    public static double minV0factorArc = 1.2; // TODO: tune for triple shot
     public static double minV0factorFlat = 1.24; // TODO: tune for triple shot
     public static double flywheelEfficiency = 0.955;
     public static double flywheelEfficiencyConstantFarAddition = -0.02;
@@ -524,7 +524,7 @@ public class Shooter {
 
     // further separation :)
     // bootleg LM1 strat being used in LM2 & LM3 code
-    public static double closeAngle = 0.2, closeVel = 470, midAngle = 0.45, midVel = 550, farAngle = 0.45, farVel = 625;
+    public static double closeAngle = 0.2, closeVel = 470, midAngle = 0.5, midVel = 545, farAngle = 0.65, farVel = 625;
 
     public enum Dist {
         CLOSE(closeAngle, closeVel),

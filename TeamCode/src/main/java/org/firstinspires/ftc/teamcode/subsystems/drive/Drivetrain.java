@@ -401,7 +401,7 @@ public class Drivetrain {
                 canvas.fillCircle(repel.x, repel.y, 0.5);
             }
         } else {
-            DashboardUtil.drawRobot(canvas, targetPoint, "#8000ff");
+            DashboardUtil.drawRobot(canvas, targetPoint, isWaypoint ? "#c040ff" : "#8000ff");
             LogUtil.drivePath.set(String.format(Locale.US, "%.3f %.3f %.3f", targetPoint.x, targetPoint.y, targetPoint.heading));
         }
     }

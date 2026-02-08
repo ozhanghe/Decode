@@ -43,14 +43,11 @@ public class Teleop extends LinearOpMode {
         ButtonToggle rt1 = new ButtonToggle();
 
         ButtonToggle a2 = new ButtonToggle();
-        ButtonToggle b2 = new ButtonToggle();
-        ButtonToggle x2 = new ButtonToggle();
-        ButtonToggle y2 = new ButtonToggle();
         ButtonToggle back2 = new ButtonToggle();
-        ButtonToggle down2 = new ButtonToggle();
-        ButtonToggle up2 = new ButtonToggle();
-        ButtonToggle lsb2 = new ButtonToggle();
-        ButtonToggle rsb2 = new ButtonToggle();
+        ButtonToggle h2 = new ButtonToggle();
+        ButtonToggle v2 = new ButtonToggle();
+        ButtonToggle lb2 = new ButtonToggle();
+        ButtonToggle rb2 = new ButtonToggle();
 
         boolean intakeReversed = false;
         boolean intakeOn = false;
@@ -78,6 +75,7 @@ public class Teleop extends LinearOpMode {
             }
 
             // INTAKE
+
             if (lb1.isClicked(gamepad1.left_bumper)) {
                 intakeOn = !intakeOn;
                 intakeReversed = false;
@@ -87,8 +85,6 @@ public class Teleop extends LinearOpMode {
                     robot.intake.reqOff(true);
                 }
                 robot.intake.setRollerDirection(false);
-                //robot.sensors.light0G.setState(!intakeOn);
-                //robot.sensors.light0P.setState(true);
             }
 
             if (a1.isClicked(gamepad1.a && !gamepad1.start)) {
@@ -96,8 +92,6 @@ public class Teleop extends LinearOpMode {
                 intakeOn = true;
                 robot.intake.reqIntake(true);
                 robot.intake.setRollerDirection(intakeReversed);
-                //robot.sensors.light0G.setState(intakeReversed);
-                //robot.sensors.light0P.setState(!intakeReversed);
             }
 
             // SHOOTER
@@ -117,23 +111,23 @@ public class Teleop extends LinearOpMode {
             if (robot.shooter.state == Shooter.State.TEST) {
                 rb1.isClicked(gamepad1.right_bumper);
 
-                if (rt1.isClicked(gamepad1.right_trigger > triggerThresh) || b1.isHeld(gamepad1.b, 500) || b2.isHeld(gamepad2.b, 500)
-                        || y1.isHeld(gamepad1.y, 500) || y2.isHeld(gamepad2.y, 500)
-                        || x1.isHeld(gamepad1.x, 500) || x2.isHeld(gamepad2.x, 500)) { // Off
+                if (rt1.isClicked(gamepad1.right_trigger > triggerThresh) || b1.isHeld(gamepad1.b, 500)
+                        || y1.isHeld(gamepad1.y, 500)
+                        || x1.isHeld(gamepad1.x, 500)) { // Off
                     flywheelOn = false;
                     robot.shooter.setShooter(Shooter.Dist.OFF);
                     atSpeedRumble = false;
-                } else if (b1.isClicked(gamepad1.b) || b2.isClicked(gamepad2.b && !gamepad2.start)) { // Close
+                } else if (b1.isClicked(gamepad1.b)) { // Close
                     flywheelOn = true;
                     robot.shooter.setShooter(Shooter.Dist.CLOSE);
                     atSpeedRumble = true;
                     confirmation = true;
-                } else if (y1.isClicked(gamepad1.y) || y2.isClicked(gamepad2.y)) { // Middle
+                } else if (y1.isClicked(gamepad1.y)) { // Middle
                     flywheelOn = true;
                     robot.shooter.setShooter(Shooter.Dist.MID);
                     atSpeedRumble = true;
                     confirmation = true;
-                } else if (x1.isClicked(gamepad1.x) || x2.isClicked(gamepad2.x)) { // Far
+                } else if (x1.isClicked(gamepad1.x)) { // Far
                     flywheelOn = true;
                     robot.shooter.setShooter(Shooter.Dist.FAR);
                     atSpeedRumble = true;
@@ -159,9 +153,8 @@ public class Teleop extends LinearOpMode {
                 }
             } else {
                 x1.isClicked(gamepad1.x);
-                x2.isClicked(gamepad2.x);
 
-                if (y1.isClicked(gamepad1.y) || y2.isClicked(gamepad2.y)) {
+                if (y1.isClicked(gamepad1.y)) {
                     robot.shooter.reqAim(true);
                 }
 
@@ -180,19 +173,25 @@ public class Teleop extends LinearOpMode {
                     confirmation = true;
                 }
 
-                if (rt1.isClicked(gamepad1.right_trigger > triggerThresh) || b1.isClicked(gamepad1.b) || b2.isClicked(gamepad2.b && !gamepad2.start)) {
+                if (rt1.isClicked(gamepad1.right_trigger > triggerThresh) || b1.isClicked(gamepad1.b)) {
                     robot.shooter.reqStop(true);
                 }
             }
 
-            if (lsb2.isClicked(gamepad2.left_stick_button)) { // set to localize to blue goal side back corner
+            if (h2.isClicked(gamepad2.dpad_left || gamepad2.dpad_right)) { // localize to far side corner (auto y side)
                 gamepad1.rumble(1000);
                 gamepad2.rumble(1000);
                 robot.drivetrain.setPoseEstimate(new Pose2d(71 - 6.2, (ROBOT_POSITION.y > 0 ? 1 : -1) * (71 - 6.5), Math.PI));
             }
 
-            if (up2.isClicked(gamepad2.dpad_up)) LogUtil.event.set("ballMiss");
-            else if (down2.isClicked(gamepad2.dpad_down)) LogUtil.event.set("ballHit");
+            if (v2.isClicked(gamepad2.dpad_up || gamepad2.dpad_down)) { // localize x to edge (auto x side)
+                gamepad1.rumble(800);
+                gamepad2.rumble(800);
+                robot.drivetrain.setPoseEstimate(new Pose2d((ROBOT_POSITION.x > 0 ? 1 : -1) * (71 - 6.5), ROBOT_POSITION.y, ROBOT_POSITION.heading));
+            }
+
+            if (lb2.isClicked(gamepad2.left_bumper)) LogUtil.event.set("ballMiss");
+            else if (rb2.isClicked(gamepad2.right_bumper)) LogUtil.event.set("ballHit");
             else LogUtil.event.set("");
 
             robot.drivetrain.drive(gamepad1);

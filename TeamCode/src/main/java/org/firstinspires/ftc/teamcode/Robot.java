@@ -65,8 +65,6 @@ public class Robot {
 
         if (this.stopChecker != null && this.stopChecker.getAsBoolean()) return;
 
-        sensors.light0G.update();
-        sensors.light0P.update();
         hardwareQueue.update();
         this.updateTelemetry();
     }

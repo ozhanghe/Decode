@@ -54,9 +54,11 @@ public class Localizer {
         encoders = new Encoder[3];
 
         // 1 / (ticks / mm * mm / in)
-        encoders[0] = new Encoder(new Pose2d(0, 2.933071 * (62.385 / (20 * Math.PI)) * (62.691 / (20 * Math.PI)) * (62.7733 / (20 * Math.PI))),  -1, 1 / (19.89436789 * 25.4)); // left
-        encoders[1] = new Encoder(new Pose2d(0, -2.933071 * (62.385 / (20 * Math.PI)) * (62.691 / (20 * Math.PI)) * (62.7733 / (20 * Math.PI))), 1, 1 / (19.89436789 * 25.4)); // right
-        encoders[2] = new Encoder(new Pose2d(-2.5861673228, 0), -1, 1 / (19.89436789 * 25.4)); // back
+        double ticksToInches = 1.0 / (2000.0 / 32.0 / Math.PI * 25.4);
+        double podOffset = 2.933071 * (62.385 / (20 * Math.PI)) * (62.691 / (20 * Math.PI)) * (62.7733 / (20 * Math.PI)); // 74 / 25.4
+        encoders[0] = new Encoder(new Pose2d(0, podOffset),  -1, ticksToInches); // left
+        encoders[1] = new Encoder(new Pose2d(0, -podOffset), 1, ticksToInches); // right
+        encoders[2] = new Encoder(new Pose2d(-80 / 25.4, 0), -1, ticksToInches); // back
 
         relHistory.add(new Pose2d(0,0,0));
         poseHistory.add(new Pose2d(0,0,0));

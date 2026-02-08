@@ -46,7 +46,7 @@ public class Sensors {
     public static boolean resetTurretAngleEncoder = true;
 
     private double lightSensorFilteredVoltage = 0;
-    public static double lightSensorFilter = 0.3;
+    public static double lightSensorFilter = 0.5;
     public AnalogInput lightSensor0;
     public final LEDWrapper light0G, light0P;
     private boolean isGreen = false, isPurple = false;
@@ -89,6 +89,9 @@ public class Sensors {
             module.clearBulkCache();
         }
 
+        light0G.update();
+        light0P.update();
+
         odoWheelPositions[0] = robot.drivetrain.leftFront.motor[0].getCurrentPosition();
         odoWheelPositions[1] = robot.drivetrain.rightFront.motor[0].getCurrentPosition();
         odoWheelPositions[2] = robot.drivetrain.leftRear.motor[0].getCurrentPosition();
@@ -128,8 +131,8 @@ public class Sensors {
         if (Globals.RUNMODE != RunMode.AUTO && currentTime - lastColorSensorUpdatedTime > colorSensorUpdateTime * 1e6) {
             double lightSensorRawVoltage = lightSensor0.getVoltage();
             lightSensorFilteredVoltage = lightSensorFilteredVoltage * (1 - lightSensorFilter) + lightSensorRawVoltage * lightSensorFilter;
-            isGreen = lightSensorFilteredVoltage > 0.008;
-            isPurple = !isGreen && lightSensorFilteredVoltage > 0.004;
+            isGreen = lightSensorFilteredVoltage > 0.01;
+            isPurple = !isGreen && lightSensorFilteredVoltage > 0.005;
             light0G.set(isGreen);
             light0P.set(isPurple);
             TelemetryUtil.packet.put("Intake : Light Raw Voltage", lightSensorRawVoltage);

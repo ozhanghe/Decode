@@ -134,6 +134,9 @@ public class MergeLocalizer extends Localizer {
                         estimatedLLPose.heading
                 );
 
+                Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
+                DashboardUtil.drawRobot(fieldOverlay, globalLLEstimate, this.expectedColor);
+
                 currentPose.x = currentPose.x * 0.5 + globalLLEstimate.x * 0.5;
                 currentPose.y = currentPose.y * 0.5 + globalLLEstimate.y * 0.5;
                 currentPose.heading = currentPose.heading * 0.5 + globalLLEstimate.heading * 0.5;
