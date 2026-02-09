@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 
-@Autonomous(name = "DrivetrainSpeedTest", group = "Test")
+@Autonomous(name = "DrivetrainSpeedTest")
 public class DrivetrainSpeedTest extends LinearOpMode {
     Robot robot;
 

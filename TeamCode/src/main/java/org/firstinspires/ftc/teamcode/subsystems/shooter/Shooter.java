@@ -374,7 +374,7 @@ public class Shooter {
         // for +-180 turret
         updateBallTargetInterpolate();
         Vector3 P;
-        if (ROBOT_POSITION.x + 24 >= ROBOT_POSITION.y * (Globals.isRed ? -1 : 1)) P = new Vector3(ballTarget);
+        if (ROBOT_POSITION.x + 48 >= ROBOT_POSITION.y * (Globals.isRed ? -1 : 1)) P = new Vector3(ballTarget);
         else P = new Vector3(ballTarget.y * (Globals.isRed ? -1 : 1), ballTarget.x * (Globals.isRed ? -1 : 1), ballTarget.z); // invert target along y = x or y = -x
         P.subtract(new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight));
         this.P = P;

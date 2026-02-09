@@ -25,6 +25,7 @@ public class Globals {
     public static double ROBOT_WIDTH = 13;
     public static double ROBOT_LENGTH = 18.0;
     public static double ROBOT_BACK_LENGTH = 6.2;
+    public static double ROBOT_FORWARD_LENGTH = 8.8;
     public static Pose2d ROBOT_POSITION = new Pose2d(0,0,0);
     public static Pose2d ROBOT_VELOCITY = new Pose2d(0,0,0);
     public static Pose2d AUTO_ENDING_POSE = new Pose2d(0,0,0);

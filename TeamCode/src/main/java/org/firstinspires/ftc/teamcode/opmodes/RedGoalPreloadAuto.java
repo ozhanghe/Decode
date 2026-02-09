@@ -49,16 +49,20 @@ public class RedGoalPreloadAuto extends LinearOpMode {
 
         long t = System.currentTimeMillis();
         //robot.shooter.reqAim(true);
-        shoot(Math.PI / 4, true);
+        shoot(Math.PI / 4, 0);
         intake(11, 60);
         open_gate(500);
-        shoot(Math.PI / 2, false);
+        shoot(Math.PI / 2, 1);
         intake(-13, 55);
         open_gate(1500);
-        shoot(Math.PI / 2, false);
+        shoot(Math.PI / 2, 1);
+        //robot.shooter.setShooter(Shooter.Dist.CLOSE);
+        robot.drivetrain.goToPoint(new Pose2d(18, 22, Math.PI), 1.0, true);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         intake(33, 60);
-        shoot(Math.PI, false);
+        shoot(Math.PI, 1);
 
+        // end near gate
         robot.shooter.setShooter(Shooter.Dist.OFF);
         robot.shooter.targetTurretAngle = 0.0;
         robot.drivetrain.goToPoint(new Pose2d(0, 40, Math.PI / 2), 1.0);
@@ -74,16 +78,16 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         });
     }
 
-    private void shoot(double heading, boolean firstShot) {
-        if (!firstShot) {
-            robot.drivetrain.goToPoint(new Pose2d(-13, 18, heading), 0.8, true);
+    private void shoot(double heading, int shotType) {
+        if (shotType > 0) {
+            robot.drivetrain.goToPoint(new Pose2d(shotType == 2 ? -32 : -13, 20, heading), 0.8, true);
             robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         }
 
-        robot.drivetrain.goToPoint(new Pose2d(-18, 18, heading), 0.4);
+        robot.drivetrain.goToPoint(new Pose2d(shotType == 2 ? -40 : -18, 18, heading), 0.4);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel() || Math.abs(robot.shooter.targetTurretAngle - robot.sensors.getTurretAngle()) > 3);
         //robot.waitWhile(() ->  robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY);
-        robot.waitFor(firstShot ? 700 : 500);
+        robot.waitFor(shotType == 0 ? 600 : 400);
 
         //robot.shooter.reqShoot(true);
         robot.shooter.setShooterBlocker(false);
@@ -97,25 +101,31 @@ public class RedGoalPreloadAuto extends LinearOpMode {
     }
 
     private void intake(double x, double y) {
+        // align
         robot.drivetrain.goToPoint(new Pose2d(x, 22, Math.PI / 2), 0.5);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.intake.reqIntake(true);
 
+        // intake
         robot.drivetrain.goToPoint(new Pose2d(x, y, Math.PI / 2), 0.25);
         robot.waitFor(intakeDuration);
 
+        // back off
         robot.drivetrain.goToPoint(new Pose2d(x, 45, Math.PI / 2), 1.0, true);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.intake.reqOff(true);
     }
 
     private void open_gate(long duration) {
+        // align
         robot.drivetrain.goToPoint(new Pose2d(0, 48, Math.PI / 2), 1);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
+        // hit gate
         robot.drivetrain.goToPoint(new Pose2d(0, 53, Math.PI / 2), 0.5);
         robot.waitFor(duration);
 
+        // back off
         robot.drivetrain.goToPoint(new Pose2d(0, 30, Math.PI / 2), 1, true);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
     }

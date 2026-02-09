@@ -33,6 +33,28 @@ public class LogUtil {
         public String toString() { return value; }
     }
 
+    public static class EventField extends Datalogger.LoggableField {
+        private String value = "";
+
+        public EventField(String name) { super(name); }
+
+        @Override
+        public void writeToBuffer(StringBuilder out) { out.append(value); }
+
+        public void set(String newValue) {
+            value = newValue;
+        }
+
+        public void add(String newValue) {
+            if (value.isEmpty()) value = newValue;
+            else value += " " + newValue;
+        }
+
+        @NonNull
+        @Override
+        public String toString() { return value; }
+    }
+
     // These are all of the fields that we want in the datalog.
     // Note that order here is NOT important. The order is important in the setFields() call below
     //public static Datalogger.GenericField loopTime = new Datalogger.GenericField("loopTime");
@@ -52,7 +74,7 @@ public class LogUtil {
     //public static Datalogger.GenericField driveTargetY = new Datalogger.GenericField("driveTargetY");
     //public static Datalogger.GenericField driveTargetAngle = new Datalogger.GenericField("driveTargetAngle");
     public static Datalogger.GenericField drivePath = new Datalogger.GenericField("drivePath");
-    public static Datalogger.GenericField event = new Datalogger.GenericField("event");
+    public static EventField event = new EventField("event");
     public static Datalogger.GenericField parkState = new Datalogger.GenericField("parkState");
     public static Datalogger.GenericField parkAngle = new Datalogger.GenericField("parkAngle");
 
@@ -116,6 +138,7 @@ public class LogUtil {
             timeAtNextWrite = timeNow + 150_000_000;
             stateTransition = false;
             drivePositionReset = false;
+            event.set("");
             TelemetryUtil.packet.put("LogUtil : stateTransition", "[ none ]");
         }
     }

@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Robot;
+import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.utils.ButtonToggle;
 import org.firstinspires.ftc.teamcode.utils.Globals;
@@ -16,6 +17,7 @@ import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
+import org.firstinspires.ftc.teamcode.utils.Utils;
 
 import java.util.Locale;
 
@@ -28,9 +30,10 @@ public class Teleop extends LinearOpMode {
         Robot robot = new Robot(hardwareMap); // new Vision(hardwareMap)
         robot.setStopChecker(this::isStopRequested);
 
-        //robot.shooter.state = Shooter.State.TEST;
+        robot.shooter.state = Shooter.State.TEST;
+        robot.shooter.turretTrackInManual = true;
 
-        robot.drivetrain.setPoseEstimate(AUTO_ENDING_POSE);
+        //robot.drivetrain.setPoseEstimate(AUTO_ENDING_POSE);
 
         robot.shooter.setShooterBlocker(true);
 
@@ -43,6 +46,9 @@ public class Teleop extends LinearOpMode {
         ButtonToggle rt1 = new ButtonToggle();
 
         ButtonToggle a2 = new ButtonToggle();
+        ButtonToggle b2 = new ButtonToggle();
+        ButtonToggle x2 = new ButtonToggle();
+        ButtonToggle y2 = new ButtonToggle();
         ButtonToggle back2 = new ButtonToggle();
         ButtonToggle h2 = new ButtonToggle();
         ButtonToggle v2 = new ButtonToggle();
@@ -54,7 +60,6 @@ public class Teleop extends LinearOpMode {
         boolean flywheelOn = false;
         boolean atSpeedRumble = false;
         boolean confirmation = true;
-        boolean manualToggled = false;
         final double triggerThresh = 0.2;
 
         while (opModeInInit()) {
@@ -96,16 +101,31 @@ public class Teleop extends LinearOpMode {
 
             // SHOOTER
 
-            if (a2.isHeld(gamepad2.a, 500)) {
-                if (!manualToggled) {
-                    manualToggled = true;
-                    robot.shooter.setManual(robot.shooter.state != Shooter.State.TEST);
-                    robot.shooter.setShooter(Shooter.Dist.OFF);
-                    gamepad1.rumble(500);
-                    gamepad2.rumble(500);
-                }
-            } else {
-                manualToggled = false;
+            if (a2.isClicked(gamepad2.a)) {
+                robot.shooter.setManual(true);
+                robot.shooter.turretTrackInManual = false;
+                gamepad1.rumble(500);
+                gamepad2.rumble(500);
+            }
+
+            if (b2.isClicked(gamepad2.b && !gamepad2.start)) {
+                robot.shooter.setManual(false);
+                robot.shooter.setShooter(Shooter.Dist.OFF);
+                gamepad1.rumble(500);
+                gamepad2.rumble(500);
+            }
+
+            if (y2.isClicked(gamepad2.y)) {
+                robot.shooter.turretTrackInManual = true;
+                robot.shooter.setManual(true);
+                gamepad1.rumble(500);
+                gamepad2.rumble(500);
+            }
+
+            if (x2.isClicked(gamepad2.x)) {
+                Sensors.resetTurretAngleEncoder = true;
+                gamepad1.rumble(50);
+                gamepad2.rumble(50);
             }
 
             if (robot.shooter.state == Shooter.State.TEST) {
@@ -140,6 +160,10 @@ public class Teleop extends LinearOpMode {
                     gamepad1.rumble(100);
                     gamepad2.rumble(100);
                     atSpeedRumble = false;
+                }
+                if (robot.shooter.atVel()) {
+                    robot.sensors.light0G.set(true);
+                    robot.sensors.light0P.set(true);
                 }
 
                 if (gamepad1.right_bumper) {
@@ -178,21 +202,32 @@ public class Teleop extends LinearOpMode {
                 }
             }
 
-            if (h2.isClicked(gamepad2.dpad_left || gamepad2.dpad_right)) { // localize to far side corner (auto y side)
+            if (h2.isClicked(gamepad2.dpad_left || gamepad2.dpad_right)) { // localize to left/right edge (unchanged x, auto y, auto h)
+                double h = Utils.headingClip(ROBOT_POSITION.heading);
+                if (h < Math.toRadians(-135)) h = -Math.PI;
+                else if (h < Math.toRadians(-45)) h = -Math.PI / 2;
+                else if (h > Math.toRadians(135)) h = Math.PI;
+                else if (h > Math.toRadians(45)) h = Math.PI / 2;
+                else h = 0;
+                robot.drivetrain.setPoseEstimate(new Pose2d(ROBOT_POSITION.x, (ROBOT_POSITION.y > 0 ? 1 : -1) * (71 - 6.5), h));
                 gamepad1.rumble(1000);
                 gamepad2.rumble(1000);
-                robot.drivetrain.setPoseEstimate(new Pose2d(71 - 6.2, (ROBOT_POSITION.y > 0 ? 1 : -1) * (71 - 6.5), Math.PI));
             }
 
-            if (v2.isClicked(gamepad2.dpad_up || gamepad2.dpad_down)) { // localize x to edge (auto x side)
+            if (v2.isClicked(gamepad2.dpad_up || gamepad2.dpad_down)) { // localize to top/bottom edge (auto x, unchanged y, auto h)
+                double h = Utils.headingClip(ROBOT_POSITION.heading);
+                if (h < Math.toRadians(-135)) h = -Math.PI;
+                else if (h < Math.toRadians(-45)) h = -Math.PI / 2;
+                else if (h > Math.toRadians(135)) h = Math.PI;
+                else if (h > Math.toRadians(45)) h = Math.PI / 2;
+                else h = 0;
+                robot.drivetrain.setPoseEstimate(new Pose2d((ROBOT_POSITION.x > 0 ? 1 : -1) * (71 - 6.5), ROBOT_POSITION.y, h));
                 gamepad1.rumble(800);
                 gamepad2.rumble(800);
-                robot.drivetrain.setPoseEstimate(new Pose2d((ROBOT_POSITION.x > 0 ? 1 : -1) * (71 - 6.5), ROBOT_POSITION.y, ROBOT_POSITION.heading));
             }
 
-            if (lb2.isClicked(gamepad2.left_bumper)) LogUtil.event.set("ballMiss");
-            else if (rb2.isClicked(gamepad2.right_bumper)) LogUtil.event.set("ballHit");
-            else LogUtil.event.set("");
+            if (lb2.isClicked(gamepad2.left_bumper)) LogUtil.event.add("ballMiss");
+            else if (rb2.isClicked(gamepad2.right_bumper)) LogUtil.event.add("ballHit");
 
             robot.drivetrain.drive(gamepad1);
 
@@ -200,6 +235,7 @@ public class Teleop extends LinearOpMode {
             telemetry.addData("intakeReversed", intakeReversed);
             telemetry.addData("intakePower", robot.intake.roller.getPower());
             telemetry.addData("shooter state", robot.shooter.state.toString());
+            telemetry.addData("turretTrackInManual", robot.shooter.turretTrackInManual);
             telemetry.addData("flywheelOn", flywheelOn);
             telemetry.addData("flywheelAtVel", robot.shooter.atVel());
             telemetry.addData("turretInPosition", Math.abs(robot.shooter.targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(2.0) ? "yes" : "aw no its not happy yet");
@@ -207,5 +243,11 @@ public class Teleop extends LinearOpMode {
 
             telemetry.update();
         }
+
+        Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
+        robot.waitWhile(() -> {
+            Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
+            return true;
+        });
     }
 }

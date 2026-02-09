@@ -20,6 +20,8 @@ import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.vision.Vision;
 
+import java.util.Locale;
+
 @Config
 public class MergeLocalizer extends Localizer {
     private String color;
@@ -35,8 +37,11 @@ public class MergeLocalizer extends Localizer {
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         pinpoint.update();
+        Pose2d p = new Pose2d (pinpoint.getPosX(), pinpoint.getPosY(), pinpoint.getHeading());
+        TelemetryUtil.packet.put("Pinpoint start", String.format(Locale.US, "%.3f %.3f %.3f", p.x, p.y, p.heading));
+        super.setPoseEstimate(p);
         lastPinpointMergePose = currentPose.clone();
-        lastPinpointPose = new Pose2d(pinpoint.getPosX(), pinpoint.getPosY(), pinpoint.getHeading());
+        lastPinpointPose = p;
     }
 
     // Pinpoint
