@@ -550,4 +550,27 @@ public class Shooter {
     }
 
     public boolean atVel() { return Math.abs(targetVelocity - filteredVelocity) <= atVelThresh; }
+
+    public double[] predictGoal(Pose2d robotPose, Pose2d robotVelocity){ //completely not finished
+        Pose2d realGoal = new Pose2d(-68, 67 * (Globals.isRed ? 1 : -1));
+
+        double realDist = Math.sqrt(Math.pow(ROBOT_POSITION.x - realGoal.x,2) + Math.pow(ROBOT_POSITION.y - realGoal.y, 2));
+        double estimatedTime;
+
+        double[] result = new double[3]; //list of three outputs hood, velocity, and turret
+
+        double hoodAngle; //pull from a table of values
+        double velocity; //pull from a table of values
+
+        for (int i = 0; i < 2; i++) {
+            double time; //pull from a table of values
+            // Calculate where the fakeGoal is
+            Pose2d virtualGoal = realGoal.subtract(robotVelocity.mult(time));
+            // Calculate dist to the virtual goal
+            double virtualDist = Math.sqrt(Math.pow(ROBOT_POSITION.x - virtualGoal.x,2) + Math.pow(ROBOT_POSITION.y - virtualGoal.y, 2));
+            // Get a more accurate time of flight for this new distance
+            double finalTime;
+        }
+        return result;
+    }
 }
