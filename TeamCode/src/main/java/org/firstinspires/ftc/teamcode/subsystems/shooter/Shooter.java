@@ -562,27 +562,39 @@ public class Shooter {
 
     public boolean atVel() { return Math.abs(targetVelocity - filteredVelocity) <= atVelThresh; }
 
-    public double[] predictGoal(Pose2d robotPose, Pose2d robotVelocity){ //completely not finished
+    public void predictGoal() {
+        // Original target
         Pose2d realGoal = new Pose2d(-68, 67 * (Globals.isRed ? 1 : -1));
 
-        double realDist = Math.sqrt(Math.pow(ROBOT_POSITION.x - realGoal.x,2) + Math.pow(ROBOT_POSITION.y - realGoal.y, 2));
-        double estimatedTime;
+        // Initial values based on the target
+        double initialDist = Math.sqrt(Math.pow(ROBOT_POSITION.x - realGoal.x, 2) + Math.pow(ROBOT_POSITION.y - realGoal.y, 2));
+        ShotSetpoint values = shooterTable.getSetpoint(initialDist);
 
-        double[] result = new double[3]; //list of three outputs hood, velocity, and turret
+        // Setting initial goal for the virtual
+        double virtualX = realGoal.x;
+        double virtualY = realGoal.y;
 
-        double hoodAngle; //pull from a table of values
-        double velocity; //pull from a table of values
+        // Looping through virtual goal
+        for (int i = 0; i < 3; i++) {
+            if (values == null) break;
+            //getting time of flight
+            double tof = values.timeOfFlight;
 
-        for (int i = 0; i < 2; i++) {
-            double time = 0; //pull from a table of values
-            // Calculate where the fakeGoal is
-            Pose2d virtualGoal = realGoal;
-            // Calculate dist to the virtual goal
-            double virtualDist = Math.sqrt(Math.pow(ROBOT_POSITION.x - virtualGoal.x,2) + Math.pow(ROBOT_POSITION.y - virtualGoal.y, 2));
-            // Get a more accurate time of flight for this new distance
-            double finalTime;
+            // Offset the virtual goal by the robot's velocity during flight
+            virtualX = realGoal.x - (ROBOT_VELOCITY.x * tof);
+            virtualY = realGoal.y - (ROBOT_VELOCITY.y * tof);
+
+            //Calculate distance to virtual goal
+            double virtualDist = Math.sqrt(Math.pow(ROBOT_POSITION.x - virtualX, 2) + Math.pow(ROBOT_POSITION.y - virtualY, 2));
+
+            // Get new shooter values from the regression based off of virtual distance
+            values = shooterTable.getSetpoint(virtualDist);
         }
-        return result;
+
+        // Outputting final result
+        targetHoodAngle = values.hoodAngle;
+        minFlywheelVelocity= values.flywheelVel;
+        targetTurretAngle = Math.atan2(virtualY - ROBOT_POSITION.y, virtualX - ROBOT_POSITION.x);
     }
 
     public void shootRegression(){
