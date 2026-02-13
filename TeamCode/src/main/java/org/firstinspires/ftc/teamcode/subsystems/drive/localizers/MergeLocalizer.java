@@ -179,16 +179,13 @@ public class MergeLocalizer extends Localizer {
 
         }
 
-        if(result.isValid()) {
+
+        if(result == null) {
+            TelemetryUtil.packet.put("Limelight result is null", "false");
+        } else if (result.isValid()){
             TelemetryUtil.packet.put("Limelight result is valid", "true");
         } else {
-            TelemetryUtil.packet.put("Limelight result is valid", "false");
-        }
-
-        if(result != null) {
-            TelemetryUtil.packet.put("Limelight result is not null", "true");
-        } else {
-            TelemetryUtil.packet.put("Limelight result is not null", "false");
+            TelemetryUtil.packet.put("Limelight result is not valid", "false");
         }
 
         Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();

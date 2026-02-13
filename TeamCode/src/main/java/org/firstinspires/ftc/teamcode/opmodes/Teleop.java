@@ -33,7 +33,7 @@ public class Teleop extends LinearOpMode {
         //robot.drivetrain.vision.start();
         robot.setStopChecker(this::isStopRequested);
 
-        robot.shooter.state = Shooter.State.TEST;
+        robot.shooter.state = Shooter.State.IDLE;
         robot.shooter.turretTrackInManual = true;
 
         //robot.drivetrain.setPoseEstimate(AUTO_ENDING_POSE);
@@ -203,6 +203,10 @@ public class Teleop extends LinearOpMode {
                 if (rt1.isClicked(gamepad1.right_trigger > triggerThresh) || b1.isClicked(gamepad1.b)) {
                     robot.shooter.reqStop(true);
                 }
+            }
+
+            if(a1.isHeld(gamepad1.a,1000)){
+                robot.drivetrain.setPoseEstimate(new Pose2d(0,0,0));
             }
 
             if (h2.isClicked(gamepad2.dpad_left || gamepad2.dpad_right)) { // localize to left/right edge (unchanged x, auto y, auto h)

@@ -49,7 +49,7 @@ public class Shooter {
     private boolean aimRequest = false, shootRequest = false, stopRequest = false;
     public boolean turretTrackInManual = false;
 
-    public static PID turretPID = new PID (0.15, 0.0, 0.008);
+    public static PID turretPID = new PID (0.15, 0.0, 0);
     public static double turretKStatic = 0.07;
     public static double turretKStaticLeft = 0.07;
     public static double turretKStaticRight = -0.07;
@@ -119,13 +119,19 @@ public class Shooter {
         this.ms1 = robot.hardwareMap.get(DcMotorEx.class, "shooter1");
         this.ms2 = robot.hardwareMap.get(DcMotorEx.class, "shooter2");
         flywheel = new PriorityMotor(new DcMotorEx[]{ms1, ms2},"flywheel",3, 5, new double[] {1, -1}, robot.sensors, false);
-
-        ShotTable shooterTable = new ShotTable();
+        this.shooterTable = new ShotTable();
 
         // Add: addSetpoint(distanceInches(from goal), new ShotSetpoint(flywheelVel, hoodPos, timeOfFlight(seconds)))
-        shooterTable.addSetpoint(36, new ShotSetpoint(470,0.2 , 0));
-        shooterTable.addSetpoint(68, new ShotSetpoint(545,0.5 , 0));
-        shooterTable.addSetpoint(94, new ShotSetpoint(0.65,625 , 0));
+        shooterTable.addSetpoint(40.3, new ShotSetpoint(430,0 , 0.75));
+        shooterTable.addSetpoint(43.6, new ShotSetpoint(440,0.05 , 0.9));
+        shooterTable.addSetpoint(48.5, new ShotSetpoint(465,0.2 , 0.6));
+        shooterTable.addSetpoint(52.9, new ShotSetpoint(470,0.25 , 0.62 ));
+        shooterTable.addSetpoint(65, new ShotSetpoint(545,0.5 , 0.6));
+        shooterTable.addSetpoint(76.4, new ShotSetpoint(555,0.5 , 0.53));
+        shooterTable.addSetpoint(85, new ShotSetpoint(585,0.55 , 0.55));
+        shooterTable.addSetpoint(94.8, new ShotSetpoint(600,0.6 , 0.6));
+        shooterTable.addSetpoint(136.9, new ShotSetpoint(665,0.65 , 0.82));
+        shooterTable.addSetpoint(148, new ShotSetpoint(700,0.75 , 0));
 
         hood = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "hood1")},
@@ -180,7 +186,7 @@ public class Shooter {
                 TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
                 //boolean aimResult = aimLauncherV8();
                 turretTrackTarget();
-                shootRegression();
+                predictGoal();
                 boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 3 : 2);
                 //TelemetryUtil.packet.put("Aim: aimResult", aimResult);
                 TelemetryUtil.packet.put("Aim: turretResult", turretResult);
@@ -204,7 +210,7 @@ public class Shooter {
                 TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
                 //boolean aimResult = aimLauncherV8();
                 //TelemetryUtil.packet.put("Aim: aimResult", aimResult);
-                shootRegression();
+                predictGoal();
                 /*
                 if (aimResult && Globals.RUNMODE != RunMode.AUTO) {
                     robot.sensors.light0G.set(true);
@@ -233,7 +239,7 @@ public class Shooter {
             }
             case SHOOT: {
                 shootRequest = false;
-
+                predictGoal();
                 setShooterBlocker(false);
                 //aimLauncherV8();
                 setTargetVelocity(minFlywheelVelocity);
@@ -304,8 +310,8 @@ public class Shooter {
         if (turretError > 0) turretPow += turretKStaticLeft;
         else if (turretError < 0) turretPow += turretKStaticRight;
         if (Math.abs(turretError) < Math.toRadians(turretDeadzone)) turretPow = 0;
-        turretPow += targetTurretAngleVel / (turret.servoType.speed) * turretVelFactor; // meant to account for robot rotating
-        if (Math.abs(turretError) > Math.toRadians(60)) turretPow = Math.signum(turretError);
+        //turretPow += targetTurretAngleVel / (turret.servoType.speed) * turretVelFactor; // meant to account for robot rotating
+        //if (Math.abs(turretError) > Math.toRadians(60)) turretPow = Math.signum(turretError);
         if (turretAngle >= Sensors.turretLimitLeft) turretPow = Math.min(turretPow, -turretKStatic);
         if (turretAngle <= Sensors.turretLimitRight) turretPow = Math.max(turretPow, turretKStatic);
         turretPow = Utils.minMaxClip(turretPow, -1, 1);
@@ -567,7 +573,7 @@ public class Shooter {
         Pose2d realGoal = new Pose2d(-68, 67 * (Globals.isRed ? 1 : -1));
 
         // Initial values based on the target
-        double initialDist = Math.sqrt(Math.pow(ROBOT_POSITION.x - realGoal.x, 2) + Math.pow(ROBOT_POSITION.y - realGoal.y, 2));
+        double initialDist = Math.hypot(ballTarget.x - ROBOT_POSITION.x, ballTarget.y - ROBOT_POSITION.y);
         ShotSetpoint values = shooterTable.getSetpoint(initialDist);
 
         // Setting initial goal for the virtual
@@ -575,26 +581,22 @@ public class Shooter {
         double virtualY = realGoal.y;
 
         // Looping through virtual goal
-        for (int i = 0; i < 3; i++) {
-            if (values == null) break;
-            //getting time of flight
-            double tof = values.timeOfFlight;
+        //getting time of flight
+        double tof = values.timeOfFlight;
 
-            // Offset the virtual goal by the robot's velocity during flight
-            virtualX = realGoal.x - (ROBOT_VELOCITY.x * tof);
-            virtualY = realGoal.y - (ROBOT_VELOCITY.y * tof);
+        // Offset the virtual goal by the robot's velocity during flight
+        virtualX = realGoal.x - (ROBOT_VELOCITY.x * tof);
+        virtualY = realGoal.y - (ROBOT_VELOCITY.y * tof);
 
-            //Calculate distance to virtual goal
-            double virtualDist = Math.sqrt(Math.pow(ROBOT_POSITION.x - virtualX, 2) + Math.pow(ROBOT_POSITION.y - virtualY, 2));
-
-            // Get new shooter values from the regression based off of virtual distance
-            values = shooterTable.getSetpoint(virtualDist);
-        }
+        //Calculate distance to virtual goal
+        double virtualDist = Math.hypot(virtualX - ROBOT_POSITION.x, virtualY - ROBOT_POSITION.y);
+        // Get new shooter values from the regression based off of virtual distance
+        values = shooterTable.getSetpoint(virtualDist);
 
         // Outputting final result
         targetHoodAngle = values.hoodAngle;
         minFlywheelVelocity= values.flywheelVel;
-        targetTurretAngle = Math.atan2(virtualY - ROBOT_POSITION.y, virtualX - ROBOT_POSITION.x);
+        //targetTurretAngle = Math.atan2(virtualY - ROBOT_POSITION.y, virtualX - ROBOT_POSITION.x);
     }
 
     public void shootRegression(){
