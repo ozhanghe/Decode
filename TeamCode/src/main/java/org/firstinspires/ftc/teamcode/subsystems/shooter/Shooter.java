@@ -596,7 +596,8 @@ public class Shooter {
         // Outputting final result
         targetHoodAngle = values.hoodAngle;
         minFlywheelVelocity= values.flywheelVel;
-        //targetTurretAngle = Math.atan2(virtualY - ROBOT_POSITION.y, virtualX - ROBOT_POSITION.x);
+        double virtualTurretAngle = Math.atan2(virtualY - ROBOT_POSITION.y, virtualX - ROBOT_POSITION.x);
+        targetTurretAngle = AngleUtil.clipAngle(virtualTurretAngle - ROBOT_POSITION.heading);
     }
 
     public void shootRegression(){
