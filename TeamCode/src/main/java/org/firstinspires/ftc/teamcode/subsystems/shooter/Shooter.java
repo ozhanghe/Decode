@@ -190,7 +190,7 @@ public class Shooter {
                 boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 3 : 2);
                 //TelemetryUtil.packet.put("Aim: aimResult", aimResult);
                 TelemetryUtil.packet.put("Aim: turretResult", turretResult);
-                if (hood.inPosition() && turretResult) {
+                if (hood.inPosition() && turretResult && this.atVel()) {
                     state = State.READY;
                 }
                 setTargetVelocity(minFlywheelVelocity);
