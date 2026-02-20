@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -14,7 +15,7 @@ import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 
 import java.util.Locale;
 
-@Autonomous(name = "DrivetrainTest")
+@TeleOp(name = "DrivetrainTest")
 public class DrivetrainTest extends LinearOpMode {
 
 
