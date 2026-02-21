@@ -36,7 +36,6 @@ public class Sensors {
     // Enocder Resolution: 28 PPR
     private double flywheelVelocity = 0;
 
-    public RelativeEncoder parkEncoder;
     public AnalogInput turretAnalogEncoder;
     private double turretAngle;
     private double turretAngleEncoderOffset, turretAngleEncoderPosition;
@@ -64,7 +63,7 @@ public class Sensors {
         voltageSensor = robot.hardwareMap.voltageSensor.iterator().next();
         voltage = voltageSensor.getVoltage();
 
-        //parkEncoder = new RelativeEncoder(robot.hardwareMap, "park_encoder");
+
         turretAnalogEncoder = robot.hardwareMap.get(AnalogInput.class, "turret_encoder");
         turretAngleEncoderOffset = turretAngleEncoderPosition = turretAngle = 0;
         resetTurretAngleEncoder = true;
@@ -170,7 +169,6 @@ public class Sensors {
     public double getTurretAngle() { return turretAngle; }
 
     //position of the park slides
-    public double getParkPos() { return parkEncoder.getAngleTraveled(); }
 
     private void updateTelemetry() {
         TelemetryUtil.packet.put("Voltage", voltage);
@@ -181,7 +179,7 @@ public class Sensors {
         TelemetryUtil.packet.put("Shooter : Hood top angle (deg)", Math.toDegrees(robot.shooter.hood.getCurrentAngle()) * 30 / 48 + 34);
         //TelemetryUtil.packet.put("Shooter : Turret analog encoder voltage", turretAnalogEncoderVoltage);
         //TelemetryUtil.packet.put("Shooter : Turret angle encoder position (deg)", Math.toDegrees(turretAngleEncoderPosition));
-        //TelemetryUtil.packet.put("Park : Servo angle", parkEncoder.getAngleTraveled());
+
 
         TelemetryUtil.packet.put("Intake : Color", isPurple ? "purple" : isGreen ? "green" : "none");
 

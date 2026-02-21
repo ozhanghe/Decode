@@ -13,13 +13,12 @@ import org.firstinspires.ftc.teamcode.utils.RunMode;
 @Config
 @TeleOp(group = "Test")
 public class ParkTester extends LinearOpMode {
-    public static double targetAngle = 0;
+    public static double pow = 0;
 
     public void runOpMode() {
         Globals.RUNMODE = RunMode.TESTER;
         Robot robot = new Robot(hardwareMap);
         Park park = new Park(robot);
-        park.state = Park.State.IDLE;
 
         while (opModeInInit()) {
             robot.update();
@@ -27,8 +26,7 @@ public class ParkTester extends LinearOpMode {
         }
 
         while (!isStopRequested()) {
-            if (gamepad1.x) park.state = Park.State.IDLE;
-            if (gamepad1.y) park.state = Park.State.EXTEND;
+            park.setPower(pow);
 
 
             robot.update();
