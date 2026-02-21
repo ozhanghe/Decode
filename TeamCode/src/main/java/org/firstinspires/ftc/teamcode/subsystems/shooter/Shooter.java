@@ -50,7 +50,7 @@ public class Shooter {
     private boolean aimRequest = false, shootRequest = false, stopRequest = false;
     public boolean turretTrackInManual = false;
 
-    public static PID turretPID = new PID (0.4, 0.0, 0.1);
+    public static PID turretPID = new PID (0.6, 0.0, 0.2);
     public static double turretKStatic = 0.07;
     public static double turretKStaticLeft = 0.07;
     public static double turretKStaticRight = -0.07;
@@ -63,6 +63,7 @@ public class Shooter {
     public double targetHoodAngle = 0.0;
     public static double hoodSweep = Math.toRadians(34.0);
     public static double hoodGearRatio = 48.0 / 30.0;
+    public static double kV = 0.0477;
 
     // velocity is in inches / second
     public static PID velocityPID = new PID (0.0, 0.0002, 0.0001);
@@ -307,12 +308,12 @@ public class Shooter {
         lastTurretTarget = targetTurretAngle;
         double turretAngle = robot.sensors.getTurretAngle();
         double turretError = targetTurretAngle - Sensors.turretAngleClip(turretAngle);
-        if(Math.hypot(ROBOT_VELOCITY.x,ROBOT_VELOCITY.y) > 10){ turretPID.updatePID(0.8,0,0); }
-        else {turretPID.updatePID(0.4, 0, 0.1);}
+        //if(Math.hypot(ROBOT_VELOCITY.x,ROBOT_VELOCITY.y) > 10){ turretPID.updatePID(0.8,0,0); }
+        //else {turretPID.updatePID(0.4, 0, 0.1);}
         double turretPow = turretPID.update(turretError, -1, 1);
-        if (turretError > 0) turretPow += turretKStaticLeft;
-        else if (turretError < 0) turretPow += turretKStaticRight;
+        turretPow += robot.drivetrain.mergeLocalizer.getInstantaneousAngularVel() * kV;
         if (Math.abs(turretError) < Math.toRadians(turretDeadzone)) turretPow = 0;
+        else turretPow += Math.signum(turretError)*turretKStatic;
         //turretPow += targetTurretAngleVel / (turret.servoType.speed) * turretVelFactor; // meant to account for robot rotating
         //if (Math.abs(turretError) > Math.toRadians(60)) turretPow = Math.signum(turretError);
         if (turretAngle >= Sensors.turretLimitLeft) turretPow = Math.min(turretPow, -turretKStatic);
