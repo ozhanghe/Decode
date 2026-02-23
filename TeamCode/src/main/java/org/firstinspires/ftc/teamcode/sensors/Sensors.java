@@ -41,7 +41,7 @@ public class Sensors {
     private double turretAngle;
     private double turretAngleEncoderOffset, turretAngleEncoderPosition;
     public static double turretAnalogEncoderOffset = Math.toRadians(177);
-    public static double turretAngleFilter = 0.4;
+    public static double turretAngleFilter = 0.6;
     public static double turretLimitLeft = Math.toRadians(105), turretLimitRight = Math.toRadians(-180), turretWrapMid = Math.toRadians(-45);
     public static boolean resetTurretAngleEncoder = true;
 
@@ -98,8 +98,8 @@ public class Sensors {
 
         //double flywheelPos = robot.drivetrain.rightRear.motor[0].getCurrentPosition();
         // (flywheelPos - flywheelLastPos) / 28.0 = delta revolutions
-        double flywheelAngularVel = robot.drivetrain.rightRear.motor[0].getVelocity() / 28.0 * 14.0 / 20.0;
-        flywheelVelocity = flywheelAngularVel * 96.0 * Math.PI / 25.4;
+        double flywheelAngularVel = robot.drivetrain.rightRear.motor[0].getVelocity() / 28.0;
+        flywheelVelocity = flywheelAngularVel * 3.0 * Math.PI;
 
         robot.drivetrain.localizer.updateEncoders(odoWheelPositions);
         robot.drivetrain.localizer.update();
@@ -179,8 +179,8 @@ public class Sensors {
         TelemetryUtil.packet.put("Voltage", voltage);
         //TelemetryUtil.packet.put("Shooter : Flywheel Angular Velocity", flywheelAngularVel);
         //TelemetryUtil.packet.put("Shooter : Flywheel RPM", flywheelAngularVel * 60);
-        TelemetryUtil.packet.put("Shooter : Flywheel Current Velocity", flywheelVelocity);
-        TelemetryUtil.packet.put("Shooter : Turret angle (deg)", Math.toDegrees(turretAngle));
+        TelemetryUtil.packet.put("Flywheel : Current Velocity", flywheelVelocity);
+        TelemetryUtil.packet.put("Turret : Current angle (deg)", Math.toDegrees(turretAngle));
         TelemetryUtil.packet.put("Shooter : Hood top angle (deg)", Math.toDegrees(robot.shooter.hood.getCurrentAngle()) * 30 / 48 + 34);
         //TelemetryUtil.packet.put("Shooter : Turret analog encoder voltage", turretAnalogEncoderVoltage);
         //TelemetryUtil.packet.put("Shooter : Turret angle encoder position (deg)", Math.toDegrees(turretAngleEncoderPosition));
@@ -191,7 +191,7 @@ public class Sensors {
         Pose2d currentPose = ROBOT_POSITION;
         //TelemetryUtil.packet.put("Robot position", currentPose.toString());
         Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
-        DashboardUtil.drawRobot(fieldOverlay, currentPose, "#00ff00", turretAngle, "#00e000c0", robot.shooter.targetTurretAngle, "#8000ff");
+        DashboardUtil.drawRobot(fieldOverlay, currentPose, "#00ff00", turretAngle, "#00e000c0", robot.shooter.turret.getTargetAngle(), "#8000ff");
 
         LogUtil.turretAngle.set(turretAngle);
         LogUtil.flywheelVelocity.set(flywheelVelocity);

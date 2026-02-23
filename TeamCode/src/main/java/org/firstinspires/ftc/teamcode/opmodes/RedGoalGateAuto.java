@@ -61,7 +61,7 @@ public class RedGoalGateAuto extends LinearOpMode {
         shoot(Math.PI, 2);
 
         robot.shooter.setShooter(Shooter.Dist.OFF);
-        robot.shooter.targetTurretAngle = 0.0;
+        robot.shooter.turret.setTargetAngle(0.0);
         //robot.drivetrain.goToPoint(new Pose2d(0, 40, Math.PI / 2), 1.0);
 
         long x = System.currentTimeMillis() - t;
@@ -82,7 +82,7 @@ public class RedGoalGateAuto extends LinearOpMode {
         }
 
         robot.drivetrain.goToPoint(new Pose2d(shotType == 2 ? -40 : -18, 18, heading), 0.4);
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel() || Math.abs(robot.shooter.targetTurretAngle - robot.sensors.getTurretAngle()) > 3);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel() || !robot.shooter.turret.inPosition());
         //robot.waitWhile(() ->  robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY);
         robot.waitFor(shotType == 0 ? 600 : 400);
 

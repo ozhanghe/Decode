@@ -39,12 +39,12 @@ public class ShooterTester extends LinearOpMode {
         }
 
         while (!isStopRequested()) {
-            robot.shooter.setTurretAngle(Math.toRadians(turretTargetDeg));
+            robot.shooter.turret.setTargetAngle(Math.toRadians(turretTargetDeg));
             robot.shooter.setHoodAngle(hoodAngle);
             robot.intake.roller.setTargetPower(intakeBtn.isToggled(gamepad1.x) || gamepad1.left_bumper ? rollerPower : 0);
             robot.intake.feed.setTargetPower(feedBtn.isToggled(gamepad1.y) || gamepad1.right_bumper ? feedPower : 0);
             robot.shooter.setShooterBlocker(latchBlock);
-            robot.shooter.setTargetVelocity(flywheelVelocity);
+            robot.shooter.flywheel.setTargetVelocity(flywheelVelocity);
             TelemetryUtil.packet.put("Shoot distance", Math.hypot(ROBOT_POSITION.x - robot.shooter.ballTarget.x, ROBOT_POSITION.y - robot.shooter.ballTarget.y));
             robot.update();
         }

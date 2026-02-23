@@ -55,7 +55,7 @@ public class RedGoalPreloadAutoGVF extends LinearOpMode {
         intake(36, 56);
         shoot(Math.PI);
         robot.shooter.setShooter(Shooter.Dist.OFF);
-        robot.shooter.targetTurretAngle = 0.0;
+        robot.shooter.turret.setTargetAngle(0.0);
         robot.drivetrain.goToPoint(new Pose2d(0, 45, Math.PI), 1.0);
 
         Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
@@ -75,7 +75,7 @@ public class RedGoalPreloadAutoGVF extends LinearOpMode {
         robot.update();
         robot.waitWhile(() -> {
             robot.shooter.turretTrackTarget();
-            return robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY || Math.abs(robot.shooter.targetTurretAngle - robot.sensors.getTurretAngle()) > 4;
+            return robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY || !robot.shooter.turret.inPosition();
         });
 
         robot.intake.reqOff(true);

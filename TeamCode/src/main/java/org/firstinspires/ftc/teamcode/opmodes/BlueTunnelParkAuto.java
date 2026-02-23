@@ -38,7 +38,7 @@ public class BlueTunnelParkAuto extends LinearOpMode {
 
         robot.shooter.setShooter(Shooter.Dist.FAR);
         //robot.shooter.turretTrackTarget(true);
-        robot.shooter.setTurretAngle(Math.toRadians(15));
+        robot.shooter.turret.setTargetAngle(Math.toRadians(15));
         robot.waitWhile(() -> !robot.shooter.atVel());
 
         robot.shooter.setShooterBlocker(false);
@@ -50,7 +50,7 @@ public class BlueTunnelParkAuto extends LinearOpMode {
 
         robot.drivetrain.goToPoint(new Pose2d(48 - ROBOT_LENGTH / 2, -48 + ROBOT_WIDTH / 2, Math.PI), 1.0);
         robot.shooter.setShooter(Shooter.Dist.OFF);
-        robot.shooter.setTurretAngle(0);
+        robot.shooter.turret.setTargetAngle(0);
         robot.intake.reqOff(true);
 
         Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();

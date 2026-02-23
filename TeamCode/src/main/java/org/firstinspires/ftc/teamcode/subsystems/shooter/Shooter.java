@@ -39,45 +39,19 @@ public class Shooter {
         TEST
     } public State state = State.IDLE;
 
-    private Robot robot;
-    private DcMotorEx ms1, ms2;
-    public final PriorityMotor flywheel;
+    private final Robot robot;
+    public final Flywheel flywheel;
+    public final Turret turret;
     public final nPriorityServo hood, flywheelBlocker;
-    public final PriorityCRServo turret;
 
     private boolean aimRequest = false, shootRequest = false, stopRequest = false;
     public boolean turretTrackInManual = false;
 
-    public static PID turretPID = new PID (0.1, 0.0, 0.01);
-    public static double turretKStatic = 0.08;
-    public static double turretKStaticLeft = 0.08;
-    public static double turretKStaticRight = -0.08;
-    public static double turretDeadzone = 0.5;
-    public static double turretVelFactor = 0.25;
-    private double lastTurretTarget = 0.0;
-    public double targetTurretAngle = 0.0;
-    private double targetTurretAngleVel = 0.0;
-    public static double targetTurretAngleVelFilter = 0.9;
     public double targetHoodAngle = 0.0;
     public static double hoodSweep = Math.toRadians(34.0);
     public static double hoodGearRatio = 48.0 / 30.0;
 
-    // velocity is in inches / second
-    public static PID velocityPID = new PID (0.0, 0.0002, 0.0001);
-    public static double velocityFFm = 0.00114078;
-    public static double velocityFFb = 0.0644956;
-    public static double velocityFilterLow = 0.05;
-    public static double velocityFilterHigh = 0.5;
-    public static double velocityFilterThresh = 60;
-    public static double velocityHighPowerThresh = 15;
-    public static double velocityNoSkipThresh = 150;
-    public static double velocityNoSkipAccel = 1.5;
-    public static double flywheelScaleVoltage = 12.8;
-    public static double atVelThresh = 20;
-    public static double latchBlockAngle = 2.5;
-    private double targetVelocity = 0.0;
-    private double filteredVelocity = 0.0;
-    private double prevPow = 0;
+    public static double latchBlockAngle = 1;
 
     // auto-aim
     public final double dLauncher = 3.6 / 2.54;
@@ -115,9 +89,8 @@ public class Shooter {
     public Shooter(Robot robot) {
         this.robot = robot;
 
-        this.ms1 = robot.hardwareMap.get(DcMotorEx.class, "shooter1");
-        this.ms2 = robot.hardwareMap.get(DcMotorEx.class, "shooter2");
-        flywheel = new PriorityMotor(new DcMotorEx[]{ms1, ms2},"flywheel",3, 5, new double[] {1, -1}, robot.sensors);
+        this.flywheel = new Flywheel(robot);
+        this.turret = new Turret(robot);
 
         hood = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "hood1")},
@@ -135,14 +108,7 @@ public class Shooter {
             2, 2
         );
 
-        turret = new PriorityCRServo(
-                new CRServo[] {robot.hardwareMap.get(CRServo.class, "turret1"), robot.hardwareMap.get(CRServo.class, "turret2")},
-                "turret", PriorityCRServo.ServoType.AXON_MINI,
-                new boolean[] {false, false},
-                5, 6
-        );
-
-        robot.hardwareQueue.addDevices(flywheel, hood, turret, flywheelBlocker);
+        robot.hardwareQueue.addDevices(hood, flywheelBlocker);
 
         updateBallTarget();
         lastVel = currVel = ROBOT_VELOCITY.clone();
@@ -155,7 +121,7 @@ public class Shooter {
                 stopRequest = false;
 
                 turretTrackTarget();
-                setTargetVelocity(0.0);
+                flywheel.setTargetVelocity(0.0);
                 setHoodAngle(0.0);
                 setShooterBlocker(true);
 
@@ -171,13 +137,13 @@ public class Shooter {
                 setShooterBlocker(true);
                 TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
                 boolean aimResult = aimLauncherV8();
-                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 3 : 2);
+                boolean turretResult = turret.inPosition();
                 TelemetryUtil.packet.put("Aim: aimResult", aimResult);
                 TelemetryUtil.packet.put("Aim: turretResult", turretResult);
                 if (aimResult && hood.inPosition() && turretResult) {
                     state = State.READY;
                 }
-                setTargetVelocity(minFlywheelVelocity);
+                flywheel.setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
 
                 if (stopRequest) {
@@ -193,14 +159,14 @@ public class Shooter {
 
                 TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
                 boolean aimResult = aimLauncherV8();
-                boolean turretResult = Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(ROBOT_POSITION.x >= 24 ? 3 : 2);
+                boolean turretResult = turret.inPosition();
                 TelemetryUtil.packet.put("Aim: aimResult", aimResult);
                 TelemetryUtil.packet.put("Aim: turretResult", turretResult);
                 if (aimResult && Globals.RUNMODE != RunMode.AUTO) {
                     robot.sensors.light0G.set(true);
                     robot.sensors.light0P.set(true);
                 }
-                setTargetVelocity(minFlywheelVelocity);
+                flywheel.setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
                 if (shootRequest) {
                     setShooterBlocker(false);
@@ -214,7 +180,7 @@ public class Shooter {
                     stopRequest = false;
                     shootRequest = false;
                     state = State.IDLE;
-                    setTargetVelocity(0.0);
+                    flywheel.setTargetVelocity(0.0);
                     robot.intake.reqShoot(false);
                     robot.intake.reqOff(true);
                 }
@@ -225,14 +191,14 @@ public class Shooter {
 
                 setShooterBlocker(false);
                 aimLauncherV8();
-                setTargetVelocity(minFlywheelVelocity);
+                flywheel.setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
 
                 if (stopRequest) {
                     stopRequest = false;
                     shootRequest = false;
                     state = State.IDLE;
-                    setTargetVelocity(0.0);
+                    flywheel.setTargetVelocity(0.0);
                     robot.intake.reqShoot(false);
                     robot.intake.reqOff(true);
                 }
@@ -260,63 +226,19 @@ public class Shooter {
             currVel.heading = 0;
         }
 
-        // Flywheel Velocity PIDF
-        double actualVelocity = robot.sensors.getFlywheelVelocity();
-        if (Math.abs(actualVelocity - filteredVelocity) <= velocityFilterThresh) {
-            filteredVelocity = filteredVelocity * (1 - velocityFilterLow) + actualVelocity * velocityFilterLow;
-        } else {
-            filteredVelocity = filteredVelocity * (1 - velocityFilterHigh) + actualVelocity * velocityFilterHigh;
-        }
-        double error = targetVelocity - filteredVelocity;
-        if (targetVelocity <= 1 || error > velocityFilterThresh) velocityPID.resetIntegral();
-        else velocityPID.clipIntegral(-1, 1);
-        double pidpow = velocityPID.update(error, -1.0, 1.0);
-        double ffpow = targetVelocity * velocityFFm + velocityFFb;
-        double pow = Math.max(0, pidpow + ffpow) * flywheelScaleVoltage / robot.sensors.getVoltage();
-        if (error > velocityHighPowerThresh) pow = 1;
-        else if (error < -velocityHighPowerThresh) pow = 0;
-        if (filteredVelocity < velocityNoSkipThresh) {
-            pow = Math.min(pow, prevPow + velocityNoSkipAccel * robot.sensors.loopTime);
-        }
-        flywheel.setTargetPower(pow);
-        prevPow = pow;
+        flywheel.update();
 
-        // Turret PID
-        //double unclippedTargetTurretAngle = targetTurretAngle;
-        targetTurretAngle = Sensors.turretAngleClip(targetTurretAngle);
-        targetTurretAngleVel = targetTurretAngleVel * (1 - targetTurretAngleVelFilter) + (targetTurretAngle - lastTurretTarget) / robot.sensors.loopTime * targetTurretAngleVelFilter;
-        targetTurretAngleVel = Utils.minMaxClip(targetTurretAngleVel, -150, 150);
-        lastTurretTarget = targetTurretAngle;
-        double turretAngle = robot.sensors.getTurretAngle();
-        double turretError = targetTurretAngle - Sensors.turretAngleClip(turretAngle);
-        double turretPow = turretPID.update(turretError, -1, 1);
-        if (turretError > 0) turretPow += turretKStaticLeft;
-        else if (turretError < 0) turretPow += turretKStaticRight;
-        if (Math.abs(turretError) < Math.toRadians(turretDeadzone)) turretPow = 0;
-        turretPow += targetTurretAngleVel / (turret.servoType.speed) * turretVelFactor; // meant to account for robot rotating
-        if (Math.abs(turretError) > Math.toRadians(60)) turretPow = Math.signum(turretError);
-        if (turretAngle >= Sensors.turretLimitLeft) turretPow = Math.min(turretPow, -turretKStatic);
-        if (turretAngle <= Sensors.turretLimitRight) turretPow = Math.max(turretPow, turretKStatic);
-        turretPow = Utils.minMaxClip(turretPow, -1, 1);
-        turret.setTargetPower(turretPow);
+        turret.update();
 
         Log.i("Shooter","Robot Velocity" + (this.V != null ? this.V.getMag() : 0));
         TelemetryUtil.packet.put("Shooter : Robot Velocity", (this.V != null ? this.V.getMag() : 0));
         TelemetryUtil.packet.put("Shooter : currVel x", currVel.x);
         TelemetryUtil.packet.put("Shooter : currVel y", currVel.y);
         TelemetryUtil.packet.put("Shooter : currVel heading (deg)", Math.toDegrees(currVel.heading));
-        TelemetryUtil.packet.put("Shooter : targetAngleVel (deg)", Math.toDegrees(targetTurretAngleVel));
         TelemetryUtil.packet.put("Shooter : state", this.state);
-        TelemetryUtil.packet.put("Shooter : Flywheel Power Applied", pow * 100);
-        TelemetryUtil.packet.put("Shooter : Flywheel Target Velocity", targetVelocity);
-        TelemetryUtil.packet.put("Shooter : Flywheel Filtered Velocity", filteredVelocity);
-        TelemetryUtil.packet.put("Shooter : Turret Target (deg)", Math.toDegrees(targetTurretAngle));
         TelemetryUtil.packet.put("Shooter : Hood Target (deg)", Math.toDegrees(hood.getTargetAngle()));
-        TelemetryUtil.packet.put("Shooter : Turret Power Applied", turretPow * 100);
         TelemetryUtil.packet.put("Shooter : Balltarget", ballTarget.toString());
-        LogUtil.flywheelTarget.set(targetVelocity);
         LogUtil.shooterState.set(this.state.toString());
-        LogUtil.turretTarget.set(targetTurretAngle);
         LogUtil.hoodAngle.set(hood.getTargetAngle());
         Canvas canvas = TelemetryUtil.packet.fieldOverlay();
         canvas.setStroke("#808080");
@@ -336,24 +258,14 @@ public class Shooter {
     public void setManual(boolean on) {
         if (on) {
             state = State.TEST;
-            robot.shooter.setTurretAngle(0);
+            turret.setTargetAngle(0);
             setShooter(Dist.OFF);
         } else {
             state = State.IDLE;
         }
     }
 
-    public void setTurretAngle (double targetAngle) {
-        targetTurretAngle = targetAngle;
-    }
-
     public void setHoodAngle(double target_angle) { hood.setTargetAngle(target_angle); }
-
-    public void setTargetVelocity(double targetVelocity) { this.targetVelocity = targetVelocity; }
-
-    public double getTargetVelocity() { return targetVelocity; }
-
-    public double getFilteredVelocity() { return filteredVelocity; }
 
     public void setShooterBlocker(boolean active) { flywheelBlocker.setTargetAngle(active ? latchBlockAngle : -0.2);}
 
@@ -378,7 +290,7 @@ public class Shooter {
         else P = new Vector3(ballTarget.y * (Globals.isRed ? -1 : 1), ballTarget.x * (Globals.isRed ? -1 : 1), ballTarget.z); // invert target along y = x or y = -x
         P.subtract(new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight));
         this.P = P;
-        targetTurretAngle = AngleUtil.clipAngle(Math.atan2(P.getY(), P.getX()) - ROBOT_POSITION.heading);
+        turret.setTargetAngle(Math.atan2(P.getY(), P.getX()) - ROBOT_POSITION.heading);
     }
 
     public boolean aimLauncherV8() {
@@ -486,7 +398,7 @@ public class Shooter {
                         }
                     }
                 }
-                targetTurretAngle = AngleUtil.clipAngle(thetas[tRoots.size()] - ROBOT_POSITION.heading);
+                turret.setTargetAngle(thetas[tRoots.size()] - ROBOT_POSITION.heading);
                 Log.i("Dynamic", "High Phi: " + phis[i]);
                 Log.i("Points", "Leaving Dynamic");
             }
@@ -516,11 +428,13 @@ public class Shooter {
     }
 
     public double getBallExitSpd() {
-        double res = filteredVelocity * 0.5;
+        double res = flywheel.getFilteredVelocity() * 0.5;
         if (ROBOT_POSITION.x >= 24) res *= flywheelEfficiency + flywheelEfficiencyConstantFarAddition;
         else res *= flywheelEfficiency;
         return res;
     }
+
+    public boolean atVel() { return flywheel.atVel(); }
 
     // further separation :)
     // bootleg LM1 strat being used in LM2 & LM3 code
@@ -545,9 +459,7 @@ public class Shooter {
     }
 
     public void setShooter(Dist mode) {
-        setTargetVelocity(mode.flywheelVel);
+        flywheel.setTargetVelocity(mode.flywheelVel);
         setHoodAngle(targetHoodAngle = mode.hoodAngle);
     }
-
-    public boolean atVel() { return Math.abs(targetVelocity - filteredVelocity) <= atVelThresh; }
 }

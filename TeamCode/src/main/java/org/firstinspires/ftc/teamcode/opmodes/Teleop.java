@@ -238,7 +238,7 @@ public class Teleop extends LinearOpMode {
             telemetry.addData("turretTrackInManual", robot.shooter.turretTrackInManual);
             telemetry.addData("flywheelOn", flywheelOn);
             telemetry.addData("flywheelAtVel", robot.shooter.atVel());
-            telemetry.addData("turretInPosition", Math.abs(robot.shooter.targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(2.0) ? "yes" : "aw no its not happy yet");
+            telemetry.addData("turretInPosition", robot.shooter.turret.inPosition() ? "yes" : "aw no its not happy yet");
             telemetry.addData("Robot position (deg)", String.format(Locale.US, "(%.2f, %.2f, %.2f)", ROBOT_POSITION.x, ROBOT_POSITION.y, Math.toDegrees(ROBOT_POSITION.heading)));
 
             telemetry.update();

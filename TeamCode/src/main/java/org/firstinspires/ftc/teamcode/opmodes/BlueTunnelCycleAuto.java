@@ -48,7 +48,7 @@ public class BlueTunnelCycleAuto extends LinearOpMode {
         shoot(-Math.PI / 2, false);
 
         robot.shooter.setShooter(Shooter.Dist.OFF);
-        robot.shooter.targetTurretAngle = 0.0;
+        robot.shooter.turret.setTargetAngle(0.0);
         robot.drivetrain.goToPoint(new Pose2d(64, -60, -Math.PI / 2), 1.0);
 
         Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
@@ -60,7 +60,7 @@ public class BlueTunnelCycleAuto extends LinearOpMode {
 
     private void shoot(double heading, boolean firstShot) {
         robot.drivetrain.goToPoint(new Pose2d(53, -12, heading), 0.4);
-        robot.waitWhile(() ->  robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel() || Math.abs(robot.shooter.targetTurretAngle - robot.sensors.getTurretAngle()) > 2);
+        robot.waitWhile(() ->  robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel() || !robot.shooter.turret.inPosition());
         robot.waitFor(firstShot ? 700 : 500);
 
         robot.shooter.setShooterBlocker(false);
