@@ -205,8 +205,10 @@ public class Teleop extends LinearOpMode {
                 }
             }
 
-            if(a1.isHeld(gamepad1.a,1000)){
+            if (a1.isHeld(gamepad1.a,1500)) {
                 robot.drivetrain.setPoseEstimate(new Pose2d(0,0,0));
+                gamepad1.rumble(1200);
+                gamepad2.rumble(1200);
             }
 
             if (h2.isClicked(gamepad2.dpad_left || gamepad2.dpad_right)) { // localize to left/right edge (unchanged x, auto y, auto h)

@@ -66,22 +66,22 @@ public class Drivetrain {
         leftFront = new PriorityMotor(
             hardwareMap.get(DcMotorEx.class, "leftFront"),
             "leftFront", 4, 5,
-            1.0, sensors, true
+            1.0, sensors
         );
         leftRear = new PriorityMotor(
             hardwareMap.get(DcMotorEx.class, "leftRear"),
             "leftRear", 4, 5,
-            1.0, sensors, true
+            1.0, sensors
         );
         rightRear = new PriorityMotor(
             hardwareMap.get(DcMotorEx.class, "rightRear"),
             "rightRear", 4, 5,
-            1.0, sensors, true
+            1.0, sensors
         );
         rightFront = new PriorityMotor(
             hardwareMap.get(DcMotorEx.class, "rightFront"),
             "rightFront", 4, 5,
-            1.0, sensors, true
+            1.0, sensors
         );
 
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);

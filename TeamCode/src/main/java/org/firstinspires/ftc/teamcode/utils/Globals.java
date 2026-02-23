@@ -44,7 +44,6 @@ public class Globals {
         return rp;
     }
 
-
     // loop time methods
     public static void START_LOOP() {
         LOOP_START = System.nanoTime();
@@ -59,13 +58,4 @@ public class Globals {
         LOOP_TIME = (System.nanoTime() - LOOP_START) / 1.0e9; // converts from nano secs to secs
         return LOOP_TIME;
     }
-
-
-    public enum LOOP_TIME_STAGE {
-        NORMAL,
-        NO_EX_HUB
-    }
-
-    public static LOOP_TIME_STAGE state = LOOP_TIME_STAGE.NORMAL;
-
 }

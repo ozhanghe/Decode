@@ -43,9 +43,6 @@ public class RedTunnelCycleAuto extends LinearOpMode {
         if (!isStopRequested()) LogUtil.init();
         LogUtil.drivePositionReset = true;
 
-
-
-
         shoot();
         intake();
         shoot();
@@ -56,11 +53,7 @@ public class RedTunnelCycleAuto extends LinearOpMode {
         intake();
         shoot();
 
-
-        robot.shooter.targetTurretAngle = 0.0;
-
-
-
+        robot.shooter.turret.setTargetAngle(0.0);
 
         Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
         robot.waitWhile(() -> {
@@ -78,7 +71,7 @@ public class RedTunnelCycleAuto extends LinearOpMode {
         robot.update();
         robot.waitWhile(() -> {
             robot.shooter.turretTrackTarget();
-            return robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY || Math.abs(robot.shooter.targetTurretAngle - robot.sensors.getTurretAngle()) > 3;
+            return robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY || !robot.shooter.turret.inPosition();
         });
 
         robot.waitFor(200);
@@ -104,14 +97,9 @@ public class RedTunnelCycleAuto extends LinearOpMode {
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.waitFor(800);
 
-
         robot.drivetrain.goToPoint(new Pose2d(x-10, 60, Math.PI/2), 0.8);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.waitFor(400);
 
     }
-
-
-
-
 }
