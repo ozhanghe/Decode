@@ -43,11 +43,6 @@ public class Robot {
         intake = new Intake(this);
         shooter = new Shooter(this);
 
-        shooter.turret.setTargetPower(0.1);
-        shooter.turret.update();
-        shooter.turret.setTargetPower(0.0);
-        shooter.turret.update();
-
         TelemetryUtil.setup();
         LogUtil.reset();
     }

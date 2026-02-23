@@ -334,10 +334,10 @@ public class Drivetrain {
     }
 
     public void setMotorPowers(double lf, double lr, double rr, double rf) {
-        leftFront.setTargetPowerSmooth(lf);
-        leftRear.setTargetPowerSmooth(lr);
-        rightRear.setTargetPowerSmooth(rr);
-        rightFront.setTargetPowerSmooth(rf);
+        leftFront.setTargetPowerSmooth(lf, 0.5);
+        leftRear.setTargetPowerSmooth(lr, 0.5);
+        rightRear.setTargetPowerSmooth(rr, 0.5);
+        rightFront.setTargetPowerSmooth(rf, 0.5);
     }
 
     public void stopAllMotors() {

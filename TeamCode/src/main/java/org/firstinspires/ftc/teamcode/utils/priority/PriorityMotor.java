@@ -57,8 +57,8 @@ public class PriorityMotor extends PriorityDevice {
         this.power = power + m * Math.signum(power);
     }
 
-    double k = 0.7; // 0.5
-    public void setTargetPowerSmooth(double power) {
+    //double k = 0.7; // 0.5
+    public void setTargetPowerSmooth(double power, double k) {
         if (lastPower == 0){
             lastZeroTime = System.currentTimeMillis();
         }
