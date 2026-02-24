@@ -35,6 +35,8 @@ public class Vision {
     public AprilTagProcessor aprilTagProcessor;
     public VisionPortal visionPortal;
 
+    public double timeSinceLastFrame = 0;
+
     public Vision (HardwareMap hardwareMap) {
         init(hardwareMap);
     }
@@ -77,7 +79,7 @@ public class Vision {
 
     public Pose2d update() {
         visionPortal.setProcessorEnabled(aprilTagProcessor, true);
-        detections = aprilTagProcessor.getDetections();
+        detections = aprilTagProcessor.getFreshDetections();
 
         Log.i("Number of apriltags", "0");
         if (detections != null && !detections.isEmpty()) {
@@ -86,6 +88,8 @@ public class Vision {
             if(detections.size() > 1 && Globals.fullField == true) {
                 AprilTagDetection detection1 = detections.get(0);
                 AprilTagDetection detection2 = detections.get(1);
+
+                timeSinceLastFrame = detection1.frameAcquisitionNanoTime;
 
                 if(detection1 != null && detection2 != null) {
                     Pose3D robotPose1 = detection1.robotPose;
@@ -102,9 +106,14 @@ public class Vision {
             } else {
                 AprilTagDetection detection = detections.get(0);
 
+
+
                 TelemetryUtil.packet.put("Decision Margin", String.valueOf(detection.decisionMargin));
 
                 if (detection != null) {
+
+                    timeSinceLastFrame = detection.frameAcquisitionNanoTime;
+
                     Pose3D robotPose = detection.robotPose;
 
                     if (robotPose != null) {

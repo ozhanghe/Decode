@@ -17,6 +17,7 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.utils.AngleUtil;
 import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
 import org.firstinspires.ftc.teamcode.utils.Globals;
+import org.firstinspires.ftc.teamcode.utils.Lerp;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.vision.Vision;
@@ -48,16 +49,22 @@ public class MergeLocalizer extends Localizer {
     // Pinpoint
     private GoBildaPinpointDriver pinpoint;
     private Pose2d lastPinpointPose = null, lastPinpointMergePose = null;
-    public static boolean constantCorrection = true;
+    public static boolean constantCorrection = false;
     public static boolean usePinpoint = true;
     public static double pinpointPollDist = 6;
 
-    // Limelight
-    private LLResult result = null;
-    //private Pose2d globalLLEstimate = null;
-    private Pose2d estimatedLLPose = new Pose2d(0,0,0);
-    private Pose2d poseWithoutLL = new Pose2d(0,0,0);
-    public static boolean useLimelight = false;
+    // Camera
+
+
+    private Pose2d estimatedCameraPose = null;
+    private Pose2d lastCameraPose = null;
+    private Pose2d poseWithoutCamera = new Pose2d(0,0,0);
+    public static boolean useCamera = false;
+    public int numberOfTimesRelocalizedWithCamera = 0;
+
+    public static double a = 0.4;
+    public static double b = 0.4;
+    public static double c = 0.4;
 
     public void update() {
         long currentTime = System.nanoTime();
@@ -65,7 +72,7 @@ public class MergeLocalizer extends Localizer {
         lastTime = currentTime;
 
         // 3 WHEEL ODOMETRY
-        /*
+
         double deltaLeft = encoders[0].getDelta();
         double deltaRight = encoders[1].getDelta();
         double deltaBack = encoders[2].getDelta();
@@ -83,10 +90,10 @@ public class MergeLocalizer extends Localizer {
 
         Pose2d relDelta = new Pose2d (relDeltaX,relDeltaY,deltaHeading);
         constAccelMath.calculate(loopTime, relDelta, currentPose);
-        constAccelMath.calculate(loopTime, relDelta, poseWithoutLL);
+        constAccelMath.calculate(loopTime, relDelta, poseWithoutCamera);
 
 
-         */
+
 
         // PINPOINT
 
@@ -114,7 +121,7 @@ public class MergeLocalizer extends Localizer {
 
             lastPinpointPose = new Pose2d (pinpoint.getPosX(), pinpoint.getPosY(), pinpoint.getHeading());
             currentPose = new Pose2d (pinpoint.getPosX(), pinpoint.getPosY(), pinpoint.getHeading());
-            poseWithoutLL = globalPinpointEstimate.clone();
+            poseWithoutCamera = globalPinpointEstimate.clone();
             lastPinpointMergePose = globalPinpointEstimate.clone();
         }
 
@@ -123,33 +130,52 @@ public class MergeLocalizer extends Localizer {
             DashboardUtil.drawRobot(fieldOverlay, new Pose2d(pinpoint.getPosX(), pinpoint.getPosY(), pinpoint.getHeading()), this.expectedColor); // pink / magenta
         }
 
-        // LIMELIGHT
+        // Camera
 
-        /*if (useLimelight && drivetrain.vision != null) {
-            drivetrain.vision.update();
-            result = drivetrain.vision.getResult();
+        if (useCamera && drivetrain.vision != null) {
+            estimatedCameraPose = drivetrain.vision.update();
+            if(estimatedCameraPose != null && lastCameraPose != null) {
+                //10 ms delay maximum
+                if(drivetrain.vision.timeSinceLastFrame < 1e7) {
+                    numberOfTimesRelocalizedWithCamera++;
 
-            // Assume 90FPS, essentially must be most recent frame
-            if (result != null && result.isValid()) {
-                double D = (Globals.tagHeight - Vision.cameraHeight) / Math.tan(Math.toRadians(0.97 - 0.729 * result.getTx() + 9.37 * 0.001 * result.getTx() * result.getTx()));
-                double ty = Math.toRadians(2.88 + 0.249 * result.getTy() + 0.0325 * result.getTy() * result.getTy());
+                    //low pass filter
 
+                    estimatedCameraPose.x = Lerp.lerp(estimatedCameraPose.x, lastCameraPose.x, a);
+                    estimatedCameraPose.y = Lerp.lerp(estimatedCameraPose.y, lastCameraPose.y, b);
+                    estimatedCameraPose.heading = Lerp.lerpAngle(estimatedCameraPose.heading, lastCameraPose.heading, c);
 
-                currentPose.x = currentPose.x * 0.5 + estimatedLLPose.x * 0.5;
-                currentPose.y = currentPose.y * 0.5 + estimatedLLPose.y * 0.5;
-                currentPose.heading = currentPose.heading * 0.5 + estimatedLLPose.heading * 0.5;
+                    //merging camera with odometry/pinpoint
+
+                    currentPose.x = Lerp.lerp(currentPose.x, estimatedCameraPose.x, 0.5);
+                    currentPose.y = Lerp.lerp(currentPose.y, estimatedCameraPose.y, 0.5);
+                    currentPose.heading = Lerp.lerpAngle(currentPose.heading, estimatedCameraPose.heading, 0.5);
+
+                    lastCameraPose = estimatedCameraPose.clone();
+                }
+            } else if (estimatedCameraPose != null){
+                if(drivetrain.vision.timeSinceLastFrame < 1e7) {
+                    numberOfTimesRelocalizedWithCamera++;
+
+                    currentPose.x = Lerp.lerp(currentPose.x, estimatedCameraPose.x, 0.5);
+                    currentPose.y = Lerp.lerp(currentPose.y, estimatedCameraPose.y, 0.5);
+                    currentPose.heading = Lerp.lerpAngle(currentPose.heading, estimatedCameraPose.heading, 0.5);
+
+                    lastCameraPose = estimatedCameraPose.clone();
+                }
             }
-        }*/
+
+        }
 
         x = currentPose.x;
         y = currentPose.y;
         heading = currentPose.heading;
 
-        //relHistory.add(0,relDelta);
+        relHistory.add(0,relDelta);
         nanoTimes.add(0, currentTime);
         poseHistory.add(0, currentPose.clone());
 
-        //updateVelocity();
+        updateVelocity();
         updateExpected();
         updateField();
     }
@@ -170,25 +196,17 @@ public class MergeLocalizer extends Localizer {
         TelemetryUtil.packet.put("Pinpoint x", pinpoint.getPosX());
         TelemetryUtil.packet.put("Pinpoint y", pinpoint.getPosY());
         TelemetryUtil.packet.put("Pinpoint heading", pinpoint.getHeading());
+        TelemetryUtil.packet.put("Number of times Relocalized with Camera", numberOfTimesRelocalizedWithCamera);
 
-        if (estimatedLLPose != null) {
-            TelemetryUtil.packet.put("Limelight x", estimatedLLPose.x);
-            TelemetryUtil.packet.put("Limelight y", estimatedLLPose.y);
-            TelemetryUtil.packet.put("Limelight heading", estimatedLLPose.heading);
+        if (estimatedCameraPose != null) {
+            TelemetryUtil.packet.put("Camera x", estimatedCameraPose.x);
+            TelemetryUtil.packet.put("Camera y", estimatedCameraPose.y);
+            TelemetryUtil.packet.put("Camera heading", estimatedCameraPose.heading);
 
-        }
-
-
-        if(result == null) {
-            TelemetryUtil.packet.put("Limelight result is null", "false");
-        } else if (result.isValid()){
-            TelemetryUtil.packet.put("Limelight result is valid", "true");
-        } else {
-            TelemetryUtil.packet.put("Limelight result is not valid", "false");
         }
 
         Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
         DashboardUtil.drawRobot(fieldOverlay, getPoseEstimate(), this.color); // blue
-        DashboardUtil.drawRobot(fieldOverlay, estimatedLLPose, "#90d5ff");
+        DashboardUtil.drawRobot(fieldOverlay, estimatedCameraPose, "#90d5ff");
     }
 }
