@@ -143,7 +143,7 @@ public class MergeLocalizer extends Localizer {
             estimatedCameraPose = drivetrain.vision.update();
             if(estimatedCameraPose != null && lastCameraPose != null) {
                 //10 ms delay maximum
-                if(drivetrain.vision.timeSinceLastFrame < 1e-7) {
+                if(System.nanoTime() - drivetrain.vision.timeSinceLastFrame < 1e-7) {
                     numberOfTimesRelocalizedWithCamera++;
 
                     //low pass filter
@@ -161,7 +161,7 @@ public class MergeLocalizer extends Localizer {
                     lastCameraPose = estimatedCameraPose.clone();
                 }
             } else if (estimatedCameraPose != null){
-                if(drivetrain.vision.timeSinceLastFrame < 1e-7) {
+                if(System.nanoTime() - drivetrain.vision.timeSinceLastFrame < 1e-7) {
                     numberOfTimesRelocalizedWithCamera++;
 
                     currentPose.x = Lerp.lerp(currentPose.x, estimatedCameraPose.x, 0.5);
