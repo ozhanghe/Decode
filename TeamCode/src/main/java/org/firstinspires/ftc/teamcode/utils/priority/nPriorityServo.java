@@ -87,7 +87,7 @@ public class nPriorityServo extends PriorityDevice {
 
     public boolean inPosition() {
         //Log.e("ERIC LOG", "inPosition is " + (Math.abs(targetAngle-currentAngle) < Math.toRadians(0.01)) + "");
-        return Math.abs(targetAngle-currentAngle) < Math.toRadians(0.01);
+        return Math.abs(targetAngle-currentAngle) < Math.toRadians(0.1);
     }
 
     public boolean inPosition(double thresh) {
@@ -208,8 +208,10 @@ public class nPriorityServo extends PriorityDevice {
 //        Log.e(this.name + "_currentIntermediateTargetAngle" , currentIntermediateTargetAngle + "");
 
         currentAngle += deltaAngle;
-        //TelemetryUtil.packet.put("servo currentAngle " + name, currentAngle);
-        //TelemetryUtil.packet.put("servo inPosition " + name, inPosition());
+        TelemetryUtil.packet.put("servo currentAngle " + name, currentAngle);
+        TelemetryUtil.packet.put("servo error " + name, error);
+        TelemetryUtil.packet.put("servo targetAngle " + name, targetAngle);
+        TelemetryUtil.packet.put("servo inPosition " + name, inPosition());
 
         // Clamp
         //Log.i("SLCI", deltaAngle + " is delta angle for servo " + name);

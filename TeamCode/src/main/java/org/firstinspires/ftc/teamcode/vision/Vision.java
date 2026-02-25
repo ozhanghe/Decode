@@ -4,8 +4,6 @@ import android.util.Log;
 import android.util.Size;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -25,7 +23,6 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Config
@@ -35,7 +32,7 @@ public class Vision {
     public AprilTagProcessor aprilTagProcessor;
     public VisionPortal visionPortal;
 
-    public double timeSinceLastFrame = 0;
+    public long frameAcquisitionNanoTime = 0;
 
     public Vision (HardwareMap hardwareMap) {
         init(hardwareMap);
@@ -86,11 +83,11 @@ public class Vision {
         if (detections != null && !detections.isEmpty()) {
             Log.i("Number of apriltags", String.valueOf(detections.size()));
 
-            if(detections.size() > 1 && Globals.fullField == true) {
+            if(detections.size() > 1 && Globals.fullField) {
                 AprilTagDetection detection1 = detections.get(0);
                 AprilTagDetection detection2 = detections.get(1);
 
-                timeSinceLastFrame = detection1.frameAcquisitionNanoTime;
+                frameAcquisitionNanoTime = detection1.frameAcquisitionNanoTime;
 
                 if(detection1 != null && detection2 != null) {
                     Pose3D robotPose1 = detection1.robotPose;
@@ -111,7 +108,7 @@ public class Vision {
 
                 if (detection != null) {
 
-                    timeSinceLastFrame = detection.frameAcquisitionNanoTime;
+                    frameAcquisitionNanoTime = detection.frameAcquisitionNanoTime;
 
                     Pose3D robotPose = detection.robotPose;
 

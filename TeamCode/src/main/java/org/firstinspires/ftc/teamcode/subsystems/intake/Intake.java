@@ -95,7 +95,7 @@ public class Intake {
             case INTAKE: {
                 requestIntake = false;
 
-                roller.setTargetPower(intakeRollerPower * (reversed ? -1 : 1));
+                roller.setTargetPowerSmooth(intakeRollerPower * (reversed ? -1 : 1), 0.3);
                 feed.setTargetPower(intakeFeedPower * (reversed ? -1 : 1));
 
                 if (requestOff) {
@@ -115,7 +115,7 @@ public class Intake {
             case SHOOT_FEED: {
                 requestShoot = false;
 
-                roller.setTargetPower(shootRollerPower);
+                roller.setTargetPowerSmooth(shootRollerPower, 0.3);
                 feed.setTargetPower(shootFeedPower);
 
                 if (requestOff) {

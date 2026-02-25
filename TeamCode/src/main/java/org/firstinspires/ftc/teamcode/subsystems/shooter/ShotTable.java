@@ -13,7 +13,7 @@ class ShotSetpoint {
     public ShotSetpoint lerp(ShotSetpoint other, double fraction) {
         return new ShotSetpoint(
                 this.flywheelVel + (other.flywheelVel - this.flywheelVel) * fraction,
-                this.hoodAngle + (other.hoodAngle - this.hoodAngle) * fraction,
+                this.hoodAngle + (other.hoodAngle - this.hoodAngle) * fraction
         );
     }
 }
@@ -43,7 +43,7 @@ public class ShotTable {
 
         return new ShotSetpoint(
                 baseSetpoint.flywheelVel * flywheelMultiplier, //offset created just in case we are consistently off, we can tune this
-                baseSetpoint.hoodAngle * hoodMultiplier, //offset created just in case we are consistently off, we can tune this
+                baseSetpoint.hoodAngle * hoodMultiplier //offset created just in case we are consistently off, we can tune this
         );
     }
 }

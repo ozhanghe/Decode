@@ -50,8 +50,8 @@ public class Shooter {
     public boolean turretTrackInManual = false;
 
     public double targetHoodAngle = 0.0;
-    public static double hoodSweep = Math.toRadians(34.0);
-    public static double hoodGearRatio = 48.0 / 30.0;
+    public static double hoodSweep = Math.toRadians(26.43);
+    public static double hoodGearRatio = 20.0 / 40.0 * 254.0 / 35.0;
 
     public static double latchBlockAngle = 1;
 
@@ -96,7 +96,13 @@ public class Shooter {
 
         this.shooterTable = new ShotTable();
         // Add: addSetpoint(distanceInches(from goal), new ShotSetpoint(flywheelVel, hoodPos, timeOfFlight(seconds)))
-        shooterTable.addSetpoint(0, new ShotSetpoint(0,0 ));
+        shooterTable.addSetpoint(39.9, new ShotSetpoint(400,Math.toRadians(27)));
+        shooterTable.addSetpoint(51.9, new ShotSetpoint(450,Math.toRadians(34)));
+        shooterTable.addSetpoint(61.3, new ShotSetpoint(480,Math.toRadians(42)));
+        shooterTable.addSetpoint(81.5, new ShotSetpoint(520,Math.toRadians(48)));
+        shooterTable.addSetpoint(95.6, new ShotSetpoint(520,Math.toRadians(51)));
+        shooterTable.addSetpoint(Math.hypot(120, 60), new ShotSetpoint(580,0.847));
+        /*
         shooterTable.addSetpoint(40.3, new ShotSetpoint(430,0));
         shooterTable.addSetpoint(43.6, new ShotSetpoint(440,0.05));
         shooterTable.addSetpoint(48.5, new ShotSetpoint(465,0.2));
@@ -105,13 +111,14 @@ public class Shooter {
         shooterTable.addSetpoint(76.4, new ShotSetpoint(555,0.5 ));
         shooterTable.addSetpoint(85, new ShotSetpoint(585,0.55 ));
         shooterTable.addSetpoint(94.8, new ShotSetpoint(600,0.6));
-        shooterTable.addSetpoint(136.9, new ShotSetpoint(665,0.65 ));
+        shooterTable.addSetpoint(136.9, new ShotSetpoint(580,1.4 ));
         shooterTable.addSetpoint(148, new ShotSetpoint(700,0.75));
+        */
 
         hood = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "hood1")},
             "hood", nPriorityServo.ServoType.AXON_MINI,
-            0.027, 0.4, 0.03,
+            0.03, 0.33, 0.03,
             new boolean[] {false},
             3, 7
         );
@@ -151,12 +158,14 @@ public class Shooter {
                 aimRequest = false;
 
                 setShooterBlocker(true);
-                TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
+                //TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
                 //boolean aimResult = aimLauncherV8();
                 predictGoal();
                 boolean turretResult = turret.inPosition();
                 //TelemetryUtil.packet.put("Aim: aimResult", aimResult);
                 TelemetryUtil.packet.put("Aim: turretResult", turretResult);
+                TelemetryUtil.packet.put("Aim: hood.inPosition", hood.inPosition());
+                TelemetryUtil.packet.put("Aim: atVel", atVel());
                 if (hood.inPosition() && turretResult && this.atVel()) {
                     state = State.READY;
                 }
@@ -174,7 +183,7 @@ public class Shooter {
             case READY: {
                 setShooterBlocker(true);
 
-                TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
+                //TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
                 //boolean aimResult = aimLauncherV8();
                 //TelemetryUtil.packet.put("Aim: aimResult", aimResult);
                 predictGoal();
@@ -456,7 +465,7 @@ public class Shooter {
 
     // further separation :)
     // bootleg LM1 strat being used in LM2 & LM3 code
-    public static double closeAngle = 0.2, closeVel = 470, midAngle = 0.5, midVel = 545, farAngle = 0.65, farVel = 625;
+    public static double closeAngle = 0.2, closeVel = 470, midAngle = 0.5, midVel = 545, farAngle = 1.4, farVel = 580;
 
     public enum Dist {
         CLOSE(closeAngle, closeVel),
@@ -491,7 +500,7 @@ public class Shooter {
         if (ROBOT_POSITION.x + 48 <= ROBOT_POSITION.y * (Globals.isRed ? -1 : 1)) ballTarget = new Vector3(ballTarget.y * (Globals.isRed ? -1 : 1), ballTarget.x * (Globals.isRed ? -1 : 1), ballTarget.z);
         // Original target
         */
-        ballTarget = new Vector3(-68,68,46);
+        ballTarget = new Vector3(-68,68,42);
         // Initial values based on the target
         double initialDist = Math.hypot(ballTarget.x - ROBOT_POSITION.x, ballTarget.y - ROBOT_POSITION.y);
         ShotSetpoint values = shooterTable.getSetpoint(initialDist);
@@ -502,12 +511,10 @@ public class Shooter {
 
         // Looping through virtual goal
         //getting time of flight
-		// TODO Please add comments to explain long expressions like this
-        //converting hood pos into angle using the conversion in nPriorityServo
-        double time = initialDist/(values.flywheelVel*Math.cos((values.hoodAngle-0.03)/(1 / Math.toRadians(305))));
+        double time = initialDist / (values.flywheelVel / 2 * Math.sin(values.hoodAngle));
 
         // Offset the virtual goal by the robot's velocity during flight
-        if(Math.hypot(ROBOT_VELOCITY.x,ROBOT_VELOCITY.y)>10) {
+        if (Math.hypot(ROBOT_VELOCITY.x,ROBOT_VELOCITY.y) > 10) {
             virtualX = ballTarget.x - (ROBOT_VELOCITY.x * time);
             virtualY = ballTarget.y - (ROBOT_VELOCITY.y * time);
         }
@@ -517,27 +524,36 @@ public class Shooter {
         values = shooterTable.getSetpoint(virtualDist);
 
         // Outputting final result
-        if(Math.hypot(ROBOT_VELOCITY.x,ROBOT_VELOCITY.y)>10){
-            Vector2 goalUnitVector = new Vector2((virtualX - ROBOT_POSITION.x)/virtualDist, (virtualY-ROBOT_POSITION.y)/virtualDist);
-            double robotVelocityGoal = (ROBOT_VELOCITY.x * goalUnitVector.x)+(ROBOT_VELOCITY.y * goalUnitVector.y);
-            double ballVelocity = robot.sensors.getFlywheelVelocity()*Math.cos((values.hoodAngle-0.03)/(1 / Math.toRadians(305)))+robotVelocityGoal; // TODO Explain what is happening in here
-            double g = 386.088;
-            minFlywheelVelocity = robot.sensors.getFlywheelVelocity();
-            targetHoodAngle = Math.atan((ballVelocity*ballVelocity + Math.sqrt(Math.pow(ballVelocity,4)-g*(g*virtualDist*virtualDist+2*(42-launcherHeight)*ballVelocity*ballVelocity)))/(g*virtualDist));
+        if (Math.hypot(ROBOT_VELOCITY.x,ROBOT_VELOCITY.y) > 10) {
+            Vector2 goalUnitVector = new Vector2((virtualX - ROBOT_POSITION.x) / virtualDist, (virtualY-ROBOT_POSITION.y) / virtualDist);
+            double robotVelocityGoal = (ROBOT_VELOCITY.x * goalUnitVector.x) + (ROBOT_VELOCITY.y * goalUnitVector.y);
+            double ballVelocity = flywheel.getFilteredVelocity() / 2 * Math.sin(values.hoodAngle) + robotVelocityGoal;
+            double g = 386.088; // in/s
+            minFlywheelVelocity = values.flywheelVel;
+            targetHoodAngle = Math.atan((
+                ballVelocity * ballVelocity + Math.sqrt(
+                    Math.pow(ballVelocity, 4) - g * (
+                        g * virtualDist * virtualDist
+                        + 2 * (ballTarget.z - launcherHeight) * ballVelocity * ballVelocity
+                    )
+                )
+            ) / (g * virtualDist));
         } else {
             targetHoodAngle = values.hoodAngle;
-            minFlywheelVelocity= values.flywheelVel;
+            minFlywheelVelocity = values.flywheelVel;
         }
+        TelemetryUtil.packet.put("Shooter : target hood launch angle (deg)", Math.toDegrees(targetHoodAngle));
+        targetHoodAngle = Utils.minMaxClip((targetHoodAngle - hoodSweep) * hoodGearRatio, 0, 1.6);
         double virtualTurretAngle = Math.atan2(virtualY - ROBOT_POSITION.y, virtualX - ROBOT_POSITION.x);
         turret.setTargetAngle(virtualTurretAngle - ROBOT_POSITION.heading);
     }
 
-    public void shootRegression() {
+    /*public void shootRegression() {
         double dist = Math.hypot(ballTarget.x - ROBOT_POSITION.x, ballTarget.y - ROBOT_POSITION.y);
         ShotSetpoint target = shooterTable.getSetpoint(dist);
         if (target != null) {
             minFlywheelVelocity = target.flywheelVel;
             targetHoodAngle = target.hoodAngle;
         }
-    }
+    }*/
 }

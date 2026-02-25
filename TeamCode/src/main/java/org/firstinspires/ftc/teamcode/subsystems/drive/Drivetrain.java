@@ -333,11 +333,12 @@ public class Drivetrain {
         TelemetryUtil.packet.put("Drivetrain : turn power", turn);
     }
 
+    public static double smoothPowerK = 0.3;
     public void setMotorPowers(double lf, double lr, double rr, double rf) {
-        leftFront.setTargetPowerSmooth(lf, 0.5);
-        leftRear.setTargetPowerSmooth(lr, 0.5);
-        rightRear.setTargetPowerSmooth(rr, 0.5);
-        rightFront.setTargetPowerSmooth(rf, 0.5);
+        leftFront.setTargetPowerSmooth(lf, smoothPowerK);
+        leftRear.setTargetPowerSmooth(lr, smoothPowerK);
+        rightRear.setTargetPowerSmooth(rr, smoothPowerK);
+        rightFront.setTargetPowerSmooth(rf, smoothPowerK);
     }
 
     public void stopAllMotors() {

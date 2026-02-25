@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.hardware.lynx.LynxModule;
 
 import org.firstinspires.ftc.teamcode.Robot;
+import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
 import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LEDWrapper;
@@ -41,7 +42,7 @@ public class Sensors {
     private double turretAngleEncoderOffset, turretAngleEncoderPosition;
     public static double turretAnalogEncoderOffset = Math.toRadians(177);
     public static double turretAngleFilter = 0.6;
-    public static double turretLimitLeft = Math.toRadians(105), turretLimitRight = Math.toRadians(-180), turretWrapMid = Math.toRadians(-45);
+    public static double turretLimitLeft = Math.toRadians(300), turretLimitRight = Math.toRadians(-30), turretWrapMid = Math.toRadians(135);
     public static boolean resetTurretAngleEncoder = true;
 
     private double lightSensorFilteredVoltage = 0;
@@ -179,10 +180,9 @@ public class Sensors {
         //TelemetryUtil.packet.put("Shooter : Flywheel RPM", flywheelAngularVel * 60);
         TelemetryUtil.packet.put("Flywheel : Current Velocity", flywheelVelocity);
         TelemetryUtil.packet.put("Turret : Current angle (deg)", Math.toDegrees(turretAngle));
-        TelemetryUtil.packet.put("Shooter : Hood top angle (deg)", Math.toDegrees(robot.shooter.hood.getCurrentAngle()) * 30 / 48 + 34);
+        TelemetryUtil.packet.put("Shooter : Hood top angle (deg)", Math.toDegrees(robot.shooter.hood.getCurrentAngle() / Shooter.hoodGearRatio + Shooter.hoodSweep));
         //TelemetryUtil.packet.put("Shooter : Turret analog encoder voltage", turretAnalogEncoderVoltage);
         //TelemetryUtil.packet.put("Shooter : Turret angle encoder position (deg)", Math.toDegrees(turretAngleEncoderPosition));
-
 
         TelemetryUtil.packet.put("Intake : Color", isPurple ? "purple" : isGreen ? "green" : "none");
 
