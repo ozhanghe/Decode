@@ -94,13 +94,10 @@ public class nPriorityServo extends PriorityDevice {
         return Math.abs(targetAngle - currentAngle) < thresh;
     }
 
-    public void setTargetAngle(double angle) {
-        this.targetAngle = Utils.minMaxClip(angle, convertPosToAngle(minPos), convertPosToAngle(maxPos));
-        this.power = this.maxPower;
-    }
+    public void setTargetAngle(double angle) { setTargetAngle(angle, 1); }
 
     public void setTargetAngle(double angle, double power) {
-        this.targetAngle = Utils.minMaxClip(angle, convertPosToAngle(minPos), convertPosToAngle(maxPos));
+        if (!Double.isNaN(angle)) this.targetAngle = Utils.minMaxClip(angle, convertPosToAngle(minPos), convertPosToAngle(maxPos));
         this.power = Utils.minMaxClip(power, 0, this.maxPower);
     }
 
@@ -108,12 +105,10 @@ public class nPriorityServo extends PriorityDevice {
         return targetAngle;
     }
 
-    public void setTargetPos(double pos) {
-        this.setTargetPos(Utils.minMaxClip(pos, minPos, maxPos), 1);
-    }
+    public void setTargetPos(double pos) { this.setTargetPos(pos, 1); }
 
     public void setTargetPos(double pos, double power) {
-        this.targetAngle = convertPosToAngle(Math.max(Math.min(pos, maxPos), minPos));
+        if (!Double.isNaN(pos)) this.targetAngle = convertPosToAngle(Utils.minMaxClip(pos, minPos, maxPos));
         this.power = Utils.minMaxClip(power, 0, this.maxPower);
     }
 
@@ -134,7 +129,7 @@ public class nPriorityServo extends PriorityDevice {
         forceUpdate = false;
 
         long currentTime = System.nanoTime();
-        double timeSinceLastUpdate = ((double) currentTime - lastUpdateTime)/1.0E9;
+        double timeSinceLastUpdate = (currentTime - lastUpdateTime) / 1.0E9;
 
         double error = targetAngle - currentAngle;
         //Log.e("TTTTTTTTa", timeSinceLastUpdate + " is the time since last update");
@@ -186,7 +181,7 @@ public class nPriorityServo extends PriorityDevice {
 
         // Update the servo internal values
         long currentTime = System.nanoTime();
-        double loopTime = ((double) currentTime - lastLoopTime)/1.0E9;
+        double loopTime = (currentTime - lastLoopTime) / 1.0E9;
 
         // We actually use this to pretty much just get direction
         double error = targetAngle - currentAngle;
@@ -210,6 +205,7 @@ public class nPriorityServo extends PriorityDevice {
         currentAngle += deltaAngle;
         TelemetryUtil.packet.put("servo currentAngle " + name, currentAngle);
         TelemetryUtil.packet.put("servo error " + name, error);
+        TelemetryUtil.packet.put("servo deltaAngle " + name, deltaAngle);
         TelemetryUtil.packet.put("servo targetAngle " + name, targetAngle);
         TelemetryUtil.packet.put("servo inPosition " + name, inPosition());
 

@@ -15,7 +15,6 @@ public class Flywheel {
     public final PriorityMotor flywheel;
 
     /*
-
     Vel - FF - Tuned 2/25/26
     0.09 - 40
     0.15 - 87
@@ -32,13 +31,10 @@ public class Flywheel {
     0.91 - 767
     0.96 - 807
     1 - 848
-
-
-
      */
 
     // velocity is in inches / second
-    public static PID velocityPID = new PID (0.0, 0.0002, 0.0001);
+    public static PID velocityPID = new PID (0.0, 0.0003, 0.0001);
     public static double velocityFFm = 0.00124059;
     public static double velocityFFb = 0.0264087;
     public static double velocityFilterLow = 0.05;
@@ -95,8 +91,4 @@ public class Flywheel {
     public double getFilteredVelocity() { return filteredVelocity; }
 
     public boolean atVel() { return Math.abs(targetVelocity - filteredVelocity) <= atVelThresh; }
-
-    public double getError() {
-        return Math.abs(targetVelocity - filteredVelocity);
-    }
 }

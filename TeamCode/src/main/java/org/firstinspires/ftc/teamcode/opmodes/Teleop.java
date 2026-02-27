@@ -67,7 +67,20 @@ public class Teleop extends LinearOpMode {
 
         while (opModeInInit()) {
             robot.sensors.update();
+
+            if (x1.isHeld(gamepad1.x, 1000)) {
+                LogUtil.DISABLED = true;
+                gamepad1.rumble(200);
+                gamepad2.rumble(200);
+            }
+            if (y1.isHeld(gamepad1.y, 1000)) {
+                LogUtil.DISABLED = false;
+                gamepad1.rumble(200);
+                gamepad2.rumble(200);
+            }
             TelemetryUtil.sendTelemetry();
+            telemetry.addData("CAT", LogUtil.DISABLED ? "DISABLED" : "ENABLED");
+            telemetry.update();
         }
 
         if (!isStopRequested()) LogUtil.init();

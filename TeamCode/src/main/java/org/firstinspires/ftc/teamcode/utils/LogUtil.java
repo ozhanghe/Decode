@@ -80,7 +80,7 @@ public class LogUtil {
 
     private static long timeAtNextWrite;
 
-    public static boolean DISABLED = true;
+    public static boolean DISABLED = false;
     public static boolean stateTransition = false;
     public static boolean drivePositionReset = false;
 
@@ -135,7 +135,7 @@ public class LogUtil {
         if (timeNow >= timeAtNextWrite || stateTransition || drivePositionReset) {
             if (drivePositionReset) driveState.set("[reset]");
             datalogger.writeLine();
-            timeAtNextWrite = timeNow + 150_000_000;
+            timeAtNextWrite = timeNow + 200_000_000;
             stateTransition = false;
             drivePositionReset = false;
             event.set("");

@@ -25,6 +25,7 @@ import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
+import org.firstinspires.ftc.teamcode.utils.Utils;
 import org.firstinspires.ftc.teamcode.utils.Vector2;
 import org.firstinspires.ftc.teamcode.utils.priority.HardwareQueue;
 import org.firstinspires.ftc.teamcode.utils.priority.PriorityMotor;
@@ -317,7 +318,11 @@ public class Drivetrain {
         }
     }
 
+    private double lastMoveVectorX = 0;
+    public static double noWheelieAccel = 3;
     public void setMoveVector(Vector2 moveVector, double turn) {
+        moveVector.x = Utils.minMaxClip(moveVector.x, lastMoveVectorX - noWheelieAccel * sensors.loopTime, lastMoveVectorX + noWheelieAccel * sensors.loopTime);
+        lastMoveVectorX = moveVector.x;
         double[] powers = {
                 moveVector.x - turn - moveVector.y,
                 moveVector.x - turn + moveVector.y,
@@ -333,7 +338,7 @@ public class Drivetrain {
         TelemetryUtil.packet.put("Drivetrain : turn power", turn);
     }
 
-    public static double smoothPowerK = 0.3;
+    public static double smoothPowerK = 0.5;
     public void setMotorPowers(double lf, double lr, double rr, double rf) {
         leftFront.setTargetPowerSmooth(lf, smoothPowerK);
         leftRear.setTargetPowerSmooth(lr, smoothPowerK);
