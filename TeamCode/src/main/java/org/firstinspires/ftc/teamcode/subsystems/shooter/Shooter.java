@@ -163,10 +163,10 @@ public class Shooter {
                 predictGoal();
                 boolean turretResult = turret.inPosition();
                 //TelemetryUtil.packet.put("Aim: aimResult", aimResult);
-                TelemetryUtil.packet.put("Aim: turretResult", turretResult);
-                TelemetryUtil.packet.put("Aim: hood.inPosition", hood.inPosition());
-                TelemetryUtil.packet.put("Aim: atVel", atVel());
-                if (turretResult && this.atVel()) {
+                //TelemetryUtil.packet.put("Aim: turretResult", turretResult);
+                //TelemetryUtil.packet.put("Aim: hood.inPosition", hood.inPosition());
+                //TelemetryUtil.packet.put("Aim: atVel", atVel());
+                if (turretResult && this.atVel() && hood.inPosition()) {
                     state = State.READY;
                 }
                 flywheel.setTargetVelocity(minFlywheelVelocity);
@@ -526,9 +526,11 @@ public class Shooter {
 
         // Outputting final result
         if (Math.hypot(ROBOT_VELOCITY.x,ROBOT_VELOCITY.y) > 10) {
-            Vector2 goalUnitVector = new Vector2((virtualX - ROBOT_POSITION.x) / virtualDist, (virtualY-ROBOT_POSITION.y) / virtualDist);
+            Vector2 goalUnitVector = new Vector2((virtualX - ROBOT_POSITION.x) / virtualDist, (virtualY - ROBOT_POSITION.y) / virtualDist);
             double robotVelocityGoal = (ROBOT_VELOCITY.x * goalUnitVector.x) + (ROBOT_VELOCITY.y * goalUnitVector.y);
             double ballVelocity = flywheel.getFilteredVelocity() / 2 * Math.sin(values.hoodAngle) + robotVelocityGoal;
+            TelemetryUtil.packet.put("Aim : robotVelocityGoal", robotVelocityGoal);
+            TelemetryUtil.packet.put("Aim : ballVelocity", ballVelocity);
             double g = 386.088; // in/s
             minFlywheelVelocity = values.flywheelVel;
             targetHoodAngle = Math.atan((

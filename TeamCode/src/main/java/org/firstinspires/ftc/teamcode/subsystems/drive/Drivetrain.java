@@ -319,23 +319,26 @@ public class Drivetrain {
     }
 
     private double lastMoveVectorX = 0;
-    public static double noWheelieAccel = 3;
+    public static double noWheelieAccelForward = 4.5, noWheelieDecelForward = 2.5, noWheelieAccelReverse = 3.5, noWheelieDecelReverse = 3.5;
     public void setMoveVector(Vector2 moveVector, double turn) {
-        moveVector.x = Utils.minMaxClip(moveVector.x, lastMoveVectorX - noWheelieAccel * sensors.loopTime, lastMoveVectorX + noWheelieAccel * sensors.loopTime);
-        lastMoveVectorX = moveVector.x;
+        double moveVectorXLimited;
+        if ((moveVector.x - lastMoveVectorX) * Math.signum(lastMoveVectorX) > 0) moveVectorXLimited = Utils.minMaxClip(moveVector.x, lastMoveVectorX - noWheelieAccelReverse * sensors.loopTime, lastMoveVectorX + noWheelieAccelForward * sensors.loopTime);
+        else moveVectorXLimited = Utils.minMaxClip(moveVector.x, lastMoveVectorX - noWheelieDecelForward * sensors.loopTime, lastMoveVectorX + noWheelieDecelReverse * sensors.loopTime);
+        lastMoveVectorX = moveVectorXLimited;
         double[] powers = {
-                moveVector.x - turn - moveVector.y,
-                moveVector.x - turn + moveVector.y,
-                moveVector.x + turn - moveVector.y,
-                moveVector.x + turn + moveVector.y
+                moveVectorXLimited - turn - moveVector.y,
+                moveVectorXLimited - turn + moveVector.y,
+                moveVectorXLimited + turn - moveVector.y,
+                moveVectorXLimited + turn + moveVector.y
         };
         normalizeArray(powers);
 
         setMotorPowers(powers[0], powers[1], powers[2], powers[3]);
 
-        TelemetryUtil.packet.put("Drivetrain : x power", moveVector.x);
-        TelemetryUtil.packet.put("Drivetrain : y power", moveVector.y);
-        TelemetryUtil.packet.put("Drivetrain : turn power", turn);
+        TelemetryUtil.packet.put("Drivetrain : moveVector x", moveVector.x);
+        TelemetryUtil.packet.put("Drivetrain : moveVector x limited", moveVectorXLimited);
+        TelemetryUtil.packet.put("Drivetrain : moveVector y", moveVector.y);
+        TelemetryUtil.packet.put("Drivetrain : moveVector turn", turn);
     }
 
     public static double smoothPowerK = 0.5;

@@ -16,9 +16,10 @@ public class Turret {
     private final Robot robot;
     public final PriorityCRServo turret;
 
-    public static PID turretPID = new PID (0.1, 0.0, 0.01);
+    public static PID turretPID = new PID (0.15, 0.0, 0.02);
     public static double turretKStatic = 0.07;
     public static double turretDeadzone = 0.5;
+    public static double inPositionThresh = Math.toRadians(2.5);
     public static double turretVelFactor = 0.25;
     private double lastTurretTarget = 0.0;
     private double targetTurretAngle = 0.0;
@@ -68,5 +69,5 @@ public class Turret {
     public void setTargetAngle(double targetAngle) { targetTurretAngle = Sensors.turretAngleClip(targetAngle); }
     public double getTargetAngle() { return targetTurretAngle; }
 
-    public boolean inPosition() { return Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= Math.toRadians(2); }
+    public boolean inPosition() { return Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= inPositionThresh; }
 }
