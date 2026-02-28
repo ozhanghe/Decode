@@ -195,7 +195,8 @@ public class Shooter {
                 */
                 flywheel.setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
-                if (shootRequest) {
+
+                if (shootRequest && isRobotInZone(0,0,-72,72,-72,-72)||isRobotInZone(-48,0,-72,24,-72,-24)) {
                     setShooterBlocker(false);
                     if (flywheelBlocker.inPosition()) {
                         state = State.SHOOT;
@@ -220,6 +221,10 @@ public class Shooter {
                 //aimLauncherV8();
                 flywheel.setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
+
+                if (isRobotInZone(0,0,-72,72,-72,-72)||isRobotInZone(-48,0,-72,24,-72,-24)){
+                    state = State.AIMING;
+                }
 
                 if (stopRequest) {
                     stopRequest = false;
@@ -489,6 +494,45 @@ public class Shooter {
     public void setShooter(Dist mode) {
         flywheel.setTargetVelocity(mode.flywheelVel);
         setHoodAngle(targetHoodAngle = mode.hoodAngle);
+    }
+
+    public static boolean isRobotInZone(double x1, double y1, double x2, double y2, double x3, double y3) {
+
+        //getting robot pose info
+        double theta = Math.toRadians(ROBOT_POSITION.heading);
+        double cosT = Math.cos(theta);
+        double sinT = Math.sin(theta);
+        double l = Globals.ROBOT_LENGTH;
+        double w = Globals.ROBOT_WIDTH;
+        double rx = ROBOT_POSITION.x;
+        double ry = ROBOT_POSITION.y;
+
+        //Four corners of robot - relative to robot
+        double[][] corners = {
+                {l/2, w/2}, {l/2, -w/2}, {-l/2, w/2}, {-l/2, -w/2}, {0, 0}
+        };
+
+        //Calculate triangle denom
+        double denom = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
+
+        //Transform the corners of robot to global coordinates and check weights
+        for (double[] c : corners) {
+            // Rotation + Translation of each corner
+            double px = rx + (c[0] * cosT - c[1] * sinT);
+            double py = ry + (c[0] * sinT + c[1] * cosT);
+
+            // Barycentric weight calculation
+            double w1 = ((y2 - y3) * (px - x3) + (x3 - x2) * (py - y3)) / denom;
+            double w2 = ((y3 - y1) * (px - x3) + (x1 - x3) * (py - y3)) / denom;
+            double w3 = 1.0 - w1 - w2;
+
+            //none of the triangle areas are negative meaning robot is inside the triangle
+            if (w1 >= 0 && w2 >= 0 && w3 >= 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void predictGoal() {
