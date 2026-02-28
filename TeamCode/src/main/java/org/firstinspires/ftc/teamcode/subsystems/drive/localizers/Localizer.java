@@ -18,6 +18,7 @@ public class Localizer {
     protected Sensors sensors;
     protected Drivetrain drivetrain;
 
+
     public Encoder[] encoders;
     protected long lastTime = System.nanoTime();
 

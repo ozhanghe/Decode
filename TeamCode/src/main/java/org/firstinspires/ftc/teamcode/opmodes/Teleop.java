@@ -4,6 +4,8 @@ import static org.firstinspires.ftc.teamcode.utils.Globals.AUTO_ENDING_POSE;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 import static org.firstinspires.ftc.teamcode.utils.Globals.isRed;
 
+import android.util.Log;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -218,10 +220,9 @@ public class Teleop extends LinearOpMode {
                 }
             }
 
-            if (x2.isHeld(gamepad2.x,1500)) { // localize to origin
-                robot.drivetrain.setPoseEstimate(new Pose2d(0,0,0));
-                gamepad1.rumble(1200);
-                gamepad2.rumble(1200);
+            if (x2.isClicked(gamepad2.x)) { // localize to origin
+                robot.drivetrain.mergeLocalizer.useCamera = !robot.drivetrain.mergeLocalizer.useCamera;
+                Log.i("Vision", "Clicked");
             }
 
             if (h2.isClicked(gamepad2.dpad_left || gamepad2.dpad_right)) { // localize to left/right edge (unchanged x, auto y, auto h)

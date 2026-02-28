@@ -30,7 +30,7 @@ public class Vision {
 
     public ArrayList<AprilTagDetection> detections = null;
     public AprilTagProcessor aprilTagProcessor;
-    public VisionPortal visionPortal;
+    public VisionPortal visionPortal = null;
 
     public long frameAcquisitionNanoTime = 0;
 
@@ -77,11 +77,13 @@ public class Vision {
     }
 
     public Pose2d update() {
+
+        visionPortal.setProcessorEnabled(aprilTagProcessor, true);
+        Log.i("Vision", "Updating");
         detections = aprilTagProcessor.getFreshDetections();
 
-        Log.i("Number of apriltags", "0");
         if (detections != null && !detections.isEmpty()) {
-            Log.i("Number of apriltags", String.valueOf(detections.size()));
+            Log.i("Vision", String.valueOf(detections.size()));
 
             if(detections.size() > 1 && Globals.fullField) {
                 AprilTagDetection detection1 = detections.get(0);

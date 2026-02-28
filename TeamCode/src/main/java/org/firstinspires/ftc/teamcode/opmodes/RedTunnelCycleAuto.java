@@ -65,9 +65,11 @@ public class RedTunnelCycleAuto extends LinearOpMode {
     private void shoot() {
         robot.shooter.reqAim(true);
 
-        Path path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline()).setDecel(true).addPoint(new Pose2d(x, 15, Math.PI / 2));
+        //Path path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline()).setDecel(true).addPoint(new Pose2d(x, 15, Math.PI / 2));
 
-        robot.drivetrain.setPath(path);
+        //robot.drivetrain.setPath(path);
+
+        robot.drivetrain.goToPoint(new Pose2d(x, 15, Math.PI / 2), 1);
         robot.update();
         robot.waitWhile(() -> {
             robot.shooter.turretTrackTarget();

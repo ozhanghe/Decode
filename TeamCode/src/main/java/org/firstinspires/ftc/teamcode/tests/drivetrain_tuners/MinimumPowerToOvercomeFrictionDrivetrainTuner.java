@@ -38,6 +38,7 @@ public class MinimumPowerToOvercomeFrictionDrivetrainTuner extends LinearOpMode 
         motors.add(robot.drivetrain.leftRear);
         motors.add(robot.drivetrain.rightFront);
         motors.add(robot.drivetrain.rightRear);
+        hardwareQueue.addDevices(motors.get(0),motors.get(1),motors.get(2),motors.get(3));
 
         Pose2d robotPose;
         robot.drivetrain.resetMinPowersToOvercomeFriction();
@@ -45,17 +46,19 @@ public class MinimumPowerToOvercomeFrictionDrivetrainTuner extends LinearOpMode 
         robot.shooter.state = Shooter.State.TEST;
 
         waitForStart();
+        robot.drivetrain.setPoseEstimate(new Pose2d(0,0,0));
 
         for (int i = 0; i < 4; i++) {
 
             for (int a = 0; a < iterations; a++) {
                 long start = System.currentTimeMillis();
-                for (double j = 0; j < 1; j = (double) (System.currentTimeMillis() - start) / (15000.0)) {
+                for (double j = 0; j < 1; j+=0.01) {
                     Globals.START_LOOP();
                     robot.update();
                     TelemetryUtil.sendTelemetry();
 
                     motors.get(i).setTargetPower(j);
+                    Log.i("Power", String.valueOf(j));
 
                     robotPose = robot.drivetrain.getPoseEstimate();
                     if (Math.abs(robotPose.x) > 0.1 || Math.abs(robotPose.y) > 0.1 || Math.abs(robotPose.heading) > Math.toRadians(7)) {
@@ -76,7 +79,7 @@ public class MinimumPowerToOvercomeFrictionDrivetrainTuner extends LinearOpMode 
                 }
             }
 
-            Log.e(motors.get(i).name + " AVERAGE min power with voltage correction", sums[i]/iterations + "");
+            Log.i(motors.get(i).name + " AVERAGE min power with voltage correction", sums[i]/iterations + "");
 
         }
     }

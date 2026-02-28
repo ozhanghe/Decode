@@ -126,10 +126,10 @@ public class Drivetrain {
 
     // leftFront, leftRear, rightRear, rightFront
     double[] minPowersToOvercomeFriction = {
-            0.2431906580541209,
-            0.14544137800655768,
-            0.183475227610153,
-            0.18010218334461908
+            0.42102811799453876,
+            0.36238541857487483,
+            0.37320129970601906,
+            0.3865220061985701
     };
 
     public void setMinPowersToOvercomeFriction(double scalar) {
@@ -171,15 +171,14 @@ public class Drivetrain {
     private double turn = 0;
     public double[] powers = {0, 0, 0, 0};
 
-    private PID turnPID = new PID (0.55, 0, 0.002);
-
     public PathData pd;
     public static double centripetalScalar = 0.2;
 
     private Pose2d targetPoint = new Pose2d (0, 0, 0);
-    public static PID xPID = new PID (0.1, 0.0, 0.003);
-    public static PID yPID = new PID (0.1, 0.0, 0.003);
-    public static PID hPID = new PID (0.15, 0.0, 0.003);
+    public static PID xPID = new PID (0.05, 0.0, 0.001);
+    public static PID yPID = new PID (0.2, 0.0, 0.005);
+    public static PID turnPID = new PID (0.8, 0.1, 0);
+
 
     public static double xThresh = 1.0, yThresh = 1.0, hThresh = 2.0, waypointThresh = 3.0;
     private double xError = 0.0, yError = 0.0, hError = 0.0;
@@ -313,7 +312,7 @@ public class Drivetrain {
         if (lastTargetPoint.x != targetPoint.x || lastTargetPoint.y != targetPoint.y || lastTargetPoint.heading != targetPoint.heading) {
             xPID.resetIntegral();
             yPID.resetIntegral();
-            hPID.resetIntegral();
+            //hPID.resetIntegral();
             state = State.PID_TO_POINT;
         }
     }
