@@ -533,14 +533,18 @@ public class Shooter {
             TelemetryUtil.packet.put("Aim : ballVelocity", ballVelocity);
             double g = 386.088; // in/s
             minFlywheelVelocity = values.flywheelVel;
-            targetHoodAngle = Math.atan((
-                ballVelocity * ballVelocity + Math.sqrt(
-                    Math.pow(ballVelocity, 4) - g * (
-                        g * virtualDist * virtualDist
-                        + 2 * (ballTarget.z - launcherHeight) * ballVelocity * ballVelocity
-                    )
-                )
-            ) / (g * virtualDist));
+            if(Math.pow(ballVelocity, 4) - g * (g * virtualDist * virtualDist + 2 * (ballTarget.z - launcherHeight) * ballVelocity * ballVelocity)>0){
+                targetHoodAngle = Math.atan((
+                        ballVelocity * ballVelocity + Math.sqrt(
+                                Math.pow(ballVelocity, 4) - g * (
+                                        g * virtualDist * virtualDist
+                                                + 2 * (ballTarget.z - launcherHeight) * ballVelocity * ballVelocity
+                                )
+                        )
+                ) / (g * virtualDist));
+            } else {
+                TelemetryUtil.packet.addLine("Shooter: no possible shot");
+            }
         } else {
             targetHoodAngle = values.hoodAngle;
             minFlywheelVelocity = values.flywheelVel;
