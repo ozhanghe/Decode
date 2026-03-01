@@ -264,6 +264,7 @@ public class Teleop extends LinearOpMode {
             telemetry.addData("flywheelAtVel", robot.shooter.atVel());
             telemetry.addData("turretInPosition", robot.shooter.turret.inPosition() ? "yes" : "aw no its not happy yet");
             telemetry.addData("Robot position (deg)", String.format(Locale.US, "(%.2f, %.2f, %.2f)", ROBOT_POSITION.x, ROBOT_POSITION.y, Math.toDegrees(ROBOT_POSITION.heading)));
+            telemetry.addData("CAT", LogUtil.DISABLED ? "DISABLED" : "ENABLED");
 
             telemetry.update();
         }

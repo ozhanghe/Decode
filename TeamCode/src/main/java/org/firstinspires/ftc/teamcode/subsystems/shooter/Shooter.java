@@ -53,7 +53,7 @@ public class Shooter {
     public static double hoodSweep = Math.toRadians(26.43);
     public static double hoodGearRatio = 20.0 / 40.0 * 254.0 / 35.0;
 
-    public static double latchBlockAngle = 1;
+    public static double latchBlockAngle = 1, latchOpenAngle = 0.2;
 
     // auto-aim
     public final double dLauncher = 3.6 / 2.54;
@@ -100,8 +100,8 @@ public class Shooter {
         shooterTable.addSetpoint(51.9, new ShotSetpoint(450,Math.toRadians(34)));
         shooterTable.addSetpoint(61.3, new ShotSetpoint(480,Math.toRadians(42)));
         shooterTable.addSetpoint(81.5, new ShotSetpoint(520,Math.toRadians(48)));
-        shooterTable.addSetpoint(95.6, new ShotSetpoint(520,Math.toRadians(51)));
-        shooterTable.addSetpoint(129, new ShotSetpoint(600,Math.toRadians(51)));
+        shooterTable.addSetpoint(95.6, new ShotSetpoint(520,Math.toRadians(50)));
+        shooterTable.addSetpoint(129, new ShotSetpoint(610,Math.toRadians(47)));
         /*
         shooterTable.addSetpoint(40.3, new ShotSetpoint(430,0));
         shooterTable.addSetpoint(43.6, new ShotSetpoint(440,0.05));
@@ -303,7 +303,7 @@ public class Shooter {
 
     public void setHoodAngle(double target_angle) { hood.setTargetAngle(target_angle); }
 
-    public void setShooterBlocker(boolean active) { flywheelBlocker.setTargetAngle(active ? latchBlockAngle : -0.2);}
+    public void setShooterBlocker(boolean active) { flywheelBlocker.setTargetAngle(active ? latchBlockAngle : latchOpenAngle);}
 
     public void updateBallTarget() {
         ballTarget = new Vector3(-68, 67 * (Globals.isRed ? 1 : -1), 46);
@@ -474,7 +474,7 @@ public class Shooter {
 
     // further separation :)
     // bootleg LM1 strat being used in LM2 & LM3 code
-    public static double closeAngle = 0.5, closeVel = 450, midAngle = 1.3, midVel = 520, farAngle = 1.5, farVel = 600;
+    public static double closeAngle = 0.5, closeVel = 450, midAngle = 1.35, midVel = 520, farAngle = 1.3, farVel = 610;
 
     public enum Dist {
         CLOSE(closeAngle, closeVel),

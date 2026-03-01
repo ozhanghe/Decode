@@ -16,10 +16,10 @@ import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
 
 @Config
-@Autonomous(name = "Blue Tunnel Cycle Auto XXXX", group = "Auto", preselectTeleOp = "A. Teleop")
+@Autonomous(name = "XX Blue Tunnel Cycle Auto", group = "Auto", preselectTeleOp = "A. Teleop")
 public class BlueTunnelCycleAuto extends LinearOpMode {
     private Robot robot;
-    public static long shootDuration = 1000, intakeDuration = 2000;
+    public static long shootDuration = 700, intakeDuration = 1500;
 
     public void runOpMode() {
         Globals.isRed = false;
@@ -30,26 +30,28 @@ public class BlueTunnelCycleAuto extends LinearOpMode {
 
         robot.shooter.state = Shooter.State.TEST;
         robot.shooter.setShooterBlocker(true);
+        robot.shooter.turretTrackInManual = true;
 
         while (opModeInInit()) {
             robot.update();
-            robot.sensors.light0G.set(System.currentTimeMillis() % 500 < 100);
+            robot.sensors.light0P.set(System.currentTimeMillis() % 500 < 100);
         }
-        robot.sensors.light0G.set(false);
+        robot.sensors.light0P.set(false);
 
         if (!isStopRequested()) LogUtil.init();
         LogUtil.drivePositionReset = true;
 
         robot.shooter.setShooter(Shooter.Dist.FAR);
-        robot.shooter.turretTrackInManual = true;
 
         shoot(-Math.PI / 2, true);
-        intake(64, -60);
-        shoot(-Math.PI / 2, false);
+        for (int i = 0; i < 2; ++i) {
+            intake(62, -60);
+            shoot(-Math.PI / 2, false);
+        }
 
         robot.shooter.setShooter(Shooter.Dist.OFF);
         robot.shooter.turret.setTargetAngle(0.0);
-        robot.drivetrain.goToPoint(new Pose2d(64, -60, -Math.PI / 2), 1.0);
+        robot.drivetrain.goToPoint(new Pose2d(62, -60, -Math.PI / 2), 1.0);
 
         Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
         robot.waitWhile(() -> {
@@ -59,9 +61,9 @@ public class BlueTunnelCycleAuto extends LinearOpMode {
     }
 
     private void shoot(double heading, boolean firstShot) {
-        robot.drivetrain.goToPoint(new Pose2d(53, -12, heading), 0.4);
+        robot.drivetrain.goToPoint(new Pose2d(58, -16, heading), 0.4);
         robot.waitWhile(() ->  robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel() || !robot.shooter.turret.inPosition());
-        robot.waitFor(firstShot ? 700 : 500);
+        robot.waitFor(firstShot ? 200 : 100);
 
         robot.shooter.setShooterBlocker(false);
         robot.intake.reqShoot(true);
@@ -71,14 +73,14 @@ public class BlueTunnelCycleAuto extends LinearOpMode {
     }
 
     private void intake(double x, double y) {
-        robot.drivetrain.goToPoint(new Pose2d(x, -22, -Math.PI / 2), 0.5);
+        robot.drivetrain.goToPoint(new Pose2d(x, -22, -Math.PI / 2), 1);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.intake.reqIntake(true);
 
-        robot.drivetrain.goToPoint(new Pose2d(x, y, -Math.PI / 2), 0.2);
+        robot.drivetrain.goToPoint(new Pose2d(x, y, -Math.PI / 2), 1);
         robot.waitFor(intakeDuration);
 
-        robot.drivetrain.goToPoint(new Pose2d(x, -45, -Math.PI / 2), 1.0, true);
+        robot.drivetrain.goToPoint(new Pose2d(x, -16, -Math.PI / 2), 1, true);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.intake.reqOff(true);
     }

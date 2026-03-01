@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
-import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_BACK_LENGTH;
+import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_FORWARD_LENGTH;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_WIDTH;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -9,51 +9,49 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Drivetrain;
-import org.firstinspires.ftc.teamcode.subsystems.drive.Path;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
-import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 
 @Config
-@Autonomous(name = "RedTunnelCycleAuto", group = "Auto", preselectTeleOp = "A. Teleop")
+@Autonomous(name = "XX Red Tunnel Cycle Auto", group = "Auto", preselectTeleOp = "A. Teleop")
 public class RedTunnelCycleAuto extends LinearOpMode {
     private Robot robot;
-    public static long shootDuration = 850, intakeDuration = 1900;
-    private double timer = System.currentTimeMillis();
-    private final double x = 60;
+    public static long shootDuration = 700, intakeDuration = 1500;
 
     public void runOpMode() {
         Globals.isRed = true;
         Globals.RUNMODE = RunMode.AUTO;
         robot = new Robot(hardwareMap);
         robot.setStopChecker(this::isStopRequested);
-        robot.drivetrain.setPoseEstimate(new Pose2d(71 - ROBOT_BACK_LENGTH, 24.25 - ROBOT_WIDTH / 2, Math.PI));
-        robot.shooter.state = Shooter.State.IDLE;
+        robot.drivetrain.setPoseEstimate(new Pose2d(71 - ROBOT_WIDTH / 2, 23.75 - ROBOT_FORWARD_LENGTH, Math.PI / 2));
+
+        robot.shooter.state = Shooter.State.TEST;
         robot.shooter.setShooterBlocker(true);
+        robot.shooter.turretTrackInManual = true;
 
         while (opModeInInit()) {
             robot.update();
-            robot.sensors.light0G.set(System.currentTimeMillis() % 500 < 350);
+            robot.sensors.light0G.set(System.currentTimeMillis() % 500 < 100);
         }
         robot.sensors.light0G.set(false);
 
         if (!isStopRequested()) LogUtil.init();
         LogUtil.drivePositionReset = true;
 
-        shoot();
-        intake();
-        shoot();
-        intake();
-        shoot();
-        intake();
-        shoot();
-        intake();
-        shoot();
+        robot.shooter.setShooter(Shooter.Dist.FAR);
 
+        shoot(Math.PI / 2, true);
+        for (int i = 0; i < 3; ++i) {
+            intake(62, 60);
+            shoot(Math.PI / 2, false);
+        }
+
+        robot.shooter.setShooter(Shooter.Dist.OFF);
         robot.shooter.turret.setTargetAngle(0.0);
+        robot.drivetrain.goToPoint(new Pose2d(62, 60, Math.PI / 2), 1.0);
 
         Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
         robot.waitWhile(() -> {
@@ -62,46 +60,28 @@ public class RedTunnelCycleAuto extends LinearOpMode {
         });
     }
 
-    private void shoot() {
-        robot.shooter.reqAim(true);
+    private void shoot(double heading, boolean firstShot) {
+        robot.drivetrain.goToPoint(new Pose2d(60, 16, heading), 0.4);
+        robot.waitWhile(() ->  robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel() || !robot.shooter.turret.inPosition());
+        robot.waitFor(firstShot ? 200 : 100);
 
-        //Path path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline()).setDecel(true).addPoint(new Pose2d(x, 15, Math.PI / 2));
-
-        //robot.drivetrain.setPath(path);
-
-        robot.drivetrain.goToPoint(new Pose2d(x, 15, Math.PI / 2), 1);
-        robot.update();
-        robot.waitWhile(() -> {
-            robot.shooter.turretTrackTarget();
-            return robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY || !robot.shooter.turret.inPosition();
-        });
-
-        robot.waitFor(200);
-
+        robot.shooter.setShooterBlocker(false);
+        robot.intake.reqShoot(true);
+        robot.waitFor(shootDuration);
+        robot.shooter.setShooterBlocker(true);
         robot.intake.reqOff(true);
-
-        robot.shooter.reqShoot(true);
-        timer = System.currentTimeMillis();
-        robot.update();
-        robot.waitWhile(() -> (System.currentTimeMillis() - timer) < shootDuration);
-
-        robot.shooter.reqStop(true);
-        robot.update();
     }
 
-    private void intake() {
+    private void intake(double x, double y) {
+        robot.drivetrain.goToPoint(new Pose2d(x, 22, Math.PI / 2), 1);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.intake.reqIntake(true);
 
-        Path path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline()).setDecel(true).addPoint(new Pose2d(x, 60, Math.PI / 2));
+        robot.drivetrain.goToPoint(new Pose2d(x, y, Math.PI / 2), 1);
+        robot.waitFor(intakeDuration);
 
-        robot.drivetrain.setPath(path);
-        robot.update();
+        robot.drivetrain.goToPoint(new Pose2d(x, 16, Math.PI / 2), 1, true);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
-        robot.waitFor(800);
-
-        robot.drivetrain.goToPoint(new Pose2d(x-10, 60, Math.PI/2), 0.8);
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
-        robot.waitFor(400);
-
+        //robot.intake.reqOff(true);
     }
 }

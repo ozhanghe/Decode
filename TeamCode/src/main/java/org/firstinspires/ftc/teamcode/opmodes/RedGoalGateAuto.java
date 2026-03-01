@@ -98,11 +98,11 @@ public class RedGoalGateAuto extends LinearOpMode {
     }
 
     private void intake(double x, double y) {
-        robot.drivetrain.goToPoint(new Pose2d(x, 22, Math.PI / 2), 0.5);
+        robot.drivetrain.goToPoint(new Pose2d(x, 22, Math.PI / 2), 1.0);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.intake.reqIntake(true);
 
-        robot.drivetrain.goToPoint(new Pose2d(x, y, Math.PI / 2), 0.25);
+        robot.drivetrain.goToPoint(new Pose2d(x, y, Math.PI / 2), 1.0);
         robot.waitFor(intakeDuration);
 
         robot.drivetrain.goToPoint(new Pose2d(x, 45, Math.PI / 2), 1.0, true);
@@ -114,7 +114,7 @@ public class RedGoalGateAuto extends LinearOpMode {
         robot.drivetrain.goToPoint(new Pose2d(0, 48, Math.PI / 2), 1);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
-        robot.drivetrain.goToPoint(new Pose2d(0, 53, Math.PI / 2), 0.5);
+        robot.drivetrain.goToPoint(new Pose2d(0, 53, Math.PI / 2), 1.0);
         robot.waitFor(duration);
 
         robot.drivetrain.goToPoint(new Pose2d(0, 30, Math.PI / 2), 1, true);
@@ -122,20 +122,26 @@ public class RedGoalGateAuto extends LinearOpMode {
     }
 
     private void gate_intake() {
-        robot.drivetrain.goToPoint(new Pose2d(5, 35, Math.PI / 2), 1.0, true);
+        robot.drivetrain.goToPoint(new Pose2d(15, 35, Math.PI / 2), 1.0, true);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
-
+        /*
         //open gate
         robot.intake.reqIntake(true);
-        robot.drivetrain.goToPoint(new Pose2d(5,55, Math.toRadians(118)), 0.7, true);
+        robot.drivetrain.goToPoint(new Pose2d(5,63, Math.toRadians(118)), 0.7, true);
         robot.waitFor(gateOpenDuration);
-
+        */
         //go behind the gate to intake the balls
         //start farther from the gate
-        robot.drivetrain.goToPoint(new Pose2d(20, 63, Math.toRadians(170)), 0.8);
+        robot.drivetrain.goToPoint(new Pose2d(15, 60, Math.PI/2), 1.0);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+
+        robot.drivetrain.goToPoint(new Pose2d(15, 60, Math.toRadians(150)), 1.0);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+
+        robot.drivetrain.goToPoint(new Pose2d(5, 60, Math.toRadians(150)), 1.0);
         robot.waitFor(gateIntakeDuration);
 
-        robot.drivetrain.goToPoint(new Pose2d(15, 36, Math.toRadians(180)), 1.0, true);
+        robot.drivetrain.goToPoint(new Pose2d(5, 36, Math.toRadians(180)), 1.0, true);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
         robot.intake.reqOff(true);

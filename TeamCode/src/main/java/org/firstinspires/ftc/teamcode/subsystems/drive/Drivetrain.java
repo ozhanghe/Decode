@@ -173,10 +173,10 @@ public class Drivetrain {
 
     private Pose2d targetPoint = new Pose2d (0, 0, 0);
     public static PID xPID = new PID (0.05, 0.0, 0.005);
-    public static PID yPID = new PID (0.4, 0.0, 0.003);
-    public static PID turnPID = new PID (0.4, 0.0, 0);
-    public static double turnKStatic = 0.4, forwardMaxPowScalar = 0.8;
-    public static double xThresh = 1.0, yThresh = 1.0, hThresh = Math.toRadians(2.5), waypointThresh = 3.0;
+    public static PID yPID = new PID (0.1, 0.0, 0.003);
+    public static PID turnPID = new PID (0.2, 0.0, 0);
+    public static double turnKStatic = 0.35, strafeScalar = 1.2;
+    public static double xThresh = 1.5, yThresh = 1.5, hThresh = Math.toRadians(2.5), waypointThresh = 3.0;
     private double xError = 0.0, yError = 0.0, hError = 0.0;
 
     public void update() {
@@ -284,8 +284,8 @@ public class Drivetrain {
     double fwd, strafe, h;
 
     private void PIDF() {
-        fwd = xPID.update(xError, -maxPower * forwardMaxPowScalar, maxPower * forwardMaxPowScalar);
-        strafe = yPID.update(yError, -maxPower, maxPower);
+        fwd = xPID.update(xError, -maxPower, maxPower);
+        strafe = yPID.update(yError, -maxPower, maxPower) * strafeScalar;
         h = turnPID.update(hError, -maxPower, maxPower);
         if (hError > hThresh) h += turnKStatic;
         if (hError < -hThresh) h -= turnKStatic;
@@ -319,7 +319,7 @@ public class Drivetrain {
     }
 
     private double lastMoveVectorX = 0;
-    public static double noWheelieAccelForward = 5, noWheelieDecelForward = 3, noWheelieAccelReverse = 4, noWheelieDecelReverse = 4, wheelieThresh = 0.4;
+    public static double noWheelieAccelForward = 5, noWheelieDecelForward = 3, noWheelieAccelReverse = 4, noWheelieDecelReverse = 4, wheelieThresh = 1;
     public void setMoveVector(Vector2 moveVector, double turn) {
         double moveVectorXLimited = moveVector.x;
         if (Math.abs(moveVector.x) > wheelieThresh || Math.abs(lastMoveVectorX) > wheelieThresh) {
