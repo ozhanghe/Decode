@@ -19,8 +19,8 @@ public class Turret {
 
     public static PID turretPID = new PID (0.15, 0.0, 0.02);
     public static double turretKStatic = 0.07;
-    public static double turretDeadzone = 5;
-    public static double inPositionThresh = Math.toRadians(2.5);
+    public static double turretDeadzone = Math.toRadians(3);
+    public static double inPositionThresh = Math.toRadians(3);
     public static double turretVelFactor = 0.25;
     private double lastTurretTarget = 0.0;
     private double targetTurretAngle = 0.0;
@@ -53,7 +53,7 @@ public class Turret {
         double turretAngle = robot.sensors.getTurretAngle();
         double turretError = targetTurretAngle - Sensors.turretAngleClip(turretAngle);
         double turretPow = turretPID.update(turretError, -1, 1) + turretKStatic * Math.signum(turretError);
-        if (Math.abs(turretError) < Math.toRadians(turretDeadzone*50/Math.hypot(Globals.ROBOT_POSITION.x - robot.shooter.ballTarget.x, Globals.ROBOT_POSITION.y - robot.shooter.ballTarget.y))) turretPow = 0;
+        if (Math.abs(turretError) < turretDeadzone) turretPow = 0;
         turretPow += targetTurretAngleVel / (turret.servoType.speed) * turretVelFactor; // meant to account for robot rotating
         if (Math.abs(turretError) > Math.toRadians(75)) turretPow = Math.signum(turretError);
         if (turretAngle >= Sensors.turretLimitLeft) turretPow = Math.min(turretPow, -turretKStatic);

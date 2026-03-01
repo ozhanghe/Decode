@@ -196,10 +196,11 @@ public class Shooter {
                 flywheel.setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
 
-                if (shootRequest /* && isRobotInZone(0,0,-72,72,-72,-72)||isRobotInZone(-48,0,-72,24,-72,-24) */) {
+                if (shootRequest /* && isRobotInZone(0,0,-72,72,-72,-72) || isRobotInZone(48,0,72,24,72,-24) */) {
                     setShooterBlocker(false);
                     if (flywheelBlocker.inPosition()) {
                         state = State.SHOOT;
+                        robot.intake.reqShoot(true);
                     }
                 }
 
@@ -208,7 +209,7 @@ public class Shooter {
                     shootRequest = false;
                     state = State.IDLE;
                     flywheel.setTargetVelocity(0.0);
-                    robot.intake.reqShoot(true);
+                    robot.intake.reqShoot(false);
                     robot.intake.reqOff(true);
                 }
                 break;
@@ -217,18 +218,10 @@ public class Shooter {
                 shootRequest = false;
                 predictGoal();
                 setShooterBlocker(false);
-                if(flywheelBlocker.inPosition()){
-                    robot.intake.reqShoot(true);
-                }
                 //aimLauncherV8();
                 flywheel.setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
 
-                /*
-                if (isRobotInZone(0,0,-72,72,-72,-72)||isRobotInZone(-48,0,-72,24,-72,-24)){
-                    state = State.AIMING;
-                }
-                */
                 if (stopRequest) {
                     stopRequest = false;
                     shootRequest = false;
@@ -237,6 +230,13 @@ public class Shooter {
                     robot.intake.reqShoot(false);
                     robot.intake.reqOff(true);
                 }
+                /*else if (!isRobotInZone(0,0,-72,72,-72,-72) && !isRobotInZone(48,0,72,24,72,-24)) {
+                    state = State.AIMING;
+                    robot.intake.reqShoot(false);
+                    robot.intake.reqIntake(true);
+                    robot.intake.setRollerDirection(false);
+                }*/
+
                 break;
             }
             case TEST: { // LEAVE THIS EMPTY AT ALL TIMES
@@ -474,7 +474,7 @@ public class Shooter {
 
     // further separation :)
     // bootleg LM1 strat being used in LM2 & LM3 code
-    public static double closeAngle = 0.5, closeVel = 450, midAngle = 1, midVel = 520, farAngle = 1.5, farVel = 600;
+    public static double closeAngle = 0.5, closeVel = 450, midAngle = 1.3, midVel = 520, farAngle = 1.5, farVel = 600;
 
     public enum Dist {
         CLOSE(closeAngle, closeVel),
@@ -562,17 +562,16 @@ public class Shooter {
         double time = initialDist / (values.flywheelVel / 2 * Math.sin(values.hoodAngle));
 
         // Offset the virtual goal by the robot's velocity during flight
-        if (Math.hypot(ROBOT_VELOCITY.x,ROBOT_VELOCITY.y) > 10) {
+        if (Math.hypot(ROBOT_VELOCITY.x, ROBOT_VELOCITY.y) > 10) {
             virtualX = ballTarget.x + (ROBOT_VELOCITY.x * time);
             virtualY = ballTarget.y + (ROBOT_VELOCITY.y * time);
-        }
-        //Calculate distance to virtual goal
-        double virtualDist = Math.hypot(virtualX - ROBOT_POSITION.x, virtualY - ROBOT_POSITION.y);
-        // Get new shooter values from the regression based off of virtual distance
-        values = shooterTable.getSetpoint(virtualDist);
 
-        // Outputting final result
-        if (Math.hypot(ROBOT_VELOCITY.x,ROBOT_VELOCITY.y) > 10) {
+            //Calculate distance to virtual goal
+            double virtualDist = Math.hypot(virtualX - ROBOT_POSITION.x, virtualY - ROBOT_POSITION.y);
+            // Get new shooter values from the regression based off of virtual distance
+            values = shooterTable.getSetpoint(virtualDist);
+
+            // Outputting final result
             Vector2 goalUnitVector = new Vector2((virtualX - ROBOT_POSITION.x) / virtualDist, (virtualY - ROBOT_POSITION.y) / virtualDist);
             double robotVelocityGoal = (ROBOT_VELOCITY.x * goalUnitVector.x) + (ROBOT_VELOCITY.y * goalUnitVector.y);
             double ballVelocity = flywheel.getFilteredVelocity() / 2 * Math.sin(values.hoodAngle) + robotVelocityGoal;
@@ -580,21 +579,18 @@ public class Shooter {
             TelemetryUtil.packet.put("Aim : ballVelocity", ballVelocity);
             double g = 386.088; // in/s
             minFlywheelVelocity = values.flywheelVel;
-            if(Math.pow(ballVelocity, 4) - g * (g * virtualDist * virtualDist + 2 * (ballTarget.z - launcherHeight) * ballVelocity * ballVelocity)>0){
-                targetHoodAngle = Math.atan((
-                        ballVelocity * ballVelocity + Math.sqrt(
-                                Math.pow(ballVelocity, 4) - g * (
-                                        g * virtualDist * virtualDist
-                                                + 2 * (ballTarget.z - launcherHeight) * ballVelocity * ballVelocity
-                                )
-                        )
-                ) / (g * virtualDist));
+            double d = Math.pow(ballVelocity, 4) - g * (g * virtualDist * virtualDist + 2 * (ballTarget.z - launcherHeight) * ballVelocity * ballVelocity);
+            if (d >= 0) {
+                targetHoodAngle = Math.atan((ballVelocity * ballVelocity + Math.sqrt(d)) / (g * virtualDist));
+                TelemetryUtil.packet.put("Aim : branch", "SOTM found hood angle");
             } else {
-                TelemetryUtil.packet.addLine("Shooter: no possible shot");
+                targetHoodAngle = values.hoodAngle;
+                TelemetryUtil.packet.put("Aim : branch", "SOTM failed");
             }
         } else {
             targetHoodAngle = values.hoodAngle;
             minFlywheelVelocity = values.flywheelVel;
+            TelemetryUtil.packet.put("Aim : branch", "static");
         }
         TelemetryUtil.packet.put("Shooter : target hood launch angle (deg)", Math.toDegrees(targetHoodAngle));
         targetHoodAngle = Utils.minMaxClip((targetHoodAngle - hoodSweep) * hoodGearRatio, 0, 1.6);

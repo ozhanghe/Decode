@@ -126,10 +126,7 @@ public class Drivetrain {
 
     // leftFront, leftRear, rightRear, rightFront
     double[] minPowersToOvercomeFriction = {
-            0.42102811799453876,
-            0.36238541857487483,
-            0.37320129970601906,
-            0.3865220061985701
+        0.3, 0.3, 0.3, 0.3
     };
 
     public void setMinPowersToOvercomeFriction(double scalar) {
@@ -139,7 +136,7 @@ public class Drivetrain {
         rightFront.setMinimumPowerToOvercomeStaticFriction(minPowersToOvercomeFriction[3] * scalar);
 
         for (PriorityMotor m : motors) {
-            m.setMinimumPowerToOvercomeKineticFriction(0.195);
+            m.setMinimumPowerToOvercomeKineticFriction(0.145);
         }
     }
 
@@ -175,12 +172,11 @@ public class Drivetrain {
     public static double centripetalScalar = 0.2;
 
     private Pose2d targetPoint = new Pose2d (0, 0, 0);
-    public static PID xPID = new PID (0.05, 0.0, 0.001);
-    public static PID yPID = new PID (0.2, 0.0, 0.005);
-    public static PID turnPID = new PID (0.8, 0.1, 0);
-
-
-    public static double xThresh = 1.0, yThresh = 1.0, hThresh = 2.0, waypointThresh = 3.0;
+    public static PID xPID = new PID (0.05, 0.0, 0.005);
+    public static PID yPID = new PID (0.4, 0.0, 0.003);
+    public static PID turnPID = new PID (0.4, 0.0, 0);
+    public static double turnKStatic = 0.4, forwardMaxPowScalar = 0.8;
+    public static double xThresh = 1.0, yThresh = 1.0, hThresh = Math.toRadians(2.5), waypointThresh = 3.0;
     private double xError = 0.0, yError = 0.0, hError = 0.0;
 
     public void update() {
@@ -240,9 +236,11 @@ public class Drivetrain {
             case PID_TO_POINT:
                 calculateErrors();
                 PIDF();
-
                 if (atPoint()) {
                     state = isWaypoint ? State.WAIT : State.BRAKE;
+                    xPID.resetIntegral();
+                    yPID.resetIntegral();
+                    turnPID.resetIntegral();
                 }
                 break;
             case BRAKE:
@@ -250,6 +248,7 @@ public class Drivetrain {
                 state = State.WAIT;
                 break;
             case WAIT:
+                calculateErrors();
                 if (!atPoint()) {
                     state = State.PID_TO_POINT;
                 }
@@ -272,7 +271,7 @@ public class Drivetrain {
         path.setReversed(reversed);
     }
 
-    private void calculateErrors(){
+    private void calculateErrors() {
         double deltaX = (targetPoint.x - ROBOT_POSITION.x);
         double deltaY = (targetPoint.y - ROBOT_POSITION.y);
 
@@ -284,10 +283,12 @@ public class Drivetrain {
     
     double fwd, strafe, h;
 
-    private void PIDF(){
-        fwd = xPID.update(xError, -maxPower, maxPower);
+    private void PIDF() {
+        fwd = xPID.update(xError, -maxPower * forwardMaxPowScalar, maxPower * forwardMaxPowScalar);
         strafe = yPID.update(yError, -maxPower, maxPower);
         h = turnPID.update(hError, -maxPower, maxPower);
+        if (hError > hThresh) h += turnKStatic;
+        if (hError < -hThresh) h -= turnKStatic;
 
         setMinPowersToOvercomeFriction(1.0);
 
@@ -297,7 +298,7 @@ public class Drivetrain {
 
     private boolean atPoint() {
         if (isWaypoint) return Math.abs(xError) < waypointThresh && Math.abs(yError) < waypointThresh;
-        return Math.abs(xError) < xThresh && Math.abs(yError) < yThresh && Math.abs(hError) < Math.toRadians(hThresh);
+        return Math.abs(xError) < xThresh && Math.abs(yError) < yThresh && Math.abs(hError) < hThresh;
     }
 
     private double maxPower = 1.0;
@@ -312,17 +313,21 @@ public class Drivetrain {
         if (lastTargetPoint.x != targetPoint.x || lastTargetPoint.y != targetPoint.y || lastTargetPoint.heading != targetPoint.heading) {
             xPID.resetIntegral();
             yPID.resetIntegral();
-            //hPID.resetIntegral();
+            turnPID.resetIntegral();
             state = State.PID_TO_POINT;
         }
     }
 
     private double lastMoveVectorX = 0;
-    public static double noWheelieAccelForward = 4.5, noWheelieDecelForward = 2.5, noWheelieAccelReverse = 3.5, noWheelieDecelReverse = 3.5;
+    public static double noWheelieAccelForward = 5, noWheelieDecelForward = 3, noWheelieAccelReverse = 4, noWheelieDecelReverse = 4, wheelieThresh = 0.4;
     public void setMoveVector(Vector2 moveVector, double turn) {
-        double moveVectorXLimited;
-        if ((moveVector.x - lastMoveVectorX) * Math.signum(lastMoveVectorX) > 0) moveVectorXLimited = Utils.minMaxClip(moveVector.x, lastMoveVectorX - noWheelieAccelReverse * sensors.loopTime, lastMoveVectorX + noWheelieAccelForward * sensors.loopTime);
-        else moveVectorXLimited = Utils.minMaxClip(moveVector.x, lastMoveVectorX - noWheelieDecelForward * sensors.loopTime, lastMoveVectorX + noWheelieDecelReverse * sensors.loopTime);
+        double moveVectorXLimited = moveVector.x;
+        if (Math.abs(moveVector.x) > wheelieThresh || Math.abs(lastMoveVectorX) > wheelieThresh) {
+            if ((moveVector.x - lastMoveVectorX) * Math.signum(lastMoveVectorX) > 0)
+                moveVectorXLimited = Utils.minMaxClip(moveVector.x, lastMoveVectorX - noWheelieAccelReverse * sensors.loopTime, lastMoveVectorX + noWheelieAccelForward * sensors.loopTime);
+            else
+                moveVectorXLimited = Utils.minMaxClip(moveVector.x, lastMoveVectorX - noWheelieDecelForward * sensors.loopTime, lastMoveVectorX + noWheelieDecelReverse * sensors.loopTime);
+        }
         lastMoveVectorX = moveVectorXLimited;
         double[] powers = {
                 moveVectorXLimited - turn - moveVector.y,

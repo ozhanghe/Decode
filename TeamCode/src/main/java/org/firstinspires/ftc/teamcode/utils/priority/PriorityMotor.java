@@ -52,7 +52,7 @@ public class PriorityMotor extends PriorityDevice {
             lastZeroTime = System.currentTimeMillis();
         }
         power = Utils.minMaxClip(power, -1.0, 1.0);
-        double m = (System.currentTimeMillis() > SWITCH_FROM_STATIC_TO_KINETIC_FRICTION + lastZeroTime ? minPowerToOvercomeKineticFriction : minPowerToOvercomeStaticFriction) * (12/sensors.getVoltage());
+        double m = (System.currentTimeMillis() > SWITCH_FROM_STATIC_TO_KINETIC_FRICTION + lastZeroTime ? minPowerToOvercomeKineticFriction : minPowerToOvercomeStaticFriction) * (13.5/sensors.getVoltage());
         power *= 1-m;
         this.power = power + m * Math.signum(power);
     }

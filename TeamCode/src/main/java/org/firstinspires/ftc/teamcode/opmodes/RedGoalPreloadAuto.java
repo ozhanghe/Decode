@@ -49,7 +49,7 @@ public class RedGoalPreloadAuto extends LinearOpMode {
 
         long t = System.currentTimeMillis();
         //robot.shooter.reqAim(true);
-        shoot(Math.PI / 4, 0);
+        shoot(Math.PI / 2, 0);
         intake(11, 60);
         open_gate(500);
         shoot(Math.PI / 2, 1);
@@ -57,10 +57,10 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         open_gate(1500);
         shoot(Math.PI / 2, 1);
         //robot.shooter.setShooter(Shooter.Dist.CLOSE);
-        robot.drivetrain.goToPoint(new Pose2d(18, 22, Math.PI), 1.0, true);
+        robot.drivetrain.goToPoint(new Pose2d(18, 22, Math.PI / 2), 1.0, true);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         intake(33, 60);
-        shoot(Math.PI, 1);
+        shoot(Math.PI / 2, 1);
 
         // end near gate
         robot.shooter.setShooter(Shooter.Dist.OFF);
@@ -80,11 +80,14 @@ public class RedGoalPreloadAuto extends LinearOpMode {
 
     private void shoot(double heading, int shotType) {
         if (shotType > 0) {
-            robot.drivetrain.goToPoint(new Pose2d(shotType == 2 ? -32 : -13, 20, heading), 0.8, true);
+            robot.drivetrain.goToPoint(new Pose2d(shotType == 2 ? -32 : -13, 20, heading), 1, true);
+            robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+        } else {
+            robot.drivetrain.goToPoint(new Pose2d(-18, 18, 0), 1, true);
             robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         }
 
-        robot.drivetrain.goToPoint(new Pose2d(shotType == 2 ? -40 : -18, 18, heading), 0.4);
+        robot.drivetrain.goToPoint(new Pose2d(shotType == 2 ? -40 : -18, 18, heading), 1);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel() || !robot.shooter.turret.inPosition());
         //robot.waitWhile(() ->  robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY);
         robot.waitFor(shotType == 0 ? 600 : 400);
@@ -102,12 +105,12 @@ public class RedGoalPreloadAuto extends LinearOpMode {
 
     private void intake(double x, double y) {
         // align
-        robot.drivetrain.goToPoint(new Pose2d(x, 22, Math.PI / 2), 0.5);
+        robot.drivetrain.goToPoint(new Pose2d(x, 22, Math.PI / 2), 1);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.intake.reqIntake(true);
 
         // intake
-        robot.drivetrain.goToPoint(new Pose2d(x, y, Math.PI / 2), 0.25);
+        robot.drivetrain.goToPoint(new Pose2d(x, y, Math.PI / 2), 0.5);
         robot.waitFor(intakeDuration);
 
         // back off
@@ -122,7 +125,7 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
         // hit gate
-        robot.drivetrain.goToPoint(new Pose2d(0, 53, Math.PI / 2), 0.5);
+        robot.drivetrain.goToPoint(new Pose2d(0, 54, Math.PI / 2), 1);
         robot.waitFor(duration);
 
         // back off
