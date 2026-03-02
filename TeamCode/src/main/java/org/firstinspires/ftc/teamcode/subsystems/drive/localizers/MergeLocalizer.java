@@ -160,33 +160,20 @@ public class MergeLocalizer extends Localizer {
 
                 //if(consecutiveFrames >= frameRequirement) {
                 //  consecutiveFrames = 0;
-
                 //we want to find the last pinpoint/odo pose at the time that the camera was taken
                 if (nanoTimes.size() > 5) {
-                    long t = drivetrain.vision.frameAcquisitionNanoTime;
-                    int index = 0;
-                    for (int i = 0; i < nanoTimes.size(); i++) {
-                        if (nanoTimes.get(i) < t) {
-                            index = i;
-                        } else break;
-                    }
-                    if (index == poseHistory.size() - 1) {
-                        index = index-1;
-                    }
+                    findPastInterpolatedPose(drivetrain.vision.frameAcquisitionNanoTime);
                     //then find the offset between that and the camera pose
-                    Pose2d pastPose = new Pose2d(Lerp.lerp(poseHistory.get(index).getX(), poseHistory.get(index + 1).getX(), 0.5),
-                            Lerp.lerp(poseHistory.get(index).getY(), poseHistory.get(index + 1).getY(), 0.5),
-                            Lerp.lerpAngle(poseHistory.get(index).getHeading(), poseHistory.get(index + 1).getHeading(), 0.5));
 
                     //cameraOffsets = new Pose2d(pastPose.x - estimatedCameraPose.x, pastPose.y - estimatedCameraPose.y, pastPose.heading - estimatedCameraPose.heading);
-                    Pose2d newPose = offsetPoseUsingGlobalDelta(currentPose, pastPose, estimatedCameraPose);
-                    TelemetryUtil.packet.put("Vision : pastPose", pastPose);
+                    Pose2d newPose = offsetPoseUsingGlobalDelta(currentPose, interpolatedPastPose, estimatedCameraPose);
+                    TelemetryUtil.packet.put("Vision : pastPose", interpolatedPastPose);
                     TelemetryUtil.packet.put("Vision : newPose", newPose);
                     Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
-                    DashboardUtil.drawRobot(fieldOverlay, pastPose, "#ffff00", 3);
+                    DashboardUtil.drawRobot(fieldOverlay, interpolatedPastPose, "#ffff00", 3);
                     DashboardUtil.drawRobot(fieldOverlay, newPose, "#ff8000", 3);
                     currentPose = newPose;
-                    lastPinpointMergePose = offsetPoseUsingGlobalDelta(lastPinpointMergePose, pastPose, estimatedCameraPose);
+                    lastPinpointMergePose = offsetPoseUsingGlobalDelta(lastPinpointMergePose, interpolatedPastPose, estimatedCameraPose);
 
                     numberOfTimesRelocalizedWithCamera++;
                 }
