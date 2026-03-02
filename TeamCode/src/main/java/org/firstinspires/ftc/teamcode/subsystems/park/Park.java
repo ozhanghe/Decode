@@ -10,11 +10,7 @@ import org.firstinspires.ftc.teamcode.utils.priority.PriorityCRServo;
 @Config
 public class Park {
     private final Robot robot;
-
     private final PriorityCRServo park;
-
-    public static double forcePullInPower = -0.2;
-    public static double stayUpPower = 0.2;
 
     private double power = 0;
 
@@ -22,10 +18,10 @@ public class Park {
         this.robot = robot;
 
         park = new PriorityCRServo(
-            new CRServo[]{robot.hardwareMap.get(CRServo.class, "park1"), robot.hardwareMap.get(CRServo.class,"park2")},
+            new CRServo[]{robot.hardwareMap.get(CRServo.class, "park")},
             "park", PriorityCRServo.ServoType.AXON_MAX,
             new boolean[]{false, true},
-            2, 5
+            2, 2
         );
 
         robot.hardwareQueue.addDevice(park);
@@ -33,10 +29,6 @@ public class Park {
 
     public void update() {
         park.setTargetPower(power);
-        this.updateTelemetry();
-    }
-
-    private void updateTelemetry() {
         TelemetryUtil.packet.put("Park : power", this.power);
     }
 

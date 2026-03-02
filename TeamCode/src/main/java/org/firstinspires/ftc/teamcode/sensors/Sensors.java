@@ -42,7 +42,7 @@ public class Sensors {
     private double turretAngleEncoderOffset, turretAngleEncoderPosition;
     public static double turretAnalogEncoderOffset = Math.toRadians(175);
     public static double turretAngleFilter = 0.6;
-    public static double turretLimitLeft = Math.toRadians(300), turretLimitRight = Math.toRadians(-30), turretWrapMid = Math.toRadians(135);
+    public static double turretLimitLeft = Math.toRadians(314), turretLimitRight = Math.toRadians(-44), turretWrapMid = Math.toRadians(135);
     public static boolean resetTurretAngleEncoder = true;
 
     private double lightSensorFilteredVoltage = 0;

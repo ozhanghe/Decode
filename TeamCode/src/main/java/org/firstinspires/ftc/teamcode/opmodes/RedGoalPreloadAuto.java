@@ -58,11 +58,12 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         intake(-13, 55);
         open_gate(1500);
         shoot(Math.PI / 2, 1);
+        open_gate(500);
         //robot.shooter.setShooter(Shooter.Dist.CLOSE);
         //robot.drivetrain.goToPoint(new Pose2d(18, 22, Math.PI / 2), 1, true);
         //robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
-        intake(33, 60);
-        shoot(Math.PI / 2, 1);
+        //intake(33, 60);
+        //shoot(Math.PI / 2, 1);
 
         // end near gate
         robot.shooter.setShooter(Shooter.Dist.OFF);
@@ -127,7 +128,7 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
         // hit gate
-        robot.drivetrain.goToPoint(new Pose2d(0, 54, Math.PI / 2), 1);
+        robot.drivetrain.goToPoint(new Pose2d(0, 55, Math.PI / 2), 1);
         robot.waitFor(duration);
 
         // back off

@@ -12,6 +12,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
+import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.Lerp;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
@@ -52,8 +53,13 @@ public class MergeLocalizer extends Localizer {
     // Camera
     private Pose2d estimatedCameraPose = new Pose2d(0,0,0);
     private Pose2d lastCameraPose = new Pose2d(0,0,0);
-    public static boolean useCamera = false;
+    private Pose2d lastLastCameraPose = new Pose2d(0,0,0);
+    public static boolean useCamera = true;
     public int numberOfTimesRelocalizedWithCamera = 0;
+    //how many frames the camera has to see consecutively before it updates the pose
+    public static int frameRequirement = 3;
+    private int consecutiveFrames = 0;
+    private int notVisibleCooldown = 0;
 
     public static double a = 0.4;
     public static double b = 0.4;
@@ -86,7 +92,7 @@ public class MergeLocalizer extends Localizer {
 
         // PINPOINT
 
-        if ((usePinpoint && lastPinpointPose != null && currentPose.getDistanceFromPoint(lastPinpointPose) >= pinpointPollDist) || constantCorrection) {
+        if ((usePinpoint && lastPinpointPose != null && currentPose.getDistanceFromPoint(lastPinpointMergePose) >= pinpointPollDist) || constantCorrection) {
             Log.i("Localization Test", "pinpoint in use");
             pinpoint.update();
 
@@ -123,56 +129,70 @@ public class MergeLocalizer extends Localizer {
          */
 
         // Camera
-        if (useCamera && drivetrain.vision != null) {
+        /*if (useCamera && drivetrain.vision != null) {
             drivetrain.vision.visionPortal.setProcessorEnabled(drivetrain.vision.aprilTagProcessor, currentPose.heading % (Math.PI * 2) > Math.PI / 2 && currentPose.heading % (Math.PI * 2) < Math.PI * 3 / 2);
+            Log.i("Vision", "Heading is good stuff " + (currentPose.heading % (Math.PI * 2) > Math.PI / 2 && currentPose.heading % (Math.PI * 2) < Math.PI * 3 / 2));
         }
 
         TelemetryUtil.packet.put("Vision is not null", drivetrain.vision != null);
+
         if (drivetrain.vision != null) {
             TelemetryUtil.packet.put("Vision Camera State", drivetrain.vision.visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING);
             TelemetryUtil.packet.put("Vision Processor Enabled", drivetrain.vision.visionPortal.getProcessorEnabled(drivetrain.vision.aprilTagProcessor));
-        }
+        }*/
 
-        if (useCamera && drivetrain.vision != null && drivetrain.vision.visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING) {
-            estimatedCameraPose = drivetrain.vision.update();
-            Log.i("Vision", "After updating");
-            if (estimatedCameraPose != null && lastCameraPose != null) {
-                Log.i("Vision", "Inside first if statement");
-                //10 ms delay maximum
-                //if(System.nanoTime() - drivetrain.vision.frameAcquisitionNanoTime < 1e7) {
-                    numberOfTimesRelocalizedWithCamera++;
-
-                    //low pass filter
-
-                    estimatedCameraPose.x = Lerp.lerp(estimatedCameraPose.x, lastCameraPose.x, a);
-                    estimatedCameraPose.y = Lerp.lerp(estimatedCameraPose.y, lastCameraPose.y, b);
-                    estimatedCameraPose.heading = Lerp.lerpAngle(estimatedCameraPose.heading, lastCameraPose.heading, c);
-
-                    //merging camera with odometry/pinpoint
-
-                    currentPose.x = Lerp.lerp(currentPose.x, estimatedCameraPose.x, 0.5);
-                    currentPose.y = Lerp.lerp(currentPose.y, estimatedCameraPose.y, 0.5);
-                    currentPose.heading = Lerp.lerpAngle(currentPose.heading, estimatedCameraPose.heading, 0.5);
-
-                    lastCameraPose = estimatedCameraPose.clone();
-
-                    pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, currentPose.x, currentPose.y, AngleUnit.RADIANS, currentPose.heading));
-                //}
-            } else if (estimatedCameraPose != null) {
-                //if(System.nanoTime() - drivetrain.vision.frameAcquisitionNanoTime < 1e7) {
-                    numberOfTimesRelocalizedWithCamera++;
-
-                    currentPose.x = Lerp.lerp(currentPose.x, estimatedCameraPose.x, 0.5);
-                    currentPose.y = Lerp.lerp(currentPose.y, estimatedCameraPose.y, 0.5);
-                    currentPose.heading = Lerp.lerpAngle(currentPose.heading, estimatedCameraPose.heading, 0.5);
-
-                    lastCameraPose = estimatedCameraPose.clone();
-                    pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, currentPose.x, currentPose.y, AngleUnit.RADIANS, currentPose.heading));
-
-                //}
+        if (useCamera && Math.hypot(Globals.ROBOT_VELOCITY.x, Globals.ROBOT_VELOCITY.y) < 20 && drivetrain.vision != null && drivetrain.vision.visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING && drivetrain.vision.visionPortal.getProcessorEnabled(drivetrain.vision.aprilTagProcessor)) {
+            Pose2d cameraResult = drivetrain.vision.update();
+            if (cameraResult != null) {
+                estimatedCameraPose = cameraResult;
+                consecutiveFrames++;
+                notVisibleCooldown = 15;
+            } else {
+                --notVisibleCooldown;
+                if (notVisibleCooldown < 0) {
+                    estimatedCameraPose = null;
+                    consecutiveFrames = 0;
+                }
             }
 
+            if (estimatedCameraPose != null) {
+                Log.i("Vision", "After updating pose " + estimatedCameraPose);
+
+                //if(consecutiveFrames >= frameRequirement) {
+                //  consecutiveFrames = 0;
+
+                //we want to find the last pinpoint/odo pose at the time that the camera was taken
+                if (nanoTimes.size() > 5) {
+                    long t = drivetrain.vision.frameAcquisitionNanoTime;
+                    int index = 0;
+                    for (int i = 0; i < nanoTimes.size(); i++) {
+                        if (nanoTimes.get(i) < t) {
+                            index = i;
+                        } else break;
+                    }
+                    if (index == poseHistory.size() - 1) {
+                        index = index-1;
+                    }
+                    //then find the offset between that and the camera pose
+                    Pose2d pastPose = new Pose2d(Lerp.lerp(poseHistory.get(index).getX(), poseHistory.get(index + 1).getX(), 0.5),
+                            Lerp.lerp(poseHistory.get(index).getY(), poseHistory.get(index + 1).getY(), 0.5),
+                            Lerp.lerpAngle(poseHistory.get(index).getHeading(), poseHistory.get(index + 1).getHeading(), 0.5));
+
+                    //cameraOffsets = new Pose2d(pastPose.x - estimatedCameraPose.x, pastPose.y - estimatedCameraPose.y, pastPose.heading - estimatedCameraPose.heading);
+                    Pose2d newPose = offsetPoseUsingGlobalDelta(currentPose, pastPose, estimatedCameraPose);
+                    TelemetryUtil.packet.put("Vision : pastPose", pastPose);
+                    TelemetryUtil.packet.put("Vision : newPose", newPose);
+                    Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
+                    DashboardUtil.drawRobot(fieldOverlay, pastPose, "#ffff00", 3);
+                    DashboardUtil.drawRobot(fieldOverlay, newPose, "#ff8000", 3);
+                    currentPose = newPose;
+                    lastPinpointMergePose = offsetPoseUsingGlobalDelta(lastPinpointMergePose, pastPose, estimatedCameraPose);
+
+                    numberOfTimesRelocalizedWithCamera++;
+                }
+            }
         }
+        //}
 
         x = currentPose.x;
         y = currentPose.y;

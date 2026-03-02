@@ -101,7 +101,7 @@ public class Shooter {
         shooterTable.addSetpoint(61.3, new ShotSetpoint(480,Math.toRadians(42)));
         shooterTable.addSetpoint(81.5, new ShotSetpoint(520,Math.toRadians(48)));
         shooterTable.addSetpoint(95.6, new ShotSetpoint(520,Math.toRadians(50)));
-        shooterTable.addSetpoint(129, new ShotSetpoint(610,Math.toRadians(47)));
+        shooterTable.addSetpoint(129, new ShotSetpoint(620,Math.toRadians(47)));
         /*
         shooterTable.addSetpoint(40.3, new ShotSetpoint(430,0));
         shooterTable.addSetpoint(43.6, new ShotSetpoint(440,0.05));
@@ -196,7 +196,7 @@ public class Shooter {
                 flywheel.setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
 
-                if (shootRequest /* && isRobotInZone(0,0,-72,72,-72,-72) || isRobotInZone(48,0,72,24,72,-24) */) {
+                if (shootRequest && isRobotInZone(0,0,-72,72,-72,-72) || isRobotInZone(48,0,72,24,72,-24)) {
                     setShooterBlocker(false);
                     if (flywheelBlocker.inPosition()) {
                         state = State.SHOOT;
@@ -229,13 +229,12 @@ public class Shooter {
                     flywheel.setTargetVelocity(0.0);
                     robot.intake.reqShoot(false);
                     robot.intake.reqOff(true);
-                }
-                /*else if (!isRobotInZone(0,0,-72,72,-72,-72) && !isRobotInZone(48,0,72,24,72,-24)) {
+                } else if (!isRobotInZone(0,0,-72,72,-72,-72) && !isRobotInZone(48,0,72,24,72,-24)) {
                     state = State.AIMING;
                     robot.intake.reqShoot(false);
                     robot.intake.reqIntake(true);
                     robot.intake.setRollerDirection(false);
-                }*/
+                }
 
                 break;
             }
@@ -274,6 +273,7 @@ public class Shooter {
         TelemetryUtil.packet.put("Shooter : Hood Target (deg)", Math.toDegrees(hood.getTargetAngle()));
         TelemetryUtil.packet.put("Shooter : Balltarget", ballTarget.toString());
         TelemetryUtil.packet.put("Shooter : goal distance", Math.hypot(ROBOT_POSITION.x - robot.shooter.ballTarget.x, ROBOT_POSITION.y - robot.shooter.ballTarget.y));
+        TelemetryUtil.packet.put("Shooter : robot in Zone", isRobotInZone(0,0,-72,72,-72,-72) || isRobotInZone(48,0,72,24,72,-24));
         LogUtil.shooterState.set(this.state.toString());
         LogUtil.hoodAngle.set(hood.getTargetAngle());
         Canvas canvas = TelemetryUtil.packet.fieldOverlay();
@@ -548,7 +548,11 @@ public class Shooter {
         if (ROBOT_POSITION.x + 48 <= ROBOT_POSITION.y * (Globals.isRed ? -1 : 1)) ballTarget = new Vector3(ballTarget.y * (Globals.isRed ? -1 : 1), ballTarget.x * (Globals.isRed ? -1 : 1), ballTarget.z);
         // Original target
         */
-        ballTarget = new Vector3(-68,68,42);
+        if (ROBOT_POSITION.x > 24) {
+            ballTarget = new Vector3(-70,71 * (Globals.isRed ? 1 : -1),42);
+        } else {
+            ballTarget = new Vector3(-68,69 * (Globals.isRed ? 1 : -1),42);
+        }
         // Initial values based on the target
         double initialDist = Math.hypot(ballTarget.x - ROBOT_POSITION.x, ballTarget.y - ROBOT_POSITION.y);
         ShotSetpoint values = shooterTable.getSetpoint(initialDist);

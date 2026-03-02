@@ -72,9 +72,10 @@ public class DashboardUtil {
         */
     }
 
-    public static void drawRobot(Canvas canvas, Pose2d pose, String color) {
+    public static void drawRobot(Canvas canvas, Pose2d pose, String color) { drawRobot(canvas, pose, color, 2); }
+    public static void drawRobot(Canvas canvas, Pose2d pose, String color, int lineWidth) {
         canvas.setStroke(color);
-        canvas.setStrokeWidth(2);
+        canvas.setStrokeWidth(lineWidth);
         canvas.strokeCircle(pose.getX(), pose.getY(), ROBOT_RADIUS);
         canvas.strokeCircle(pose.getX(), pose.getY(), 0.5);
         Pose2d v = new Pose2d(Math.cos(pose.heading)*ROBOT_RADIUS, Math.sin(pose.heading)*ROBOT_RADIUS);

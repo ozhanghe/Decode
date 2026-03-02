@@ -20,7 +20,7 @@ public class Turret {
     public static PID turretPID = new PID (0.15, 0.0, 0.02);
     public static double turretKStatic = 0.08;
     public static double turretDeadzone = Math.toRadians(2.5);
-    public static double inPositionThresh = Math.toRadians(4);
+    public static double inPositionThresh = Math.toRadians(2.5);
     public static double turretVelFactor = 0.25;
     private double lastTurretTarget = 0.0;
     private double targetTurretAngle = 0.0;
@@ -71,5 +71,5 @@ public class Turret {
     public void setTargetAngle(double targetAngle) { targetTurretAngle = Sensors.turretAngleClip(targetAngle); }
     public double getTargetAngle() { return targetTurretAngle; }
 
-    public boolean inPosition() { return Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= inPositionThresh; }
+    public boolean inPosition() { return Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= inPositionThresh * 100 / Math.hypot(Globals.ROBOT_POSITION.x - robot.shooter.ballTarget.x, Globals.ROBOT_POSITION.y - robot.shooter.ballTarget.y); }
 }

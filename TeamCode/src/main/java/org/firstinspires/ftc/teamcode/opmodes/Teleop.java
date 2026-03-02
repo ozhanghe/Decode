@@ -48,6 +48,7 @@ public class Teleop extends LinearOpMode {
         ButtonToggle b1 = new ButtonToggle();
         ButtonToggle y1 = new ButtonToggle();
         ButtonToggle x1 = new ButtonToggle();
+        ButtonToggle lt1 = new ButtonToggle();
         ButtonToggle rt1 = new ButtonToggle();
 
         ButtonToggle a2 = new ButtonToggle();
@@ -149,7 +150,7 @@ public class Teleop extends LinearOpMode {
             if (robot.shooter.state == Shooter.State.TEST) {
                 rb1.isClicked(gamepad1.right_bumper);
 
-                if (rt1.isClicked(gamepad1.right_trigger > triggerThresh) || b1.isHeld(gamepad1.b, 500)
+                if (lt1.isClicked(gamepad1.left_trigger > triggerThresh) || rt1.isClicked(gamepad1.right_trigger > triggerThresh) || b1.isHeld(gamepad1.b, 500)
                         || y1.isHeld(gamepad1.y, 500)
                         || x1.isHeld(gamepad1.x, 500)) { // Off
                     flywheelOn = false;
@@ -215,10 +216,16 @@ public class Teleop extends LinearOpMode {
                     confirmation = true;
                 }
 
-                if (rt1.isClicked(gamepad1.right_trigger > triggerThresh) || b1.isClicked(gamepad1.b)) {
+                if (lt1.isClicked(gamepad1.left_trigger > triggerThresh) || b1.isClicked(gamepad1.b)) {
                     robot.shooter.reqStop(true);
                 }
+                if (rt1.isClicked(gamepad1.right_trigger > triggerThresh)) {
+                    robot.shooter.reqStop(true);
+                    robot.shooter.reqAim(true);
+                }
             }
+
+            // LOCALIZER
 
             if (x2.isHeld(gamepad2.x,1500)) { // localize to origin
                 robot.drivetrain.setPoseEstimate(new Pose2d(0,0,0));
@@ -250,8 +257,14 @@ public class Teleop extends LinearOpMode {
                 gamepad2.rumble(800);
             }
 
+            // MISC
+
             if (lb2.isClicked(gamepad2.left_bumper)) LogUtil.event.add("ballMiss");
             else if (rb2.isClicked(gamepad2.right_bumper)) LogUtil.event.add("ballHit");
+
+            if (gamepad1.dpad_up) robot.park.setPower(1);
+            else if (gamepad1.dpad_down) robot.park.setPower(-1);
+            else robot.park.setPower(0);
 
             robot.drivetrain.drive(gamepad1);
 

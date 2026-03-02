@@ -40,17 +40,17 @@ public class Vision {
 
     public void init(HardwareMap HardwareMap) {
         aprilTagProcessor = new AprilTagProcessor.Builder()
-                .setDrawTagID(false)
+                .setDrawTagID(true)
 //                .setDrawAxes(true)
 //                .setDrawTagOutline(true)
 //                .setDrawCubeProjection(true)
                 .setNumThreads(3)
                 .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
-                .setTagLibrary(AprilTagGameDatabase.getCurrentGameTagLibrary())
+                .setTagLibrary(AprilTagGameDatabase.getDecodeTagLibrary())
                 .setOutputUnits(DistanceUnit.INCH, AngleUnit.RADIANS)
                 .setLensIntrinsics(549.651, 549.651, 317.108, 236.644) // 640x480: 549.651, 549.651, 317.108, 236.644; 320x240: 281.5573273, 281.366942, 156.3332591, 119.8965271
                 .setCameraPose(
-                        new Position(DistanceUnit.MM, 0, 0, 0, 0),
+                        new Position(DistanceUnit.MM, -135.675, 130.402, 228, 0),
                         new YawPitchRollAngles(AngleUnit.DEGREES, 0, -90, 0, 0))
                 .build();
 
@@ -61,6 +61,8 @@ public class Vision {
                 .addProcessor(aprilTagProcessor);
 
         visionPortal = builder.build();
+
+        TelemetryUtil.dashboard.startCameraStream(visionPortal, 30);
 
         try {
             ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
@@ -77,21 +79,23 @@ public class Vision {
     }
 
     public Pose2d update() {
-
-        visionPortal.setProcessorEnabled(aprilTagProcessor, true);
+        //visionPortal.setProcessorEnabled(aprilTagProcessor, true);
         Log.i("Vision", "Updating");
         detections = aprilTagProcessor.getFreshDetections();
 
         if (detections != null && !detections.isEmpty()) {
             Log.i("Vision", String.valueOf(detections.size()));
 
-            if(detections.size() > 1 && Globals.fullField) {
+            detections = (ArrayList<AprilTagDetection>) detections.clone();
+            detections.removeIf(detection -> detection.id != 24 && detection.id != 20);
+
+            if (detections.size() > 1 && Globals.fullField) {
                 AprilTagDetection detection1 = detections.get(0);
                 AprilTagDetection detection2 = detections.get(1);
 
                 frameAcquisitionNanoTime = detection1.frameAcquisitionNanoTime;
 
-                if(detection1 != null && detection2 != null) {
+                if (detection1 != null && detection2 != null) {
                     Pose3D robotPose1 = detection1.robotPose;
                     Pose3D robotPose2 = detection2.robotPose;
 
@@ -103,13 +107,12 @@ public class Vision {
                     Pose2d overallPose = new Pose2d(botPose1.x * d + botPose2.x * d, botPose1.y * d + botPose2.y * d, detection1.decisionMargin >= detection2.decisionMargin ? botPose1.heading : botPose2.heading);
                     return overallPose;
                 }
-            } else {
+            } else if (!detections.isEmpty()) {
                 AprilTagDetection detection = detections.get(0);
 
                 TelemetryUtil.packet.put("Decision Margin", String.valueOf(detection.decisionMargin));
 
                 if (detection != null) {
-
                     frameAcquisitionNanoTime = detection.frameAcquisitionNanoTime;
 
                     Pose3D robotPose = detection.robotPose;

@@ -45,13 +45,13 @@ public class RedTunnelCycleAuto extends LinearOpMode {
 
         shoot(Math.PI / 2, true);
         for (int i = 0; i < 3; ++i) {
-            intake(62, 60);
+            intake(63, 60);
             shoot(Math.PI / 2, false);
         }
 
         robot.shooter.setShooter(Shooter.Dist.OFF);
         robot.shooter.turret.setTargetAngle(0.0);
-        robot.drivetrain.goToPoint(new Pose2d(62, 60, Math.PI / 2), 1.0);
+        robot.drivetrain.goToPoint(new Pose2d(63, 60, Math.PI / 2), 1.0);
 
         Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
         robot.waitWhile(() -> {
@@ -61,7 +61,7 @@ public class RedTunnelCycleAuto extends LinearOpMode {
     }
 
     private void shoot(double heading, boolean firstShot) {
-        robot.drivetrain.goToPoint(new Pose2d(60, 16, heading), 0.4);
+        robot.drivetrain.goToPoint(new Pose2d(63, 16, heading), 0.4);
         robot.waitWhile(() ->  robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel() || !robot.shooter.turret.inPosition());
         robot.waitFor(firstShot ? 200 : 100);
 

@@ -4,7 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 
 public class TelemetryUtil {
-    private static FtcDashboard dashboard;
+    public static FtcDashboard dashboard;
     public static TelemetryPacket packet = new TelemetryPacket();
 
     public static void setup() {
