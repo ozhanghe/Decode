@@ -55,7 +55,8 @@ public class MergeLocalizer extends Localizer {
     private Pose2d lastCameraPose = new Pose2d(0,0,0);
     private Pose2d lastLastCameraPose = new Pose2d(0,0,0);
     public static boolean useCamera = true;
-    public int numberOfTimesRelocalizedWithCamera = 0;
+    private int numberOfTimesRelocalizedWithCamera = 0;
+    private long lastFrameAcquisitionNanoTime = 0;
     //how many frames the camera has to see consecutively before it updates the pose
     public static int frameRequirement = 3;
     private int consecutiveFrames = 0;
@@ -156,24 +157,32 @@ public class MergeLocalizer extends Localizer {
             }
 
             if (estimatedCameraPose != null) {
+                long frameAcquisitionNanoTime = drivetrain.vision.frameAcquisitionNanoTime;
                 Log.i("Vision", "After updating pose " + estimatedCameraPose);
 
                 //if(consecutiveFrames >= frameRequirement) {
                 //  consecutiveFrames = 0;
                 //we want to find the last pinpoint/odo pose at the time that the camera was taken
-                if (nanoTimes.size() > 5 && cameraResult != null) {
-                    findPastInterpolatedPose(drivetrain.vision.frameAcquisitionNanoTime);
+                if (nanoTimes.size() > 5 /* && lastFrameAcquisitionNanoTime < frameAcquisitionNanoTime*/) {
+                    findPastInterpolatedPose(frameAcquisitionNanoTime);
                     //then find the offset between that and the camera pose
 
                     //cameraOffsets = new Pose2d(pastPose.x - estimatedCameraPose.x, pastPose.y - estimatedCameraPose.y, pastPose.heading - estimatedCameraPose.heading);
-                    Pose2d newPose = offsetPoseUsingGlobalDelta(currentPose, interpolatedPastPose, estimatedCameraPose);
+                    Pose2d smoothCameraPose = new Pose2d(
+                        Lerp.lerp(estimatedCameraPose.x, interpolatedPastPose.x, 0.1),
+                        Lerp.lerp(estimatedCameraPose.y, interpolatedPastPose.y, 0.1),
+                        Lerp.lerpAngle(estimatedCameraPose.heading, interpolatedPastPose.heading, 0.1)
+                    );
+                    Pose2d newPose = offsetPoseUsingGlobalDelta(currentPose, interpolatedPastPose, smoothCameraPose);
                     TelemetryUtil.packet.put("Vision : pastPose", interpolatedPastPose);
                     TelemetryUtil.packet.put("Vision : newPose", newPose);
                     Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
                     DashboardUtil.drawRobot(fieldOverlay, interpolatedPastPose, "#ffff00", 3);
                     DashboardUtil.drawRobot(fieldOverlay, newPose, "#ff8000", 3);
-                    //currentPose = newPose;
-                    //lastPinpointMergePose = offsetPoseUsingGlobalDelta(lastPinpointMergePose, interpolatedPastPose, estimatedCameraPose);
+                    currentPose = newPose;
+                    lastPinpointMergePose = offsetPoseUsingGlobalDelta(lastPinpointMergePose, interpolatedPastPose, smoothCameraPose);
+                    poseHistory.replaceAll(now -> offsetPoseUsingGlobalDelta(now, interpolatedPastPose, smoothCameraPose));
+                    lastFrameAcquisitionNanoTime = frameAcquisitionNanoTime;
 
                     numberOfTimesRelocalizedWithCamera++;
                 }

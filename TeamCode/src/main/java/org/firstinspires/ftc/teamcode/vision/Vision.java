@@ -98,12 +98,17 @@ public class Vision {
                 Pose3D robotPose1 = detection1.robotPose;
                 Pose3D robotPose2 = detection2.robotPose;
 
-                Pose2d botPose1 = Pose2d.from3D(robotPose1);
-                Pose2d botPose2 = Pose2d.from3D(robotPose2);
+                if (robotPose1 != null && robotPose2 != null) {
+                    Pose2d botPose1 = Pose2d.from3D(robotPose1);
+                    Pose2d botPose2 = Pose2d.from3D(robotPose2);
 
-                double d = detection1.decisionMargin / (detection2.decisionMargin * 2);
+                    double d = detection1.decisionMargin / (detection2.decisionMargin * 2);
 
-                return new Pose2d(botPose1.x * d + botPose2.x * d, botPose1.y * d + botPose2.y * d, detection1.decisionMargin >= detection2.decisionMargin ? botPose1.heading : botPose2.heading);
+                    Pose2d p = new Pose2d(botPose1.x * d + botPose2.x * d, botPose1.y * d + botPose2.y * d, detection1.decisionMargin >= detection2.decisionMargin ? botPose1.heading : botPose2.heading);
+
+                    p.heading += Math.PI / 2;
+                    return p;
+                }
             } else if (!detections.isEmpty()) {
                 AprilTagDetection detection = detections.get(0);
 

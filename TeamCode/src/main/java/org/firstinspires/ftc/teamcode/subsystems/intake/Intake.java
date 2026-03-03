@@ -20,7 +20,7 @@ public class Intake {
 
     private boolean requestIntake = false, requestShoot = false, requestOff = false, reversed = false;
 
-    public static double intakeRollerPower = 1.0, intakeFeedPower = 0.4, shootRollerPower = 1.0, shootFeedPower = 0.75;
+    public static double intakeRollerPower = 1.0, intakeFeedPower = 0.4, shootRollerPower = 1.0, shootFeedPower = 0.8;
 
     public enum State {
         IDLE,
@@ -71,6 +71,7 @@ public class Intake {
     }
 
     long launchTime = System.currentTimeMillis();
+    long turnedOffTime = 0;
 
     public void update() {
         switch (state) {
@@ -78,7 +79,7 @@ public class Intake {
                 requestOff = false;
 
                 roller.setTargetPower(0.0);
-                feed.setTargetPower(0.0);
+                feed.setTargetPower(System.currentTimeMillis() < turnedOffTime + 250 ? -intakeFeedPower : 0.0);
 
                 if (requestIntake) {
                     requestIntake = false;
@@ -150,7 +151,7 @@ public class Intake {
         requestShoot = req;
     }
 
-    public void reqOff (boolean req) { requestOff = req; }
+    public void reqOff (boolean req) { requestOff = req; turnedOffTime = System.currentTimeMillis(); }
 
     public void setRollerDirection(boolean reversed) { this.reversed = reversed; }
 

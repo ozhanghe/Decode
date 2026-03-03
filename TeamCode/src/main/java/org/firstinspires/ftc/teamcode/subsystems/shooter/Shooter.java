@@ -145,7 +145,7 @@ public class Shooter {
                 stopRequest = false;
 
                 turretTrackTarget();
-                flywheel.setTargetVelocity(closeVel);
+                flywheel.setTargetVelocity(Dist.CLOSE.flywheelVel);
                 setHoodAngle(0.0);
                 setShooterBlocker(true);
 
@@ -476,12 +476,12 @@ public class Shooter {
 
     // further separation :)
     // bootleg LM1 strat being used in LM2 & LM3 code
-    public static double closeAngle = 0.5, closeVel = 450, midAngle = 1.35, midVel = 520, farAngle = 1.3, farVel = 610;
 
     public enum Dist {
-        CLOSE(closeAngle, closeVel),
-        MID(midAngle, midVel),
-        FAR(farAngle, farVel),
+        CLOSE(0.5, 450),
+        AUTO_POSITION(0.6, 460),
+        MID(1.35, 520),
+        FAR(1.3, 610),
         OFF(0.0, 0.0);
 
         private double hoodAngle, flywheelVel;
@@ -490,10 +490,6 @@ public class Shooter {
             this.hoodAngle = hoodAngle;
             this.flywheelVel = flywheelVel;
         }
-
-        public static void setHoodAngle(Dist dist, double angle) { dist.hoodAngle = angle; }
-
-        public static void setFlywheelVel(Dist dist, double vel) { dist.flywheelVel = vel; }
     }
 
     public void setShooter(Dist mode) {

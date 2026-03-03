@@ -20,7 +20,7 @@ import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 @Autonomous(name = "** Red Goal Preload Auto", group = "Auto", preselectTeleOp = "A. Teleop")
 public class RedGoalPreloadAuto extends LinearOpMode {
     private Robot robot;
-    public static long shootDuration = 700, intakeDuration = 1500;
+    public static long shootDuration = 800, intakeDuration = 1200;
 
     public void runOpMode() {
         Globals.isRed = true;
@@ -45,7 +45,7 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         //robot.drivetrain.goToPoint(new Pose2d(-40, 40, 0), 1.0);
         //robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
-        robot.shooter.setShooter(Shooter.Dist.MID);
+        robot.shooter.setShooter(Shooter.Dist.AUTO_POSITION);
 
         long t = System.currentTimeMillis();
         //robot.shooter.reqAim(true);
@@ -56,14 +56,14 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         open_gate(500);
         shoot(Math.PI / 2, 1);
         intake(-13, 55);
-        open_gate(1500);
+        open_gate(1000);
         shoot(Math.PI / 2, 1);
-        open_gate(500);
+        //open_gate(500);
         //robot.shooter.setShooter(Shooter.Dist.CLOSE);
         //robot.drivetrain.goToPoint(new Pose2d(18, 22, Math.PI / 2), 1, true);
         //robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
-        //intake(33, 60);
-        //shoot(Math.PI / 2, 1);
+        intake(33, 60);
+        shoot(Math.PI / 2, 1);
 
         // end near gate
         robot.shooter.setShooter(Shooter.Dist.OFF);
@@ -124,7 +124,7 @@ public class RedGoalPreloadAuto extends LinearOpMode {
 
     private void open_gate(long duration) {
         // align
-        robot.drivetrain.goToPoint(new Pose2d(0, 48, Math.PI / 2), 1);
+        robot.drivetrain.goToPoint(new Pose2d(0, 48, Math.PI / 2), 1, true);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
         // hit gate
