@@ -30,7 +30,7 @@ public class Teleop extends LinearOpMode {
 
     public void runOpMode() {
         Globals.RUNMODE = RunMode.TELEOP;
-        Robot robot = new Robot(hardwareMap, new Vision(hardwareMap));
+        Robot robot = new Robot(hardwareMap, true);
 
         //robot.drivetrain.vision.start();
         robot.setStopChecker(this::isStopRequested);

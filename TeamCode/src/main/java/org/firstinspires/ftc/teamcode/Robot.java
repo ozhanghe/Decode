@@ -34,21 +34,20 @@ public class Robot {
     private BooleanSupplier stopChecker = null;
     public ArrayList<Consumer<Canvas>> canvasDrawTasks = new ArrayList<>();
 
-    public Robot(HardwareMap hardwareMap) { this(hardwareMap, null); }
+    public Robot(HardwareMap hardwareMap) { this(hardwareMap, false); }
 
-    public Robot(HardwareMap hardwareMap, Vision vision) {
+    public Robot(HardwareMap hardwareMap, boolean useVision) {
         this.hardwareMap = hardwareMap;
         hardwareQueue = new HardwareQueue();
 
         TelemetryUtil.setup();
+        LogUtil.reset();
 
         sensors = new Sensors(this);
-        drivetrain = new Drivetrain(this, vision);
+        drivetrain = new Drivetrain(this, useVision ? new Vision(hardwareMap) : null);
         intake = new Intake(this);
         shooter = new Shooter(this);
         park = new Park(this);
-
-        LogUtil.reset();
     }
 
     public void update() {

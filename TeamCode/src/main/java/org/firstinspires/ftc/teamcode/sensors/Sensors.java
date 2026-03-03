@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.sensors;
 
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_VELOCITY;
+import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_GLOBAL_VELOCITY;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
@@ -42,7 +43,7 @@ public class Sensors {
     private double turretAngleEncoderOffset, turretAngleEncoderPosition;
     public static double turretAnalogEncoderOffset = Math.toRadians(175);
     public static double turretAngleFilter = 0.6;
-    public static double turretLimitLeft = Math.toRadians(314), turretLimitRight = Math.toRadians(-44), turretWrapMid = Math.toRadians(135);
+    public static double turretLimitLeft = Math.toRadians(332), turretLimitRight = Math.toRadians(-22), turretWrapMid = Math.toRadians(155);
     public static boolean resetTurretAngleEncoder = true;
 
     private double lightSensorFilteredVoltage = 0;
@@ -107,6 +108,7 @@ public class Sensors {
         robot.drivetrain.mergeLocalizer.update();
         ROBOT_POSITION = robot.drivetrain.mergeLocalizer.getPoseEstimate();
         ROBOT_VELOCITY = robot.drivetrain.mergeLocalizer.getRelativePoseVelocity();
+        ROBOT_GLOBAL_VELOCITY = robot.drivetrain.mergeLocalizer.getGlobalVelocity();
 
         //parkEncoder.update();
 

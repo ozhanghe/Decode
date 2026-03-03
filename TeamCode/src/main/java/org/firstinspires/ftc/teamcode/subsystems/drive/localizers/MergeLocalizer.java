@@ -161,7 +161,7 @@ public class MergeLocalizer extends Localizer {
                 //if(consecutiveFrames >= frameRequirement) {
                 //  consecutiveFrames = 0;
                 //we want to find the last pinpoint/odo pose at the time that the camera was taken
-                if (nanoTimes.size() > 5) {
+                if (nanoTimes.size() > 5 && cameraResult != null) {
                     findPastInterpolatedPose(drivetrain.vision.frameAcquisitionNanoTime);
                     //then find the offset between that and the camera pose
 
@@ -172,8 +172,8 @@ public class MergeLocalizer extends Localizer {
                     Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
                     DashboardUtil.drawRobot(fieldOverlay, interpolatedPastPose, "#ffff00", 3);
                     DashboardUtil.drawRobot(fieldOverlay, newPose, "#ff8000", 3);
-                    currentPose = newPose;
-                    lastPinpointMergePose = offsetPoseUsingGlobalDelta(lastPinpointMergePose, interpolatedPastPose, estimatedCameraPose);
+                    //currentPose = newPose;
+                    //lastPinpointMergePose = offsetPoseUsingGlobalDelta(lastPinpointMergePose, interpolatedPastPose, estimatedCameraPose);
 
                     numberOfTimesRelocalizedWithCamera++;
                 }
@@ -235,6 +235,7 @@ public class MergeLocalizer extends Localizer {
         TelemetryUtil.packet.put(this.getClass().getSimpleName()+" y", y);
         TelemetryUtil.packet.put(this.getClass().getSimpleName()+" heading (deg)", Math.toDegrees(heading));
         TelemetryUtil.packet.put(this.getClass().getSimpleName()+" distance", distanceTraveled);
+        TelemetryUtil.packet.put(this.getClass().getSimpleName()+" velocity", relCurrentVel);
         TelemetryUtil.packet.put("Pinpoint x", pinpoint.getPosX());
         TelemetryUtil.packet.put("Pinpoint y", pinpoint.getPosY());
         TelemetryUtil.packet.put("Pinpoint heading", pinpoint.getHeading());
@@ -242,7 +243,8 @@ public class MergeLocalizer extends Localizer {
         TelemetryUtil.packet.put("Number of times Relocalized with Camera", numberOfTimesRelocalizedWithCamera);
 
         Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
-        DashboardUtil.drawRobot(fieldOverlay, getPoseEstimate(), this.color); // blue
+        DashboardUtil.drawRobot(fieldOverlay, currentPose, this.color); // blue
+        DashboardUtil.drawPoseHistory(fieldOverlay, poseHistory);
 
         if (estimatedCameraPose != null) {
             TelemetryUtil.packet.put("Camera x", estimatedCameraPose.x);

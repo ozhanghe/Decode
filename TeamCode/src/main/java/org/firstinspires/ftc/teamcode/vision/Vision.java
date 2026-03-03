@@ -89,40 +89,35 @@ public class Vision {
             detections = (ArrayList<AprilTagDetection>) detections.clone();
             detections.removeIf(detection -> detection.id != 24 && detection.id != 20);
 
-            if (detections.size() > 1 && Globals.fullField) {
+            if (detections.size() >= 2 && Globals.fullField) {
                 AprilTagDetection detection1 = detections.get(0);
                 AprilTagDetection detection2 = detections.get(1);
 
                 frameAcquisitionNanoTime = detection1.frameAcquisitionNanoTime;
 
-                if (detection1 != null && detection2 != null) {
-                    Pose3D robotPose1 = detection1.robotPose;
-                    Pose3D robotPose2 = detection2.robotPose;
+                Pose3D robotPose1 = detection1.robotPose;
+                Pose3D robotPose2 = detection2.robotPose;
 
-                    Pose2d botPose1 = Pose2d.from3D(robotPose1);
-                    Pose2d botPose2 = Pose2d.from3D(robotPose2);
+                Pose2d botPose1 = Pose2d.from3D(robotPose1);
+                Pose2d botPose2 = Pose2d.from3D(robotPose2);
 
-                    double d = detection1.decisionMargin / (detection2.decisionMargin * 2);
+                double d = detection1.decisionMargin / (detection2.decisionMargin * 2);
 
-                    Pose2d overallPose = new Pose2d(botPose1.x * d + botPose2.x * d, botPose1.y * d + botPose2.y * d, detection1.decisionMargin >= detection2.decisionMargin ? botPose1.heading : botPose2.heading);
-                    return overallPose;
-                }
+                return new Pose2d(botPose1.x * d + botPose2.x * d, botPose1.y * d + botPose2.y * d, detection1.decisionMargin >= detection2.decisionMargin ? botPose1.heading : botPose2.heading);
             } else if (!detections.isEmpty()) {
                 AprilTagDetection detection = detections.get(0);
 
                 TelemetryUtil.packet.put("Decision Margin", String.valueOf(detection.decisionMargin));
 
-                if (detection != null) {
-                    frameAcquisitionNanoTime = detection.frameAcquisitionNanoTime;
+                frameAcquisitionNanoTime = detection.frameAcquisitionNanoTime;
 
-                    Pose3D robotPose = detection.robotPose;
+                Pose3D robotPose = detection.robotPose;
 
-                    if (robotPose != null) {
-                        Pose2d p = Pose2d.from3D(robotPose);
+                if (robotPose != null) {
+                    Pose2d p = Pose2d.from3D(robotPose);
 
-                        p.heading += Math.PI / 2;
-                        return p;
-                    }
+                    p.heading += Math.PI / 2;
+                    return p;
                 }
             }
         }

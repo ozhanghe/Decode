@@ -94,6 +94,8 @@ public class Localizer {
         return new Pose2d(relCurrentVel.x, relCurrentVel.y, relCurrentVel.heading);
     }
 
+    public Pose2d getGlobalVelocity() { return currentVel.clone(); }
+
     double fidelity = 1E-8;
 
     public double relDeltaX;
@@ -189,7 +191,7 @@ public class Localizer {
     }
 
     public void updateVelocity() {
-        double targetVelTimeEstimate = 0.2;
+        double targetVelTimeEstimate = 0.5;
         double actualVelTime = 0;
         double relDeltaXTotal = 0;
         double relDeltaYTotal = 0;
