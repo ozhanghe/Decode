@@ -79,6 +79,11 @@ public class Shooter {
     public static double posFilter = 0.9;
     public static double arcDistThresh = 5000;
 
+    public static int xShiftThresh = -40;
+    public static int xShift = 3;
+    public static int yShiftThresh = 54;
+    public static int yShift = 3;
+
     /*
     (-71, 48)
     (-48, 64)
@@ -558,15 +563,16 @@ public class Shooter {
         // Setting initial goal for the virtual
         double virtualX = ballTarget.x;
         double virtualY = ballTarget.y;
-        /*
-        if(ROBOT_POSITION.x < - 32) {
 
-            double temp = virtualY;
-            virtualY = virtualX * (Globals.isRed ? -1 : 1);
-            virtualX = temp * (Globals.isRed ? -1 : 1);
+
+        if(virtualX < xShiftThresh) {
+            virtualX += xShift;
         }
 
-         */
+        if(Math.abs(virtualY) > yShiftThresh) {
+            virtualY -= yShift * (Globals.isRed ? 1 : -1);
+        }
+
 
         // Looping through virtual goal
         //getting time of flight
