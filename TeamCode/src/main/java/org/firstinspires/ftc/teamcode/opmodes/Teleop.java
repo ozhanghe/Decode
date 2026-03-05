@@ -35,7 +35,7 @@ public class Teleop extends LinearOpMode {
         //robot.drivetrain.vision.start();
         robot.setStopChecker(this::isStopRequested);
 
-        robot.shooter.state = Shooter.State.IDLE;
+        robot.shooter.state = Shooter.State.TEST;
         robot.shooter.turretTrackInManual = true;
 
         //robot.drivetrain.setPoseEstimate(AUTO_ENDING_POSE);
@@ -90,6 +90,7 @@ public class Teleop extends LinearOpMode {
         LogUtil.drivePositionReset = true;
 
         //robot.drivetrain.vision.start();
+        robot.shooter.setManual(false);
 
         while (!isStopRequested()) {
             robot.update();

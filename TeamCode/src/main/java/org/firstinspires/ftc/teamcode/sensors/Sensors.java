@@ -7,7 +7,6 @@ import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_GLOBAL_VELOCITY
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.hardware.lynx.LynxModule;
 
@@ -41,7 +40,7 @@ public class Sensors {
     public AnalogInput turretAnalogEncoder;
     private double turretAngle;
     private double turretAngleEncoderOffset, turretAngleEncoderPosition;
-    public static double turretAnalogEncoderOffset = Math.toRadians(174);
+    public static double turretAnalogEncoderOffsetDeg = 172;
     public static double turretAngleFilter = 0.6;
     public static double turretLimitLeft = Math.toRadians(332), turretLimitRight = Math.toRadians(-22), turretWrapMid = Math.toRadians(155);
     public static boolean resetTurretAngleEncoder = true;
@@ -120,7 +119,7 @@ public class Sensors {
             double turretAnalogEncoderVoltage = turretAnalogEncoder.getVoltage();
             //TelemetryUtil.packet.put("Shooter : Turret analog encoder voltage", turretAnalogEncoderVoltage);
             if (turretAnalogEncoderVoltage > 0.1) {
-                newTurretAngle = Utils.headingClip(RelativeEncoder.normalizeVoltage(turretAnalogEncoderVoltage) - turretAnalogEncoderOffset - turretWrapMid) + turretWrapMid;
+                newTurretAngle = Utils.headingClip(RelativeEncoder.normalizeVoltage(turretAnalogEncoderVoltage) - Math.toRadians(turretAnalogEncoderOffsetDeg) - turretWrapMid) + turretWrapMid;
                 turretAngleEncoderOffset = turretAngleEncoderPosition - newTurretAngle;
                 //if (Globals.RUNMODE != RunMode.TESTER)
                 resetTurretAngleEncoder = false;

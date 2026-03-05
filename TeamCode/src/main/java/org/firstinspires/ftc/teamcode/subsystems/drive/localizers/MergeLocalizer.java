@@ -52,11 +52,10 @@ public class MergeLocalizer extends Localizer {
 
     // Camera
     private Pose2d estimatedCameraPose = new Pose2d(0,0,0);
-    private Pose2d lastCameraPose = new Pose2d(0,0,0);
-    private Pose2d lastLastCameraPose = new Pose2d(0,0,0);
     public static boolean useCamera = true;
     private int numberOfTimesRelocalizedWithCamera = 0;
     private long lastFrameAcquisitionNanoTime = 0;
+    public static double cameraSmoothFactor = 0.05;
     //how many frames the camera has to see consecutively before it updates the pose
     public static int frameRequirement = 3;
     private int consecutiveFrames = 0;
@@ -171,9 +170,9 @@ public class MergeLocalizer extends Localizer {
 
                     //cameraOffsets = new Pose2d(pastPose.x - estimatedCameraPose.x, pastPose.y - estimatedCameraPose.y, pastPose.heading - estimatedCameraPose.heading);
                     Pose2d smoothCameraPose = new Pose2d(
-                        Lerp.lerp(estimatedCameraPose.x, interpolatedPastPose.x, 0.1),
-                        Lerp.lerp(estimatedCameraPose.y, interpolatedPastPose.y, 0.1),
-                        Lerp.lerpAngle(estimatedCameraPose.heading, interpolatedPastPose.heading, 0.1)
+                        Lerp.lerp(estimatedCameraPose.x, interpolatedPastPose.x, cameraSmoothFactor),
+                        Lerp.lerp(estimatedCameraPose.y, interpolatedPastPose.y, cameraSmoothFactor),
+                        Lerp.lerpAngle(estimatedCameraPose.heading, interpolatedPastPose.heading, cameraSmoothFactor)
                     );
                     Pose2d newPose = offsetPoseUsingGlobalDelta(currentPose, interpolatedPastPose, smoothCameraPose);
                     TelemetryUtil.packet.put("Vision : pastPose", interpolatedPastPose);

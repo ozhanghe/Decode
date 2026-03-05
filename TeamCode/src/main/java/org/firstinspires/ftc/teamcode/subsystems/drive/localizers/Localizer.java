@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems.drive.localizers;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
@@ -13,7 +14,7 @@ import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.utils.Utils;
 
 import java.util.ArrayList;
-
+@Config
 public class Localizer {
     protected Sensors sensors;
     protected Drivetrain drivetrain;
@@ -45,6 +46,8 @@ public class Localizer {
     protected double startHeadingOffset = 0;
     protected String color;
     protected String expectedColor;
+
+    public static double targetVelTimeEstimate = 0.1;
 
     public Localizer(Sensors sensors, Drivetrain drivetrain, String color, String expectedColor) {
         this.sensors = sensors;
@@ -191,7 +194,6 @@ public class Localizer {
     }
 
     public void updateVelocity() {
-        double targetVelTimeEstimate = 0.5;
         double actualVelTime = 0;
         double relDeltaXTotal = 0;
         double relDeltaYTotal = 0;

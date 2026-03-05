@@ -34,7 +34,7 @@ public class Flywheel {
      */
 
     // velocity is in inches / second
-    public static PID velocityPID = new PID (0.0, 0.0003, 0.0001);
+    public static PID velocityPID = new PID (0.01, 0.0003, 0.0001);
     public static double velocityFFm = 0.00124059;
     public static double velocityFFb = 0.0264087;
     public static double velocityFilterLow = 0.05;

@@ -49,7 +49,6 @@ public class Shooter {
 
     private boolean aimRequest = false, shootRequest = false, stopRequest = false;
     public boolean turretTrackInManual = false;
-    public boolean autoOn = false;
 
     public double targetHoodAngle = 0.0;
     public static double hoodSweep = Math.toRadians(26.43);
@@ -80,11 +79,6 @@ public class Shooter {
     public static double posFilter = 0.9;
     public static double arcDistThresh = 5000;
 
-    public static int xShiftThresh = -40;
-    public static int xShift = 3;
-    public static int yShiftThresh = 54;
-    public static int yShift = 3;
-
     /*
     (-71, 48)
     (-48, 64)
@@ -103,39 +97,37 @@ public class Shooter {
 
         this.shooterTable = new ShotTable();
         // Add: addSetpoint(distanceInches(from goal), new ShotSetpoint(flywheelVel, hoodPos, timeOfFlight(seconds)))
-        shooterTable.addSetpoint(39.9, new ShotSetpoint(400,Math.toRadians(27)));
-        shooterTable.addSetpoint(51.9, new ShotSetpoint(450,Math.toRadians(34)));
-        shooterTable.addSetpoint(61.3, new ShotSetpoint(480,Math.toRadians(42)));
-        shooterTable.addSetpoint(81.5, new ShotSetpoint(520,Math.toRadians(50)));
-        shooterTable.addSetpoint(95.6, new ShotSetpoint(520,Math.toRadians(50)));
-        shooterTable.addSetpoint(129, new ShotSetpoint(620,Math.toRadians(47)));
-        /*
-        shooterTable.addSetpoint(40.3, new ShotSetpoint(430,0));
-        shooterTable.addSetpoint(43.6, new ShotSetpoint(440,0.05));
-        shooterTable.addSetpoint(48.5, new ShotSetpoint(465,0.2));
-        shooterTable.addSetpoint(52.9, new ShotSetpoint(470,0.25));
-        shooterTable.addSetpoint(65, new ShotSetpoint(545,0.5));
-        shooterTable.addSetpoint(76.4, new ShotSetpoint(555,0.5 ));
-        shooterTable.addSetpoint(85, new ShotSetpoint(585,0.55 ));
-        shooterTable.addSetpoint(94.8, new ShotSetpoint(600,0.6));
-        shooterTable.addSetpoint(136.9, new ShotSetpoint(580,1.4 ));
-        shooterTable.addSetpoint(148, new ShotSetpoint(700,0.75));
-        */
+        //shooterTable.addSetpoint(39.9, new ShotSetpoint(400,Math.toRadians(27)));
+        //shooterTable.addSetpoint(51.9, new ShotSetpoint(450,Math.toRadians(34)));
+        //shooterTable.addSetpoint(61.3, new ShotSetpoint(480,Math.toRadians(42)));
+        shooterTable.addSetpoint(42.8, new ShotSetpoint(410,Math.toRadians(28)));
+        shooterTable.addSetpoint(57.5, new ShotSetpoint(450,Math.toRadians(32)));
+        shooterTable.addSetpoint(69.3, new ShotSetpoint(472,Math.toRadians(31)));
+        shooterTable.addSetpoint(75.9, new ShotSetpoint(485,Math.toRadians(32)));
+        shooterTable.addSetpoint(98, new ShotSetpoint(528,Math.toRadians(36)));
+        shooterTable.addSetpoint(114.5, new ShotSetpoint(560,Math.toRadians(37)));
+        shooterTable.addSetpoint(132.6, new ShotSetpoint(615,Math.toRadians(47)));
+        shooterTable.addSetpoint(142.6, new ShotSetpoint(635,Math.toRadians(50)));
+        shooterTable.addSetpoint(150.7, new ShotSetpoint(645,Math.toRadians(48)));
+
+
+
+
 
         hood = new nPriorityServo(
-            new Servo[]{robot.hardwareMap.get(Servo.class, "hood1")},
-            "hood", nPriorityServo.ServoType.AXON_MINI,
-            0.03, 0.33, 0.03,
-            new boolean[] {false},
-            3, 7
+                new Servo[]{robot.hardwareMap.get(Servo.class, "hood1")},
+                "hood", nPriorityServo.ServoType.AXON_MINI,
+                0.03, 0.33, 0.03,
+                new boolean[] {false},
+                3, 7
         );
 
         flywheelBlocker = new nPriorityServo(
-            new Servo[]{robot.hardwareMap.get(Servo.class, "flywheelBlocker")},
-            "flywheelBlocker", nPriorityServo.ServoType.AXON_MICRO,
-            0, 0.7, 0.1,
-            new boolean[] {false},
-            2, 2
+                new Servo[]{robot.hardwareMap.get(Servo.class, "flywheelBlocker")},
+                "flywheelBlocker", nPriorityServo.ServoType.AXON_MICRO,
+                0, 0.7, 0.1,
+                new boolean[] {false},
+                2, 2
         );
 
         robot.hardwareQueue.addDevices(hood, flywheelBlocker);
@@ -374,7 +366,7 @@ public class Shooter {
         double arcFlip = (dist2 < arcDistThresh ? 1 : -1);
         minV0 = (Math.sqrt(2 * a * tRoots.get(0) * tRoots.get(0) + c + d / 2 / tRoots.get(0)) + minV0Superthresh);
         if (arcFlip == 1 && ROBOT_POSITION.x >= 24) minV0 *= minV0factorFlat;
-        //else if (arcFlip == 1) minV0*= minV0factorFlat; use if the close flat shot is jank to have 2 constants
+            //else if (arcFlip == 1) minV0*= minV0factorFlat; use if the close flat shot is jank to have 2 constants
         else minV0 *= minV0factorArc;
         if (ROBOT_POSITION.x >= 24) minFlywheelVelocity = minV0 * 2 / (flywheelEfficiency + flywheelEfficiencyConstantFarAddition);
         else minFlywheelVelocity = minV0 * 2 / flywheelEfficiency;
@@ -531,7 +523,8 @@ public class Shooter {
             // Barycentric weight calculation
             double w1 = ((y2 - y3) * (px - x3) + (x3 - x2) * (py - y3)) / denom;
             double w2 = ((y3 - y1) * (px - x3) + (x1 - x3) * (py - y3)) / denom;
-            double w3 = ((y1 - y2) * (px - x3) + (x2 - x1) * (py - y3)) / denom;
+            double w3 = 1.0 - w1 - w2;
+
             //none of the triangle areas are negative meaning robot is inside the triangle
             if (w1 >= 0 && w2 >= 0 && w3 >= 0) {
                 return true;
@@ -539,9 +532,6 @@ public class Shooter {
         }
 
         return false;
-    }
-    public void autoToggle(){
-        autoOn = !autoOn;
     }
 
     public void predictGoal() {
@@ -556,8 +546,6 @@ public class Shooter {
         */
         if (ROBOT_POSITION.x > 24) {
             ballTarget = new Vector3(-70,71 * (Globals.isRed ? 1 : -1),42);
-        } else if(autoOn){
-            ballTarget = new Vector3(-66, 68 *  (Globals.isRed ? 1 : -1),42);
         } else {
             ballTarget = new Vector3(-68,69 * (Globals.isRed ? 1 : -1),42);
         }
@@ -568,21 +556,22 @@ public class Shooter {
         // Setting initial goal for the virtual
         double virtualX = ballTarget.x;
         double virtualY = ballTarget.y;
+        /*
+        if(ROBOT_POSITION.x < - 32) {
 
-
-        if(virtualX < xShiftThresh) {
-            virtualX += xShift;
+            double temp = virtualY;
+            virtualY = virtualX * (Globals.isRed ? -1 : 1);
+            virtualX = temp * (Globals.isRed ? -1 : 1);
         }
 
-        if(Math.abs(virtualY) > yShiftThresh) {
-            virtualY -= yShift * (Globals.isRed ? 1 : -1);
-        }
-
+         */
 
         // Looping through virtual goal
         //getting time of flight
         double time = initialDist / (values.flywheelVel / 2 * Math.sin(values.hoodAngle));
         double sotmCompensation = 0;
+
+        TelemetryUtil.packet.put("Shooter Velocity :", Math.hypot(ROBOT_GLOBAL_VELOCITY.x, ROBOT_GLOBAL_VELOCITY.y));
 
         // Offset the virtual goal by the robot's velocity during flight
         if (Math.hypot(ROBOT_GLOBAL_VELOCITY.x, ROBOT_GLOBAL_VELOCITY.y) > 10) {
