@@ -63,6 +63,13 @@ public class Path {
         lastPose = p.clone();
     }
 
+    public Path (Pose2d p) {
+        segments = new ArrayList<>();
+        repulsion = new ArrayList<RepulsionPoint>();
+        lastPose = p.clone();
+    }
+
+
     public Path addPoint(Pose2d p, boolean rev, boolean dec) {
         if (rev) p.heading += Math.PI;
         segments.add(new PathSegment (new Spline (lastPose, p), rev, dec, 1.0));

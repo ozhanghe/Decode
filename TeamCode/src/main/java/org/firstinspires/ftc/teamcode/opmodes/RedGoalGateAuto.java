@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_BACK_LENGTH;
+import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_WIDTH;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -8,7 +9,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.Robot;
+import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Drivetrain;
+import org.firstinspires.ftc.teamcode.subsystems.drive.Path;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
@@ -36,6 +39,7 @@ public class RedGoalGateAuto extends LinearOpMode {
         while (opModeInInit()) {
             robot.update();
             robot.sensors.light0G.set(System.currentTimeMillis() % 500 < 350);
+            Sensors.resetTurretAngleEncoder = true;
         }
         robot.sensors.light0G.set(false);
 
@@ -52,15 +56,19 @@ public class RedGoalGateAuto extends LinearOpMode {
         //robot.drivetrain.goToPoint(new Pose2d(-18, 18, 0), 1, true);
         //robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         //preloads
-        shoot(Math.toRadians(45), 1);
+        shoot(Math.toRadians(126), 1);
         intake(11, 60, true, false);
         //middle spikemarks
         shoot(Math.toRadians(80), 1);
+
+        intake(-13, 53, false, false);
+        shoot(Math.toRadians(80), 2);
+
         //gate intake and shoot
         gate_intake(true);
         shoot(Math.toRadians(80), 1);
         //close spikemarks
-        intake(-13, 53, true, false);
+        intake(-13, 53, false, false);
         shoot(Math.toRadians(80), 2);
         //robot.shooter.setShooter(Shooter.Dist.CLOSE);
         //robot.drivetrain.goToPoint(new Pose2d(18, 22, Math.PI), 1.0, true);
@@ -74,6 +82,7 @@ public class RedGoalGateAuto extends LinearOpMode {
         shoot(Math.toRadians(80), 1);
         //gate intake and shoot
         gate_intake(true);
+        shoot(Math.toRadians(80), 1);
 
         //robot.shooter.reqStop(true);
         //robot.shooter.turret.setTargetAngle(0.0);
@@ -92,7 +101,7 @@ public class RedGoalGateAuto extends LinearOpMode {
 
     private void shoot(double heading, int shotType) {
         robot.shooter.reqAim(true);
-        robot.drivetrain.goToPoint(new Pose2d(shotType == 1 ? -7 : -18, shotType == 1 ? 7 : 18, heading), 1);
+        robot.drivetrain.goToPoint(new Pose2d(shotType == 1 ? -10 : -18, shotType == 1 ? 10 : 18, heading), 1);
         //robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel() || !robot.shooter.turret.inPosition());
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY);
         robot.waitFor(200);
@@ -105,6 +114,7 @@ public class RedGoalGateAuto extends LinearOpMode {
         //robot.intake.reqOff(true);
 
         robot.shooter.reqStop(true);
+        robot.waitFor(50);
         //if (recharge) robot.shooter.reqAim(true);
     }
 
@@ -150,23 +160,13 @@ public class RedGoalGateAuto extends LinearOpMode {
         //2, 47
         //4, 54
 
-        robot.drivetrain.goToPoint(new Pose2d(-5, 17, Math.PI / 2), 1, true);
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
-
-        robot.drivetrain.goToPoint(new Pose2d(-3, 27, Math.PI / 2), 1, true);
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
-
-        robot.drivetrain.goToPoint(new Pose2d(0, 37, Math.PI / 2), 1, true);
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
-
-        robot.drivetrain.goToPoint(new Pose2d(2, 47, Math.PI / 2), 1, true);
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+        robot.intake.reqIntake(true);
 
 
         // hit gate
-        robot.drivetrain.goToPoint(new Pose2d(4, 54, Math.PI / 2), 1);
-        //robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
-        robot.waitFor(gateOpenDuration);
+        robot.drivetrain.goToPoint(new Pose2d(4, 52.5, Math.toRadians(80)), 1);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+        //robot.waitFor(gateOpenDuration);
 
         //robot.drivetrain.goToPoint(new Pose2d(15, 53, Math.PI / 2), 1, true);
         //robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
@@ -184,10 +184,16 @@ public class RedGoalGateAuto extends LinearOpMode {
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.waitFor(gateIntakeDuration);
 
+        //robot.drivetrain.goToPoint(new Pose2d(,Math.toRadians(90)), 1, true);
+
+
+
         if (!skipLast) {
             robot.drivetrain.goToPoint(new Pose2d(15, 36, Math.PI / 2), 1, true);
             robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         }
+
+
 
         robot.intake.reqOff(true);
     }

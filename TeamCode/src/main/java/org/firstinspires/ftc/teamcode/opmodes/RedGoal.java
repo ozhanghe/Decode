@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
-
+/*
 @Autonomous(name = "Red Goal")
 public class RedGoal extends LinearOpMode {
     long delay;
@@ -35,7 +35,7 @@ public class RedGoal extends LinearOpMode {
         // Preload
         robot.shooter.reqAim(true);
         Path path = new Path(Globals.ROBOT_POSITION.clone(), Globals.getMidline())
-                .addPoint(new Pose2d(-24, 24, Math.PI * 0.75))
+                .addPoint(new Pose2d(-24, 24, Math.PI * 0.75), false, false)
                 .setDecel(true);
         robot.drivetrain.setPath(path);
         robot.update();
@@ -151,3 +151,5 @@ public class RedGoal extends LinearOpMode {
         });
     }
 }
+
+ */

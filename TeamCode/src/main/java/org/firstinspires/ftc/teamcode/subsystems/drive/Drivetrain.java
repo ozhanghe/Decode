@@ -330,6 +330,7 @@ public class Drivetrain {
 
     public static double smoothPowerK = 0.5;
     public void setMotorPowers(double lf, double lr, double rr, double rf) {
+        Log.i("Drivetrain powers : ", lf + " " + lr + " " + rr + " " + rf);
         leftFront.setTargetPowerSmooth(lf, smoothPowerK);
         leftRear.setTargetPowerSmooth(lr, smoothPowerK);
         rightRear.setTargetPowerSmooth(rr, smoothPowerK);

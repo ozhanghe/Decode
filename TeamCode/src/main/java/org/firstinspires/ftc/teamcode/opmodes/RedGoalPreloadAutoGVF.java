@@ -16,7 +16,7 @@ import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
 
 import java.util.ArrayList;
-
+/*
 @Autonomous(name = "RedGoalPreloadAutoGVF")
 public class RedGoalPreloadAutoGVF extends LinearOpMode {
     private Robot robot;
@@ -135,3 +135,5 @@ public class RedGoalPreloadAutoGVF extends LinearOpMode {
 
 
 }
+
+ */

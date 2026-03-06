@@ -1,5 +1,5 @@
 package org.firstinspires.ftc.teamcode.tests.localization_testers;
-
+/*
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
@@ -43,3 +43,5 @@ public class GVFTester extends LinearOpMode{
         }
     }
 }
+
+ */
