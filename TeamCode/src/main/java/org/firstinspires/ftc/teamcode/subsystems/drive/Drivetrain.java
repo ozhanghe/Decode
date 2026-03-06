@@ -165,7 +165,6 @@ public class Drivetrain {
     public PathData data;
     private Vector2 moveVector = new Vector2(0, 0);
     private double turnPow = 0;
-    public double[] powers = {0, 0, 0, 0};
 
     public static double correctScalar = 0.2, decelThresh = 8.0;
 
@@ -219,6 +218,8 @@ public class Drivetrain {
                     moveVector.mul(0.2 + 0.8 * Math.sqrt(ROBOT_POSITION.getDistanceFromPoint(path.getSegLast(data.index)) / decelThresh));
                 }
                 moveVector.mul(data.power);
+
+                setMoveVector(moveVector, turnPow);
                 break;
             case PID_TO_POINT:
                 calculateErrors();
@@ -251,11 +252,6 @@ public class Drivetrain {
 
     public void setPath (Path p) {
         this.path = p;
-    }
-
-    public void addPoint(Pose2d point, boolean reversed) {
-        path.addPoint(point);
-        path.setReversed(reversed);
     }
 
     private void calculateErrors() {
@@ -387,8 +383,8 @@ public class Drivetrain {
 
         Canvas canvas = TelemetryUtil.packet.fieldOverlay();
         if (path != null) {
-            DashboardUtil.drawRobot(canvas, new Pose2d(ROBOT_POSITION.x + sensors.loopTime * pd.vel.x, ROBOT_POSITION.y + sensors.loopTime * pd.vel.y, Math.atan2(pd.vel.y, pd.vel.x)), "#8000ff"); // purple
-            Spline s = path.pathSegments.get(pd.index).spline;
+            DashboardUtil.drawRobot(canvas, new Pose2d(ROBOT_POSITION.x + sensors.loopTime * data.velocity.x, ROBOT_POSITION.y + sensors.loopTime * data.velocity.y, Math.atan2(data.velocity.y, data.velocity.x)), "#8000ff"); // purple
+            Spline s = path.segments.get(data.index).spline;
             LogUtil.drivePath.set(s.toString());
 
             double n = 100;
@@ -397,7 +393,7 @@ public class Drivetrain {
                 canvas.strokeLine(s.getPos(t).x, s.getPos(t).y, s.getPos(t + step).x, s.getPos(t + step).y);
             }
 
-            for (RepulsionPoint repel : path.repel) {
+            for (RepulsionPoint repel : path.repulsion) {
                 canvas.fillCircle(repel.x, repel.y, 0.5);
             }
         } else {

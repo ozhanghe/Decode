@@ -53,8 +53,8 @@ class GuidingVectors {
 }
 
 public class Path {
-    private ArrayList <PathSegment> segments;
-    private ArrayList <RepulsionPoint> repulsion;
+    ArrayList <PathSegment> segments;
+    ArrayList <RepulsionPoint> repulsion;
     private Pose2d lastPose;
 
     public Path (Pose2d p, ArrayList <RepulsionPoint> rp) {
