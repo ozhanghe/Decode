@@ -70,6 +70,7 @@ public class Flywheel {
         double error = targetVelocity - filteredVelocity;
         if (targetVelocity <= 1 || error > velocityFilterThresh) velocityPID.resetIntegral();
         else velocityPID.clipIntegral(-1, 1);
+
         double pidpow = velocityPID.update(error, -1.0, 1.0);
         double ffpow = targetVelocity * velocityFFm + velocityFFb;
         double pow = Math.max(0, pidpow + ffpow) * flywheelScaleVoltage / robot.sensors.getVoltage();

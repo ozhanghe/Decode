@@ -89,20 +89,6 @@ public class Shooter {
         this.turret = new Turret(robot);
 
         this.shooterTable = new ShotTable();
-        // Add: addSetpoint(distanceInches(from goal), new ShotSetpoint(flywheelVel, hoodPos, timeOfFlight(seconds)))
-        //shooterTable.addSetpoint(39.9, new ShotSetpoint(400,Math.toRadians(27)));
-        //shooterTable.addSetpoint(51.9, new ShotSetpoint(450,Math.toRadians(34)));
-        //shooterTable.addSetpoint(61.3, new ShotSetpoint(480,Math.toRadians(42)));
-        shooterTable.addSetpoint(57.5, new ShotSetpoint(450,Math.toRadians(32)));
-        shooterTable.addSetpoint(69.3, new ShotSetpoint(520,Math.toRadians(47)));
-        shooterTable.addSetpoint(73.3, new ShotSetpoint(520,Math.toRadians(47)));
-        shooterTable.addSetpoint(80.3, new ShotSetpoint(527,Math.toRadians(49)));
-        shooterTable.addSetpoint(88.9, new ShotSetpoint(542,Math.toRadians(49)));
-        shooterTable.addSetpoint(99.8, new ShotSetpoint(548,Math.toRadians(49)));
-        shooterTable.addSetpoint(114.5, new ShotSetpoint(560,Math.toRadians(37)));
-        shooterTable.addSetpoint(132.6, new ShotSetpoint(615,Math.toRadians(47)));
-        shooterTable.addSetpoint(142.6, new ShotSetpoint(635,Math.toRadians(50)));
-        shooterTable.addSetpoint(150.7, new ShotSetpoint(645,Math.toRadians(48)));
 
         hood = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "hood1")},
@@ -171,20 +157,12 @@ public class Shooter {
             case READY: {
                 setShooterBlocker(true);
 
-                //TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
-                //boolean aimResult = aimLauncherV8();
-                //TelemetryUtil.packet.put("Aim: aimResult", aimResult);
                 predictGoal();
-                /*
-                if (aimResult && Globals.RUNMODE != RunMode.AUTO) {
-                    robot.sensors.light0G.set(true);
-                    robot.sensors.light0P.set(true);
-                }
-                */
+
                 flywheel.setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
 
-                if (shootRequest /* && isRobotInZone(0,0,-72,72,-72,-72) || isRobotInZone(48,0,72,24,72,-24)*/) {
+                if (shootRequest) {
                     setShooterBlocker(false);
                     if (flywheelBlocker.inPosition()) {
                         state = State.SHOOT;
@@ -195,10 +173,11 @@ public class Shooter {
                 if (stopRequest) {
                     stopRequest = false;
                     shootRequest = false;
-                    state = State.IDLE;
                     flywheel.setTargetVelocity(0.0);
                     robot.intake.reqShoot(false);
                     robot.intake.reqOff(true);
+
+                    state = State.IDLE;
                 }
                 break;
             }
@@ -206,7 +185,6 @@ public class Shooter {
                 shootRequest = false;
                 predictGoal();
                 setShooterBlocker(false);
-                //aimLauncherV8();
                 flywheel.setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
 
@@ -218,16 +196,9 @@ public class Shooter {
                     robot.intake.reqShoot(false);
                     robot.intake.reqOff(true);
                 }
-                /*else if (!isRobotInZone(0,0,-72,72,-72,-72) && !isRobotInZone(48,0,72,24,72,-24)) {
-                    state = State.AIMING;
-                    robot.intake.reqShoot(false);
-                    robot.intake.reqIntake(true);
-                    robot.intake.setRollerDirection(false);
-                }*/
-
                 break;
             }
-            case TEST: { // LEAVE THIS EMPTY AT ALL TIMES
+            case TEST: {
                 if (turretTrackInManual) turretTrackTarget();
                 break;
             }
@@ -250,19 +221,24 @@ public class Shooter {
         }
 
         flywheel.update();
-
         turret.update();
 
-        Log.i("Shooter","Robot Velocity" + (this.V != null ? this.V.getMag() : 0));
+        updateTelemetry();
+    }
+
+    private void updateTelemetry(){
+        TelemetryUtil.packet.put("Shooter : state", this.state);
+        TelemetryUtil.packet.put("Shooter : Balltarget", ballTarget.toString());
+        TelemetryUtil.packet.put("Shooter : goal distance", Math.hypot(ROBOT_POSITION.x - robot.shooter.ballTarget.x, ROBOT_POSITION.y - robot.shooter.ballTarget.y));
+        TelemetryUtil.packet.put("Shooter : robot in Zone", isRobotInZone(0,0,-72,72,-72,-72) || isRobotInZone(48,0,72,24,72,-24));
+
+        /*
         TelemetryUtil.packet.put("Shooter : Robot Velocity", (this.V != null ? this.V.getMag() : 0));
         TelemetryUtil.packet.put("Shooter : currVel x", currVel.x);
         TelemetryUtil.packet.put("Shooter : currVel y", currVel.y);
         TelemetryUtil.packet.put("Shooter : currVel heading (deg)", Math.toDegrees(currVel.heading));
-        TelemetryUtil.packet.put("Shooter : state", this.state);
-        TelemetryUtil.packet.put("Shooter : Hood Target (deg)", Math.toDegrees(hood.getTargetAngle()));
-        TelemetryUtil.packet.put("Shooter : Balltarget", ballTarget.toString());
-        TelemetryUtil.packet.put("Shooter : goal distance", Math.hypot(ROBOT_POSITION.x - robot.shooter.ballTarget.x, ROBOT_POSITION.y - robot.shooter.ballTarget.y));
-        TelemetryUtil.packet.put("Shooter : robot in Zone", isRobotInZone(0,0,-72,72,-72,-72) || isRobotInZone(48,0,72,24,72,-24));
+        */
+
         LogUtil.shooterState.set(this.state.toString());
         LogUtil.hoodAngle.set(hood.getTargetAngle());
         Canvas canvas = TelemetryUtil.packet.fieldOverlay();
@@ -622,13 +598,4 @@ public class Shooter {
         double virtualTurretAngle = Math.atan2(virtualY - ROBOT_POSITION.y, virtualX - ROBOT_POSITION.x) + sotmCompensation;
         turret.setTargetAngle(virtualTurretAngle - ROBOT_POSITION.heading);
     }
-
-    /*public void shootRegression() {
-        double dist = Math.hypot(ballTarget.x - ROBOT_POSITION.x, ballTarget.y - ROBOT_POSITION.y);
-        ShotSetpoint target = shooterTable.getSetpoint(dist);
-        if (target != null) {
-            minFlywheelVelocity = target.flywheelVel;
-            targetHoodAngle = target.hoodAngle;
-        }
-    }*/
 }

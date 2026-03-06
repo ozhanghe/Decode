@@ -96,8 +96,6 @@ public class Sensors {
         odoWheelPositions[1] = robot.drivetrain.rightFront.motor[0].getCurrentPosition(); // right
         odoWheelPositions[2] = robot.drivetrain.leftRear.motor[0].getCurrentPosition(); // back
 
-        //double flywheelPos = robot.drivetrain.rightRear.motor[0].getCurrentPosition();
-        // (flywheelPos - flywheelLastPos) / 28.0 = delta revolutions
         double flywheelAngularVel = robot.drivetrain.rightRear.motor[0].getVelocity() / 28.0;
         flywheelVelocity = flywheelAngularVel * 3.0 * Math.PI;
 
@@ -105,44 +103,30 @@ public class Sensors {
         robot.drivetrain.localizer.update();
         robot.drivetrain.mergeLocalizer.updateEncoders(odoWheelPositions);
         robot.drivetrain.mergeLocalizer.update();
+
         ROBOT_POSITION = robot.drivetrain.mergeLocalizer.getPoseEstimate();
         ROBOT_VELOCITY = robot.drivetrain.mergeLocalizer.getRelativePoseVelocity();
         ROBOT_GLOBAL_VELOCITY = robot.drivetrain.mergeLocalizer.getGlobalVelocity();
 
-        //parkEncoder.update();
-
-        // if (currentTime - initialTime < 200_000_000) resetTurretAngleEncoder = true;
         turretAngleEncoderPosition = robot.intake.feed.motor[0].getCurrentPosition() * (Math.PI) / -8192 / 2;
-
-        double newTurretAngle = (turretAngleEncoderPosition - turretAngleEncoderOffset) % (2*Math.PI);
+        double newTurretAngle = (turretAngleEncoderPosition - turretAngleEncoderOffset) % (2 * Math.PI);
         if (resetTurretAngleEncoder) {
-
             turretAnalogEncoderVoltage = turretAnalogEncoder.getVoltage();
             if (turretAnalogEncoderVoltage > 0.1) {
                 newTurretAngle = Utils.headingClip(RelativeEncoder.normalizeVoltage(turretAnalogEncoderVoltage) - Math.toRadians(turretAnalogEncoderOffsetDeg) - turretWrapMid) + turretWrapMid;
                 turretAngleEncoderOffset = turretAngleEncoderPosition - newTurretAngle;
-                //if (Globals.RUNMODE != RunMode.TESTER)
                 resetTurretAngleEncoder = false;
             }
         }
         turretAngle = turretAngle * (1 - turretAngleFilter) + newTurretAngle * turretAngleFilter;
 
-        //float[] color = colorSensor0.readLSRGBA();
-        //int[] colorRaw = colorSensor0.readLSRGBRAW();
-        //TelemetryUtil.packet.put("Intake : Color RGBA", Arrays.toString(color));
-        //TelemetryUtil.packet.put("Intake : Color Raw", Arrays.toString(colorRaw));
-
+        double lightSensorRawVoltage = lightSensor0.getVoltage();
         if (Globals.RUNMODE != RunMode.AUTO && currentTime - lastColorSensorUpdatedTime > colorSensorUpdateTime * 1e6) {
-            double lightSensorRawVoltage = lightSensor0.getVoltage();
             lightSensorFilteredVoltage = lightSensorFilteredVoltage * (1 - lightSensorFilter) + lightSensorRawVoltage * lightSensorFilter;
             isGreen = lightSensorFilteredVoltage > 0.01;
             isPurple = !isGreen && lightSensorFilteredVoltage > 0.005;
             light0G.set(isGreen);
             light0P.set(isPurple);
-            TelemetryUtil.packet.put("Intake : Light Raw Voltage", lightSensorRawVoltage);
-            TelemetryUtil.packet.put("Intake : Light Filtered Voltage", lightSensorFilteredVoltage);
-            //TelemetryUtil.packet.put("Intake : Light Voltage Green Thresh", 0.009);
-            //TelemetryUtil.packet.put("Intake : Light Voltage Purple Thresh", 0.004);
             lastColorSensorUpdatedTime = currentTime;
         }
 
@@ -151,7 +135,7 @@ public class Sensors {
             lastVoltageUpdatedTime = currentTime;
         }
 
-        updateTelemetry();
+        updateTelemetry(lightSensorRawVoltage);
     }
 
     public double getFlywheelVelocity() { return flywheelVelocity; }
@@ -175,27 +159,24 @@ public class Sensors {
 
     //position of the park slides
 
-    private void updateTelemetry() {
-        TelemetryUtil.packet.put("Voltage", voltage);
-        //TelemetryUtil.packet.put("Shooter : Flywheel Angular Velocity", flywheelAngularVel);
-        //TelemetryUtil.packet.put("Shooter : Flywheel RPM", flywheelAngularVel * 60);
-        TelemetryUtil.packet.put("Flywheel : Current Velocity", flywheelVelocity);
-        TelemetryUtil.packet.put("Turret : Current angle (deg)", Math.toDegrees(turretAngle));
-        TelemetryUtil.packet.put("Shooter : Hood top angle (deg)", Math.toDegrees(robot.shooter.hood.getCurrentAngle() / Shooter.hoodGearRatio + Shooter.hoodSweep));
-        //TelemetryUtil.packet.put("Shooter : Turret analog encoder voltage", turretAnalogEncoderVoltage);
-        //TelemetryUtil.packet.put("Shooter : Turret angle encoder position (deg)", Math.toDegrees(turretAngleEncoderPosition));
+    private void updateTelemetry(double lightSensorRawVoltage) {
+        TelemetryUtil.packet.put("Sensors: Voltage", voltage);
 
-        TelemetryUtil.packet.put("Intake : Color", isPurple ? "purple" : isGreen ? "green" : "none");
+        TelemetryUtil.packet.put("Sensors : Flywheel Velocity (in/s)", flywheelVelocity);
+        TelemetryUtil.packet.put("Sensors : Turret Angle (deg)", Math.toDegrees(turretAngle));
+        TelemetryUtil.packet.put("Sensors : Hood Angle (deg)", Math.toDegrees(robot.shooter.hood.getCurrentAngle() / Shooter.hoodGearRatio + Shooter.hoodSweep));
 
-        Pose2d currentPose = ROBOT_POSITION;
-        //TelemetryUtil.packet.put("Robot position", currentPose.toString());
+        TelemetryUtil.packet.put("Sensors : Ball Color", isPurple ? "purple" : isGreen ? "green" : "none");
+        TelemetryUtil.packet.put("Sensors : Light Raw Voltage", lightSensorRawVoltage);
+        TelemetryUtil.packet.put("Sensors : Light Filtered Voltage", lightSensorFilteredVoltage);
+
         Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
-        DashboardUtil.drawRobot(fieldOverlay, currentPose, "#00ff00", turretAngle, "#00e000c0", robot.shooter.turret.getTargetAngle(), "#8000ff");
+        DashboardUtil.drawRobot(fieldOverlay, ROBOT_POSITION, "#00ff00", turretAngle, "#00e000c0", robot.shooter.turret.getTargetAngle(), "#8000ff");
 
         LogUtil.turretAngle.set(turretAngle);
         LogUtil.flywheelVelocity.set(flywheelVelocity);
-        LogUtil.driveCurrentX.set(currentPose.x);
-        LogUtil.driveCurrentY.set(currentPose.y);
-        LogUtil.driveCurrentAngle.set(currentPose.heading);
+        LogUtil.driveCurrentX.set(ROBOT_POSITION.x);
+        LogUtil.driveCurrentY.set(ROBOT_POSITION.y);
+        LogUtil.driveCurrentAngle.set(ROBOT_POSITION.heading);
     }
 }
