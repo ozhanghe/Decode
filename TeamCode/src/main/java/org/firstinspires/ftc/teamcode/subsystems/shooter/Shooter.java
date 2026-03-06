@@ -512,7 +512,7 @@ public class Shooter {
         if (ROBOT_POSITION.x > 24) {
             ballTarget = new Vector3(-70,71 * (Globals.isRed ? 1 : -1),42);
         } else {
-            ballTarget = new Vector3(-64,64 * (Globals.isRed ? 1 : -1),42);
+            ballTarget = new Vector3(-70,66 * (Globals.isRed ? 1 : -1),42);
         }
         // Initial values based on the target
         double initialDist = Math.hypot(ballTarget.x - ROBOT_POSITION.x, ballTarget.y - ROBOT_POSITION.y);

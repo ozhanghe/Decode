@@ -162,14 +162,12 @@ public class Drivetrain {
     }
 
     private Path path = null;
-    ArrayList<RepulsionPoint> repel;
-
+    public PathData data;
     private Vector2 moveVector = new Vector2(0, 0);
-    private double turn = 0;
+    private double turnPow = 0;
     public double[] powers = {0, 0, 0, 0};
 
-    public PathData pd;
-    public static double centripetalScalar = 0.2;
+    public static double correctScalar = 0.2, decelThresh = 8.0;
 
     private Pose2d targetPoint = new Pose2d (0, 0, 0);
     public static PID xPID = new PID (0.05, 0.0, 0.005);
@@ -190,48 +188,37 @@ public class Drivetrain {
 
         switch(state) {
             case FOLLOW_SPLINE:
-                pd = path.update(ROBOT_POSITION);
+                data = path.update(ROBOT_POSITION);
 
-                if(path != null && path.completed) {
-                    targetPoint = path.lastPose.clone();
-                    isWaypoint = false;
+                if (data == null) {
+                    targetPoint = path.getLastPose();
+                    maxPower = 0.25;
                     path = null;
                     state = State.PID_TO_POINT;
                     break;
                 }
 
-                Vector2 pathForward, pathCentripetal;
-                pathForward = pd.vel;
+                Vector2 traverse = new Vector2(data.velocity.x, data.velocity.y);
+                Vector2 correct = new Vector2(0, traverse.mag() * traverse.mag() / data.radius * correctScalar);
+                correct.rotate(Math.atan2(traverse.y, traverse.x));
 
-                pathCentripetal = new Vector2(0, pathForward.mag() * pathForward.mag() / pd.r * centripetalScalar);
-                pathCentripetal.rotate(Math.atan2(pathForward.y, pathForward.x));
-
-                /*
-                Log.i("Path vel", pathForward.x + " " + pathForward.y);
-                Log.i("Path accel", pd.accel + "");
-                Log.i("Path cent", pathCentripetal.x + " " + pathCentripetal.y);
-                Log.i("Path r", pd.r + "");
-                 */
-
-                moveVector = Vector2.add(pathForward, pathCentripetal);
-                double mag = moveVector.mag();
+                moveVector = Vector2.add(traverse, correct);
                 moveVector.rotate(-ROBOT_POSITION.heading);
+                double mag = moveVector.mag();
                 moveVector.norm();
 
                 double pathRot = 0;
-                if(Math.abs(pd.r) < Spline.MAX_RADIUS) {
-                    pathRot = pathForward.mag() / mag * (TRACK_WIDTH / (2.0 * pd.r)) * (pd.reversed ? -1 : 1);
+                if (Math.abs(data.radius) < Spline.MAX_RADIUS) {
+                    pathRot = traverse.mag() / mag * (TRACK_WIDTH) / (2.0 * data.radius) * (data.reversed ? -1 : 1);
                 }
 
-                double targetHeading = Math.atan2(pathForward.y, pathForward.x) + (pd.reversed ? Math.PI : 0);
-                turn = pathRot + turnPID.update(AngleUtil.clipAngle(targetHeading - ROBOT_POSITION.heading), -0.6, 0.6);
+                double targetHeading = Math.atan2(traverse.y, traverse.x) + (data.reversed ? Math.PI : 0);
+                turnPow = pathRot + turnPID.update(targetHeading - ROBOT_POSITION.heading, -0.8, 0.8);
 
-                double distRemaining = ROBOT_POSITION.getDistanceFromPoint(path.lastPose);
-                if (path.pathSegments.get(pd.index).decel && distRemaining <= 18) {
-                    moveVector.mul(0.8 * Math.sqrt(distRemaining / 18) + 0.2);
+                if (data.decel & ROBOT_POSITION.getDistanceFromPoint(path.getSegLast(data.index)) < decelThresh) {
+                    moveVector.mul(0.2 + 0.8 * Math.sqrt(ROBOT_POSITION.getDistanceFromPoint(path.getSegLast(data.index)) / decelThresh));
                 }
-
-                setMoveVector(moveVector, turn);
+                moveVector.mul(data.power);
                 break;
             case PID_TO_POINT:
                 calculateErrors();

@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.subsystems.drive;
 
-import android.util.Log;
-
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.Vector2;
 
@@ -9,161 +7,119 @@ import java.util.ArrayList;
 
 class PathSegment {
     public final Spline spline;
-    public final boolean reversed;
-    public boolean decel;
+    public final boolean reversed, decel;
     public final double power;
 
-    PathSegment (Spline s, boolean r, boolean d, double p){
+    public PathSegment (Spline s, boolean rev, boolean dec, double pow) {
         spline = s;
-        reversed = r;
-        decel = d;
-        power = p;
+        reversed = rev;
+        decel = dec;
+        power = pow;
     }
 }
 
 class PathData {
-    Vector2 vel, accel;
-    double r, power;
-    boolean reversed;
-    int index;
+    public Vector2 velocity, acceleration;
+    public double radius, power;
+    public boolean reversed, decel;
+    public int index;
 
-    public PathData (Vector2 vel, Vector2 accel, double r, double power, boolean reversed, int index) {
-        this.vel = vel;
-        this.accel = accel;
-        this.r = r;
-        this.power = power;
-        this.reversed = reversed;
-        this.index = index;
+    public PathData (Vector2 vel, Vector2 accel, double r, double pow, boolean rev, boolean dec, int ind) {
+        velocity = new Vector2(vel.x, vel.y);
+        acceleration = new Vector2(accel.x, accel.y);
+        radius = r;
+        power = pow;
+        reversed = rev;
+        decel = dec;
+        index = ind;
     }
 }
 
-class InstantaneousData  {
-    Vector2 vel;
-    double mag;
+class GuidingVectors {
+    public Vector2 tangential, pull, repulsion;
 
-    public InstantaneousData (Vector2 v, double m) {
-        vel = v;
-        mag = m;
+    public GuidingVectors(Vector2 v_t, Vector2 v_p, Vector2 v_r) {
+        tangential = new Vector2(v_t.x, v_t.y);
+        pull = new Vector2(v_p.x, v_p.y);
+        pull.mul(tangential.mag());
+        repulsion = new Vector2(v_r.x, v_r.y);
     }
+
+    public Vector2 theoreticalVel() { return Vector2.add(tangential, Vector2.add(pull, repulsion)); }
+
+    public Vector2 getAccel(GuidingVectors predict) { return new Vector2((predict.theoreticalVel().x - this.theoreticalVel().x) / 0.001, (predict.theoreticalVel().y - this.theoreticalVel().y) / 0.001); }
+
+    public double getRadius(GuidingVectors predict) { return (this.theoreticalVel().mag() * this.theoreticalVel().mag() * this.theoreticalVel().mag()) / (this.theoreticalVel().x * this.getAccel(predict).y - this.theoreticalVel().y * this.getAccel(predict).x); }
 }
 
 public class Path {
-    ArrayList <PathSegment> pathSegments;
-    ArrayList <RepulsionPoint> repel;
-    boolean reversed, decel, completed;
-    double power;
-    int lastReachedIndex = 0;
-    Pose2d lastPose;
+    private ArrayList <PathSegment> segments;
+    private ArrayList <RepulsionPoint> repulsion;
+    private Pose2d lastPose;
 
-    public Path (Pose2d p) {
-        this.repel = new ArrayList <>();
-        pathSegments = new ArrayList <>();
-        reversed = false;
-        decel = false;
-        completed = false;
-        power = 1.0;
+    public Path (Pose2d p, ArrayList <RepulsionPoint> rp) {
+        segments = new ArrayList<>();
+        repulsion = rp;
         lastPose = p.clone();
     }
 
-    public Path (Pose2d p, ArrayList<RepulsionPoint> repel) {
-        this.repel = repel;
-        pathSegments = new ArrayList <>();
-        reversed = false;
-        decel = false;
-        completed = false;
-        power = 1.0;
+    public Path addPoint(Pose2d p, boolean rev, boolean dec) {
+        if (rev) p.heading += Math.PI;
+        segments.add(new PathSegment (new Spline (lastPose, p), rev, dec, 1.0));
         lastPose = p.clone();
+        return this;
     }
 
-    public Path addPoint(Pose2d p) {
-        if(reversed) {
-            p.heading += Math.PI;
-        }
-
-        Spline s = new Spline (lastPose, p);
-        pathSegments.add(new PathSegment(s, reversed, decel, 1.0));
+    public Path addPoint(Pose2d p, boolean rev, boolean dec, double pow) {
+        if (rev) p.heading += Math.PI;
+        segments.add(new PathSegment (new Spline (lastPose, p), rev, dec, pow));
         lastPose = p.clone();
-
         return this;
     }
 
-    public Path addRepel(RepulsionPoint point){
-        this.repel.add(point);
-        return this;
-    }
+    public Pose2d getSegLast(int index) { return new Pose2d(segments.get(index).spline.getPos(1).x, segments.get(index).spline.getPos(1).y); }
 
-    public Path setReversed (boolean rev) {
-        if (rev != reversed) {
-            lastPose.heading += Math.PI;
-        }
-        reversed = rev;
+    public Pose2d getLastPose() { return lastPose.clone(); }
 
-        return this;
-    }
+    public static double k_p = 0.1666; // 1 / 6
 
-    public Path setDecel (boolean dec) {
-        if (dec != decel && pathSegments.size() != 0) {
-            pathSegments.get(pathSegments.size() - 1).decel = dec;
-        }
-        decel = dec;
+    private GuidingVectors calculate(PathSegment currSegment, Pose2d robot) {
+        Spline s = currSegment.spline;
+        double tau = s.getT(robot);
 
-        return this;
-    }
-
-    public static double k_p = 0.1666;
-
-    public InstantaneousData getVelocity (Spline s, double tau, Vector2 robot) {
         Vector2 v_t = s.getVel(tau);
-        v_t.norm();
-        Log.i("Path v_t", v_t + "");
 
         Vector2 v_p = new Vector2(s.getPos(tau).x - robot.x, s.getPos(tau).y - robot.y);
         v_p.mul(k_p);
-        Log.i("Path v_p", v_p + "");
 
-        Vector2 v_rep = new Vector2(0, 0);
-        for(RepulsionPoint rep : repel) {
-            Vector2 trep = new Vector2(robot.x - rep.x, robot.y - rep.y);
-            double scale = Math.pow(Math.E, 1 - Math.pow(trep.mag()/rep.weight,2));
-            trep.norm();
-            trep.mul(scale);
-
-            v_rep.add(trep);
+        Vector2 v_r = new Vector2(0, 0);
+        for(RepulsionPoint rp : repulsion) {
+            v_r.add(rp.getInfluence(robot));
         }
-        Log.i("Path v_rep", v_rep + "");
 
-        return new InstantaneousData(Vector2.add(v_t, Vector2.add(v_p, v_rep)), v_t.mag());
+
+        return new GuidingVectors(v_t, v_p, v_r);
     }
 
-    public PathData update (Pose2d robot) {
-        PathSegment curr;
-        int index = lastReachedIndex;
-
-        while(index < pathSegments.size() && pathSegments.get(index).spline.getT(robot) == 1.0) {
+    public PathData update(Pose2d robot) {
+        int index = 0;
+        while (index < segments.size() && segments.get(index).spline.getT(robot) == 1.0) {
             index++;
         }
-        Log.i("Path chosen index", index + "");
-        lastReachedIndex = index;
 
-        completed = index == pathSegments.size();
-        if (completed) {
-            return null;
-        }
+        if (index == segments.size()) return null;
 
-        curr = pathSegments.get(index);
+        GuidingVectors current = calculate(segments.get(index), robot);
+        GuidingVectors predict = calculate(segments.get(index), new Pose2d(robot.x + current.theoreticalVel().x * 0.001, robot.y + current.theoreticalVel().y * 0.001));
 
-        InstantaneousData current = getVelocity(
-                curr.spline,
-                curr.spline.getT(robot),
-                new Vector2(robot.x, robot.y));
-
-        InstantaneousData next = getVelocity(
-                curr.spline,
-                curr.spline.getT(new Pose2d(robot.x + current.vel.x * 0.001, robot.y + current.vel.y * 0.001)),
-                new Vector2(robot.x + current.vel.x * 0.001, robot.y + current.vel.y * 0.001));
-
-        Vector2 accel = new Vector2((next.vel.x * next.mag - current.vel.x * current.mag) / 0.001, (next.vel.y * next.mag - current.vel.y * current.mag));
-
-        return new PathData(current.vel, accel, (current.vel.mag() * current.vel.mag() * current.vel.mag()) / (current.vel.x * accel.y - current.vel.y * accel.x), curr.power, curr.reversed, index);
+        return new PathData(
+                current.theoreticalVel(),
+                current.getAccel(predict),
+                current.getRadius(predict),
+                segments.get(index).power,
+                segments.get(index).reversed,
+                segments.get(index).decel,
+                index
+        );
     }
 }

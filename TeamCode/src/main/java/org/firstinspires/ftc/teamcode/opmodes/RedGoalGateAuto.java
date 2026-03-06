@@ -91,16 +91,8 @@ public class RedGoalGateAuto extends LinearOpMode {
     }
 
     private void shoot(double heading, int shotType) {
-        /*if (shotType > 0) {
-            robot.drivetrain.goToPoint(new Pose2d(shotType == 2 ? -32 : -13, 20, heading), 1, true);
-            robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
-        } else {
-            robot.drivetrain.goToPoint(new Pose2d(-18, 18, 0), 1, true);
-            robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
-        }*/
-
         robot.shooter.reqAim(true);
-        robot.drivetrain.goToPoint(new Pose2d(shotType == 1 ? -10 : -18, shotType == 1 ? 10 : 18, heading), 1);
+        robot.drivetrain.goToPoint(new Pose2d(shotType == 1 ? -7 : -18, shotType == 1 ? 7 : 18, heading), 1);
         //robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || !robot.shooter.atVel() || !robot.shooter.turret.inPosition());
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || robot.shooter.state != Shooter.State.READY);
         robot.waitFor(200);
@@ -140,10 +132,36 @@ public class RedGoalGateAuto extends LinearOpMode {
     }
 
     private void gate_intake(boolean skipLast) {
+        //-7, 7
         // align
+
+
+
+        /*
         robot.drivetrain.goToPoint(new Pose2d(4, 22, Math.PI / 2), 1, true);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.intake.reqIntake(true);
+        */
+
+        //-7, 7
+        //-5. 17
+        //-3. 27
+        //0, 37
+        //2, 47
+        //4, 54
+
+        robot.drivetrain.goToPoint(new Pose2d(-5, 17, Math.PI / 2), 1, true);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+
+        robot.drivetrain.goToPoint(new Pose2d(-3, 27, Math.PI / 2), 1, true);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+
+        robot.drivetrain.goToPoint(new Pose2d(0, 37, Math.PI / 2), 1, true);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+
+        robot.drivetrain.goToPoint(new Pose2d(2, 47, Math.PI / 2), 1, true);
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+
 
         // hit gate
         robot.drivetrain.goToPoint(new Pose2d(4, 54, Math.PI / 2), 1);
