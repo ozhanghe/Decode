@@ -42,7 +42,7 @@ public class Sensors {
     private double turretAngleEncoderOffset, turretAngleEncoderPosition;
     public static double turretAnalogEncoderOffsetDeg = 172;
     public static double turretAngleFilter = 0.6;
-    public static double turretLimitLeft = Math.toRadians(330), turretLimitRight = Math.toRadians(-20), turretWrapMid = Math.toRadians(155);
+    public static double turretLimitLeft = Math.toRadians(340), turretLimitRight = Math.toRadians(-10), turretWrapMid = Math.toRadians(165);
     public static boolean resetTurretAngleEncoder = true;
     private double turretAnalogEncoderVoltage;
 
@@ -110,7 +110,7 @@ public class Sensors {
 
         if (currentTime - initialTime < 400_000_000) resetTurretAngleEncoder = true;
         turretAngleEncoderPosition = robot.intake.feed.motor[0].getCurrentPosition() * (Math.PI) / -8192 / 2;
-        double newTurretAngle = (turretAngleEncoderPosition - turretAngleEncoderOffset) % (2 * Math.PI);
+        double newTurretAngle = turretAngleEncoderPosition - turretAngleEncoderOffset;
         if (resetTurretAngleEncoder) {
             turretAnalogEncoderVoltage = turretAnalogEncoder.getVoltage();
             if (turretAnalogEncoderVoltage > 0.1) {

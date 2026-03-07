@@ -283,8 +283,12 @@ public class Teleop extends LinearOpMode {
             if (lb2.isClicked(gamepad2.left_bumper)) LogUtil.event.add("ballMiss");
             else if (rb2.isClicked(gamepad2.right_bumper)) LogUtil.event.add("ballHit");
 
-            if (gamepad1.dpad_up) robot.park.setPower(1);
-            else if (gamepad1.dpad_down) robot.park.setPower(-1);
+            if (gamepad1.dpad_up) {
+                robot.park.setPower(1);
+                robot.shooter.setManual(true);
+                robot.shooter.turretTrackInManual = false;
+                robot.shooter.turret.setTargetAngle(Math.toRadians(195));
+            } else if (gamepad1.dpad_down) robot.park.setPower(-1);
             else robot.park.setPower(0);
 
             robot.drivetrain.drive(gamepad1);

@@ -268,7 +268,7 @@ public class MergeLocalizer extends Localizer {
         DashboardUtil.drawRobot(fieldOverlay, currentPose, this.color); // blue
 
         if (estimatedCameraPose != null) {
-            DashboardUtil.drawRobot(fieldOverlay, estimatedCameraPose, "000000"); // black
+            DashboardUtil.drawRobot(fieldOverlay, estimatedCameraPose, "#000000"); // black
         }
         DashboardUtil.drawPoseHistory(fieldOverlay, poseHistory);
     }

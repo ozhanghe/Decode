@@ -62,7 +62,7 @@ public class Vision {
 
         visionPortal = builder.build();
 
-        //TelemetryUtil.dashboard.startCameraStream(visionPortal, 30);
+        TelemetryUtil.dashboard.startCameraStream(visionPortal, 30);
 
         try {
             ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);

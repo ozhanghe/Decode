@@ -14,6 +14,7 @@ import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
+import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 
 @Config
 @Autonomous(name = "XX Red Tunnel Cycle Auto", group = "Auto", preselectTeleOp = "A. Teleop")
@@ -41,6 +42,7 @@ public class RedTunnelCycleAuto extends LinearOpMode {
         if (!isStopRequested()) LogUtil.init();
         LogUtil.drivePositionReset = true;
 
+        long t = System.currentTimeMillis();
         robot.shooter.setManual(false);
 
         robot.shooter.reqAim(true);
@@ -50,9 +52,12 @@ public class RedTunnelCycleAuto extends LinearOpMode {
         intakeSpikes(37,60);
         shoot(Math.PI / 2, false);
 
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 5; ++i) {
+            telemetry.addData("i", i);
             intake(61, 60);
             shoot(Math.PI / 2, false);
+            long x = System.currentTimeMillis() - t;
+            telemetry.addData("Time", x);
         }
 
         robot.shooter.setManual(true);

@@ -160,8 +160,6 @@ public class RedGoalGateAuto extends LinearOpMode {
         //-7, 7
         // align
 
-
-
         /*
         robot.drivetrain.goToPoint(new Pose2d(4, 22, Math.PI / 2), 1, true);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
@@ -177,9 +175,8 @@ public class RedGoalGateAuto extends LinearOpMode {
 
         robot.intake.reqIntake(true);
 
-
         // hit gate
-        robot.drivetrain.goToPoint(new Pose2d(6, 51, Math.toRadians(80)), 1);
+        robot.drivetrain.goToPoint(new Pose2d(4, 51, Math.toRadians(80)), 1);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         //robot.waitFor(gateOpenDuration);
 
@@ -199,12 +196,9 @@ public class RedGoalGateAuto extends LinearOpMode {
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.waitFor(gateIntakeDuration);
 
-
         robot.drivetrain.goToPoint(new Pose2d(12, 56, Math.toRadians(80)), 1, true);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.intake.reqOff(true);
-
-
 
         robot.drivetrain.goToPoint(new Pose2d(-6, 10, Math.toRadians(80)), 1, false);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);

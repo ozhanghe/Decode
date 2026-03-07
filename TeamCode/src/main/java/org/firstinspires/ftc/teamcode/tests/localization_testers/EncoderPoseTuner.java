@@ -26,9 +26,9 @@ public class EncoderPoseTuner extends LinearOpMode {
         //Vision vision = new Vision(hardwareMap);
         //Drivetrain drivetrain = new Drivetrain(hardwareMap, sensors, hardwareQueue, vision);
 
-        double leftInitial = drivetrain.leftRear.motor[0].getCurrentPosition();
-        double rightInitial = drivetrain.rightRear.motor[0].getCurrentPosition();
-        double backInitial = drivetrain.rightFront.motor[0].getCurrentPosition();
+        double leftInitial = drivetrain.leftFront.motor[0].getCurrentPosition();
+        double rightInitial = drivetrain.rightFront.motor[0].getCurrentPosition();
+        double backInitial = drivetrain.leftRear.motor[0].getCurrentPosition();
         double theta;
 
         waitForStart();
