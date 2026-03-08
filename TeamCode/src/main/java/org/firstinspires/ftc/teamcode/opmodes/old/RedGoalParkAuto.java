@@ -1,11 +1,10 @@
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.opmodes.old;
 
-import static org.firstinspires.ftc.teamcode.utils.Globals.AUTO_ENDING_POSE;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_LENGTH;
-import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_WIDTH;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.Robot;
@@ -15,7 +14,7 @@ import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
-
+@Disabled
 @Autonomous(name = "RedGoalParkAuto")
 public class RedGoalParkAuto extends LinearOpMode {
     private Robot robot;
