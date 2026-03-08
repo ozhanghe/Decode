@@ -24,16 +24,21 @@ public class ShotTable {
     public double hoodMultiplier = 1.0;
 
     public ShotTable() {
+        table.put(44.1, new ShotSetpoint(400, Math.toRadians(26.4)));
         table.put(50.8, new ShotSetpoint(445, Math.toRadians(26.4)));
         table.put(60.8, new ShotSetpoint(465, Math.toRadians(39.0)));
         table.put(70.1, new ShotSetpoint(523, Math.toRadians(48.2)));
         table.put(80.6, new ShotSetpoint(525, Math.toRadians(48.5)));
+        table.put(83.0, new ShotSetpoint(525, Math.toRadians(49.3)));
         table.put(90.0, new ShotSetpoint(538, Math.toRadians(49.0)));
         table.put(98.4, new ShotSetpoint(546, Math.toRadians(49.3)));
         table.put(110.7, new ShotSetpoint(580, Math.toRadians(49.3)));
         table.put(122.7, new ShotSetpoint(607, Math.toRadians(49.6)));
-        table.put(131.9, new ShotSetpoint(624, Math.toRadians(60.58)));
-        table.put(135.4, new ShotSetpoint(638, Math.toRadians(60.58)));
+        table.put(131.9, new ShotSetpoint(625, Math.toRadians(51)));
+        table.put(135.4, new ShotSetpoint(638, Math.toRadians(51)));
+        table.put(137.5, new ShotSetpoint(640, Math.toRadians(48.5)));
+        table.put(140.5, new ShotSetpoint(660, Math.toRadians(48.5)));
+        table.put(154.6, new ShotSetpoint(660, Math.toRadians(48.5)));
     }
 
     public void addSetpoint(double distanceInches, ShotSetpoint setpoint) {

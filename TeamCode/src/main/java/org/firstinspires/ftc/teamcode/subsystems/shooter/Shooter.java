@@ -161,7 +161,7 @@ public class Shooter {
                 flywheel.setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
 
-                if (shootRequest) {
+                if (shootRequest /* && (isRobotInZone(0,0,-72,72,-72,-72) || isRobotInZone(48,0,72,24,72,-24)) */) {
                     setShooterBlocker(false);
                     if (flywheelBlocker.inPosition()) {
                         state = State.SHOOT;
@@ -194,7 +194,12 @@ public class Shooter {
                     flywheel.setTargetVelocity(0.0);
                     robot.intake.reqShoot(false);
                     robot.intake.reqOff(true);
-                }
+                } /*else if (!isRobotInZone(0,0,-72,72,-72,-72) && !isRobotInZone(48,0,72,24,72,-24)) {
+                    state = State.AIMING;
+                    robot.intake.reqShoot(false);
+                    robot.intake.reqIntake(true);
+                    robot.intake.setRollerDirection(false);
+                }*/
                 break;
             }
             case TEST: {
@@ -512,7 +517,7 @@ public class Shooter {
         if (ROBOT_POSITION.x > 24) {
             ballTarget = new Vector3(-70,71 * (Globals.isRed ? 1 : -1),42);
         } else {
-            ballTarget = new Vector3(-69,69 * (Globals.isRed ? 1 : -1),42);
+            ballTarget = new Vector3(-67,69 * (Globals.isRed ? 1 : -1),42);
         }
         // Initial values based on the target
         double initialDist = Math.hypot(ballTarget.x - ROBOT_POSITION.x, ballTarget.y - ROBOT_POSITION.y);

@@ -33,6 +33,7 @@ public class Vision {
     public VisionPortal visionPortal = null;
 
     public long frameAcquisitionNanoTime = 0;
+    public static double decisionMarginLimit = 55;
 
     public Vision (HardwareMap hardwareMap) {
         init(hardwareMap);
@@ -50,7 +51,7 @@ public class Vision {
                 .setOutputUnits(DistanceUnit.INCH, AngleUnit.RADIANS)
                 .setLensIntrinsics(549.651, 549.651, 317.108, 236.644) // 640x480: 549.651, 549.651, 317.108, 236.644; 320x240: 281.5573273, 281.366942, 156.3332591, 119.8965271
                 .setCameraPose(
-                        new Position(DistanceUnit.MM, -135.675, 130.402, 228, 0),
+                        new Position(DistanceUnit.MM, -135.675, 155.8, 228, 0),
                         new YawPitchRollAngles(AngleUnit.DEGREES, 0, -90, 0, 0))
                 .build();
 
@@ -62,7 +63,7 @@ public class Vision {
 
         visionPortal = builder.build();
 
-        TelemetryUtil.dashboard.startCameraStream(visionPortal, 30);
+        //TelemetryUtil.dashboard.startCameraStream(visionPortal, 30);
 
         try {
             ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
@@ -72,7 +73,7 @@ public class Vision {
             GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
             gainControl.setGain(100);
         } catch (Exception e) {
-            Log.i("WHAT A TERRIBLE FAILURE.", "Camera Exposure/Gain Control got fried \n" + e);
+            Log.i("Vision", "Camera Exposure/Gain Control got fried \n" + e);
         }
 
         visionPortal.setProcessorEnabled(aprilTagProcessor, true);
@@ -113,7 +114,7 @@ public class Vision {
                 AprilTagDetection detection = detections.get(0);
 
                 TelemetryUtil.packet.put("Vision : Decision Margin", String.valueOf(detection.decisionMargin));
-                if (detection.decisionMargin < 110) return null;
+                if (detection.decisionMargin < decisionMarginLimit) return null;
 
                 frameAcquisitionNanoTime = detection.frameAcquisitionNanoTime;
 

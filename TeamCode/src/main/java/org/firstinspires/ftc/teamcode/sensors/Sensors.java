@@ -39,11 +39,12 @@ public class Sensors {
     public AnalogInput turretAnalogEncoder;
     private double turretAngle;
     private double turretAngleEncoderOffset, turretAngleEncoderPosition;
-    public static double turretAnalogEncoderOffsetDeg = 172;
+    public static double turretAnalogEncoderOffsetDeg = 148;
     public static double turretAngleFilter = 0.6;
     public static double turretLimitLeft = Math.toRadians(340), turretLimitRight = Math.toRadians(-10), turretWrapMid = Math.toRadians(165);
     public static boolean resetTurretAngleEncoder = true;
     private double turretAnalogEncoderVoltage;
+    public static double lastTurretAngle = 0.0;
 
     private double lightSensorFilteredVoltage = 0;
     public static double lightSensorFilter = 0.5;
@@ -107,24 +108,24 @@ public class Sensors {
         ROBOT_VELOCITY = robot.drivetrain.mergeLocalizer.getRelativePoseVelocity();
         ROBOT_GLOBAL_VELOCITY = robot.drivetrain.mergeLocalizer.getGlobalVelocity();
 
-        if (currentTime - initialTime < 400_000_000) resetTurretAngleEncoder = true;
-        turretAngleEncoderPosition = robot.intake.feed.motor[0].getCurrentPosition() * (Math.PI) / -8192 / 2;
+        if (currentTime - initialTime < 500_000_000) resetTurretAngleEncoder = true;
+        turretAngleEncoderPosition = getTurretAngleRaw();
         double newTurretAngle = turretAngleEncoderPosition - turretAngleEncoderOffset;
         if (resetTurretAngleEncoder) {
             turretAnalogEncoderVoltage = turretAnalogEncoder.getVoltage();
             if (turretAnalogEncoderVoltage > 0.1) {
                 newTurretAngle = Utils.headingClip(RelativeEncoder.normalizeVoltage(turretAnalogEncoderVoltage) - Math.toRadians(turretAnalogEncoderOffsetDeg) - turretWrapMid) + turretWrapMid;
                 turretAngleEncoderOffset = turretAngleEncoderPosition - newTurretAngle;
-                resetTurretAngleEncoder = false;
+                if (Globals.RUNMODE != RunMode.TESTER) resetTurretAngleEncoder = false;
             }
         }
-        turretAngle = turretAngle * (1 - turretAngleFilter) + newTurretAngle * turretAngleFilter;
+        lastTurretAngle = turretAngle = turretAngle * (1 - turretAngleFilter) + newTurretAngle * turretAngleFilter;
 
         if (Globals.RUNMODE != RunMode.AUTO && currentTime - lastColorSensorUpdatedTime > colorSensorUpdateTime * 1e6) {
             double lightSensorRawVoltage = lightSensor0.getVoltage();
             lightSensorFilteredVoltage = lightSensorFilteredVoltage * (1 - lightSensorFilter) + lightSensorRawVoltage * lightSensorFilter;
-            isGreen = lightSensorFilteredVoltage > 0.004;
-            isPurple = !isGreen && lightSensorFilteredVoltage > 0.0015;
+            isGreen = lightSensorFilteredVoltage > 0.008;
+            isPurple = !isGreen && lightSensorFilteredVoltage > 0.007;
             light0G.set(isGreen);
             light0P.set(isPurple);
             TelemetryUtil.packet.put("Intake : Light Raw Voltage", lightSensorRawVoltage);
@@ -140,6 +141,12 @@ public class Sensors {
         }
 
         updateTelemetry();
+    }
+
+    private double getTurretAngleRaw() { return robot.intake.feed.motor[0].getCurrentPosition() * (Math.PI) / -8192 / 2; }
+    public void resetTurretAngleEncoder() {
+        if (Globals.RUNMODE != RunMode.TELEOP) lastTurretAngle = 0;
+        turretAngleEncoderOffset = turretAngleEncoderPosition = getTurretAngleRaw() - lastTurretAngle;
     }
 
     public double getFlywheelVelocity() { return flywheelVelocity; }
@@ -168,6 +175,7 @@ public class Sensors {
 
         TelemetryUtil.packet.put("Flywheel : Current Velocity (in/s)", flywheelVelocity);
         TelemetryUtil.packet.put("Turret : Current angle (deg)", Math.toDegrees(turretAngle));
+        TelemetryUtil.packet.put("Turret : turretAnalogEncoderVoltage", turretAnalogEncoderVoltage);
         TelemetryUtil.packet.put("Shooter : Hood launch angle (deg)", Math.toDegrees(robot.shooter.hood.getCurrentAngle() / Shooter.hoodGearRatio + Shooter.hoodSweep));
 
         TelemetryUtil.packet.put("Intake : Ball Color", isPurple ? "purple" : isGreen ? "green" : "none");

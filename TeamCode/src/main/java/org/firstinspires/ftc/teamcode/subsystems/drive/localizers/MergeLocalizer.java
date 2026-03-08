@@ -53,10 +53,10 @@ public class MergeLocalizer extends Localizer {
 
     // Camera
     private Pose2d estimatedCameraPose = new Pose2d(0,0,0);
-    public static boolean useCamera = true;
-    private int numberOfTimesRelocalizedWithCamera = 0;
+    public static boolean useCamera = false;
+    public int numberOfTimesRelocalizedWithCamera = 0;
     private long lastFrameAcquisitionNanoTime = 0;
-    public static double cameraFilterFactor = 0.2, cameraSmoothFactor = 0.01;
+    public static double cameraFilterFactor = 0.2, cameraSmoothFactor = 0.02;
     //how many frames the camera has to see consecutively before it updates the pose
     public static int frameRequirement = 3;
     private int consecutiveFrames = 0;

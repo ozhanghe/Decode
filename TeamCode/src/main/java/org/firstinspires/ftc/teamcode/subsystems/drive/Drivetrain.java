@@ -293,7 +293,7 @@ public class Drivetrain {
         this.maxPower = maxPower;
         this.isWaypoint = isWaypoint;
 
-        if (lastTargetPoint.x != targetPoint.x || lastTargetPoint.y != targetPoint.y || lastTargetPoint.heading != targetPoint.heading) {
+        if (lastTargetPoint.x != targetPoint.x || lastTargetPoint.y != targetPoint.y || lastTargetPoint.heading != targetPoint.heading || state == State.DRIVE) {
             xPID.resetIntegral();
             yPID.resetIntegral();
             turnPID.resetIntegral();
