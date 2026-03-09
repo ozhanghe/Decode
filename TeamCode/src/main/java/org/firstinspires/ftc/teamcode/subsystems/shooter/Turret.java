@@ -1,20 +1,19 @@
 package org.firstinspires.ftc.teamcode.subsystems.shooter;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
-import org.firstinspires.ftc.teamcode.utils.Utils;
-import org.firstinspires.ftc.teamcode.utils.priority.PriorityCRServo;
+import org.firstinspires.ftc.teamcode.utils.priority.nPriorityServo;
 
 @Config
 public class Turret {
     private final Robot robot;
-    public final PriorityCRServo turret;
+    public final nPriorityServo turret;
 
     public static PID turretPID = new PID (0.15, 0, 0.02);
     public static PID finalAdjustPID = new PID (0.08, 0.0, 0.004);
@@ -33,22 +32,28 @@ public class Turret {
     public Turret(Robot robot) {
         this.robot = robot;
 
-        turret = new PriorityCRServo(
-                new CRServo[] {robot.hardwareMap.get(CRServo.class, "turret1"), robot.hardwareMap.get(CRServo.class, "turret2")},
-                "turret", PriorityCRServo.ServoType.AXON_MINI,
+        turret = new nPriorityServo(
+                new Servo[] {robot.hardwareMap.get(Servo.class, "turret1"), robot.hardwareMap.get(Servo.class, "turret2")},
+                "turret", nPriorityServo.ServoType.AXON_MINI,
+                0, 1, 0.5,
                 new boolean[] {false, false},
                 5, 6
         );
+        /*
 
         turret.setTargetPower(0.1);
         turret.update();
         turret.setTargetPower(0.0);
         turret.update();
 
+         */
+
         robot.hardwareQueue.addDevice(turret);
     }
 
     public void update() {
+
+        /*
         // Turret PIDF
         targetTurretAngleVel = targetTurretAngleVel * (1 - targetTurretAngleVelFilter) + (targetTurretAngle - lastTurretTarget) / robot.sensors.loopTime * targetTurretAngleVelFilter;
         targetTurretAngleVel = Utils.minMaxClip(targetTurretAngleVel, -150, 150);
@@ -72,23 +77,29 @@ public class Turret {
         if (turretAngle >= Sensors.turretLimitLeft) turretPow = Math.min(turretPow, -turretKStaticBig);
         if (turretAngle <= Sensors.turretLimitRight) turretPow = Math.max(turretPow, turretKStaticBig);
 
+
+
         turretPow = Utils.minMaxClip(turretPow, -1, 1);
         turret.setTargetPower(turretPow);
 
         updateTelemetry(turretPow, turretError);
+
+         */
+
+        turret.setTargetAngle(targetTurretAngle);
     }
 
     public void setTargetAngle(double targetAngle) { targetTurretAngle = Sensors.turretAngleClip(targetAngle); }
 
     public double getTargetAngle() { return targetTurretAngle; }
 
-    public boolean inPosition() { return Math.abs(targetTurretAngle - robot.sensors.getTurretAngle()) <= inPositionThresh; }
+    public boolean inPosition() { return turret.inPosition(); }
 
     private void updateTelemetry(double turretPow, double turretError) {
-        TelemetryUtil.packet.put("Turret : targetAngleVel (deg)", Math.toDegrees(targetTurretAngleVel));
-        TelemetryUtil.packet.put("Turret : Target Angle (deg)", Math.toDegrees(targetTurretAngle));
-        TelemetryUtil.packet.put("Turret : Power Applied", turretPow * 100);
-        TelemetryUtil.packet.put("Turret : Error (def)", Math.toDegrees(turretError));
+        TelemetryUtil.packet.put("Turret : pos", Math.toDegrees(turret.getCurrentAngle()));
+        TelemetryUtil.packet.put("Turret : target", Math.toDegrees(turret.getTargetAngle()));
+
+
         LogUtil.turretTarget.set(targetTurretAngle);
     }
 }
