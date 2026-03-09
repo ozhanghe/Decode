@@ -110,11 +110,27 @@ public class Path {
 
     public PathData update(Pose2d robot) {
         int index = 0;
-        while (index < segments.size() && segments.get(index).spline.getT(robot) == 1.0) {
+        while (index < segments.size() - 1 && segments.get(index).spline.getT(robot) > 0.98) {
             index++;
         }
 
         if (index == segments.size()) return null;
+
+        PathSegment currSeg = segments.get(index);
+        GuidingVectors currentGVF = calculate(currSeg, robot);
+        double t = currSeg.spline.getT(robot);
+        Vector2 finalVel = currentGVF.theoreticalVel();
+        double blendThreshold = 0.9;
+
+        if (index < segments.size() - 1 && t > blendThreshold) {
+            PathSegment nextSeg = segments.get(index + 1);
+            GuidingVectors nextGVF = calculate(nextSeg, robot);
+
+            double weight = (t - blendThreshold) / (1.0 - blendThreshold);
+
+            finalVel.x = finalVel.x * (1 - weight) + nextGVF.theoreticalVel().x * weight;
+            finalVel.y = finalVel.y * (1 - weight) + nextGVF.theoreticalVel().y * weight;
+        }
 
         GuidingVectors current = calculate(segments.get(index), robot);
         GuidingVectors predict = calculate(segments.get(index), new Pose2d(robot.x + current.theoreticalVel().x * 0.001, robot.y + current.theoreticalVel().y * 0.001));
