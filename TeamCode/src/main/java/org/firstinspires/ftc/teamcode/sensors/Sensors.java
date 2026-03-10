@@ -36,14 +36,14 @@ public class Sensors {
     // Enocder Resolution: 28 PPR
     private double flywheelVelocity = 0;
 
-    public AnalogInput turretAnalogEncoder;
+    //public AnalogInput turretAnalogEncoder;
     private double turretAngle;
     private double turretAngleEncoderOffset, turretAngleEncoderPosition;
-    public static double turretAnalogEncoderOffsetDeg = 148;
+    //public static double turretAnalogEncoderOffsetDeg = 148;
     public static double turretAngleFilter = 0.6;
-    public static double turretLimitLeft = Math.toRadians(340), turretLimitRight = Math.toRadians(-10), turretWrapMid = Math.toRadians(165);
-    public static boolean resetTurretAngleEncoder = true;
-    private double turretAnalogEncoderVoltage;
+    public static double turretLimitLeft = Math.toRadians(295), turretLimitRight = Math.toRadians(-25), turretWrapMid = Math.toRadians(135);
+    //public static boolean resetTurretAngleEncoder = true;
+    //private double turretAnalogEncoderVoltage;
     public static double lastTurretAngle = 0.0;
 
     private double lightSensorFilteredVoltage = 0;
@@ -65,9 +65,9 @@ public class Sensors {
         voltageSensor = robot.hardwareMap.voltageSensor.iterator().next();
         voltage = voltageSensor.getVoltage();
 
-        turretAnalogEncoder = robot.hardwareMap.get(AnalogInput.class, "turret_encoder");
+        //turretAnalogEncoder = robot.hardwareMap.get(AnalogInput.class, "turret_encoder");
         turretAngleEncoderOffset = turretAngleEncoderPosition = turretAngle = 0;
-        resetTurretAngleEncoder = true;
+        //resetTurretAngleEncoder = true;
 
         lightSensor0 = robot.hardwareMap.get(AnalogInput.class, "lightSensor0");
         light0G = new LEDWrapper(robot.hardwareMap, "light0G");
@@ -108,17 +108,17 @@ public class Sensors {
         ROBOT_VELOCITY = robot.drivetrain.mergeLocalizer.getRelativePoseVelocity();
         ROBOT_GLOBAL_VELOCITY = robot.drivetrain.mergeLocalizer.getGlobalVelocity();
 
-        if (currentTime - initialTime < 500_000_000) resetTurretAngleEncoder = true;
+        //if (currentTime - initialTime < 500_000_000) resetTurretAngleEncoder = true;
         turretAngleEncoderPosition = getTurretAngleRaw();
         double newTurretAngle = turretAngleEncoderPosition - turretAngleEncoderOffset;
-        if (resetTurretAngleEncoder) {
+        /*if (resetTurretAngleEncoder) {
             turretAnalogEncoderVoltage = turretAnalogEncoder.getVoltage();
             if (turretAnalogEncoderVoltage > 0.1) {
                 newTurretAngle = Utils.headingClip(RelativeEncoder.normalizeVoltage(turretAnalogEncoderVoltage) - Math.toRadians(turretAnalogEncoderOffsetDeg) - turretWrapMid) + turretWrapMid;
                 turretAngleEncoderOffset = turretAngleEncoderPosition - newTurretAngle;
                 if (Globals.RUNMODE != RunMode.TESTER) resetTurretAngleEncoder = false;
             }
-        }
+        }*/
         lastTurretAngle = turretAngle = turretAngle * (1 - turretAngleFilter) + newTurretAngle * turretAngleFilter;
 
         if (Globals.RUNMODE != RunMode.AUTO && currentTime - lastColorSensorUpdatedTime > colorSensorUpdateTime * 1e6) {
@@ -174,16 +174,16 @@ public class Sensors {
         TelemetryUtil.packet.put("Sensors: Voltage", voltage);
 
         TelemetryUtil.packet.put("Flywheel : Current Velocity (in/s)", flywheelVelocity);
-        //TelemetryUtil.packet.put("Turret : Current angle (deg)", Math.toDegrees(turretAngle));
+        TelemetryUtil.packet.put("Turret : Current angle (deg)", Math.toDegrees(turretAngle));
         //TelemetryUtil.packet.put("Turret : turretAnalogEncoderVoltage", turretAnalogEncoderVoltage);
         TelemetryUtil.packet.put("Shooter : Hood launch angle (deg)", Math.toDegrees(robot.shooter.hood.getCurrentAngle() / Shooter.hoodGearRatio + Shooter.hoodSweep));
 
         TelemetryUtil.packet.put("Intake : Ball Color", isPurple ? "purple" : isGreen ? "green" : "none");
 
         Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
-        DashboardUtil.drawRobot(fieldOverlay, ROBOT_POSITION, "#00ff00", robot.shooter.turret.getCurrentAngle(), "#00e000c0", robot.shooter.turret.getTargetAngle(), "#8000ff");
+        DashboardUtil.drawRobot(fieldOverlay, ROBOT_POSITION, "#00ff00", turretAngle, "#00e000c0", robot.shooter.turret.getTargetAngle(), "#8000ff");
 
-        LogUtil.turretAngle.set(robot.shooter.turret.getCurrentAngle());
+        LogUtil.turretAngle.set(turretAngle);
         LogUtil.flywheelVelocity.set(flywheelVelocity);
         LogUtil.driveCurrentX.set(ROBOT_POSITION.x);
         LogUtil.driveCurrentY.set(ROBOT_POSITION.y);

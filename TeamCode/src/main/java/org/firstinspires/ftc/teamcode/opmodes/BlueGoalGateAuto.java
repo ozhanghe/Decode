@@ -37,7 +37,6 @@ public class BlueGoalGateAuto extends LinearOpMode {
         while (opModeInInit()) {
             robot.update();
             robot.sensors.light0P.set(System.currentTimeMillis() % 500 < 350);
-            Sensors.resetTurretAngleEncoder = true;
         }
         robot.sensors.light0P.set(false);
 

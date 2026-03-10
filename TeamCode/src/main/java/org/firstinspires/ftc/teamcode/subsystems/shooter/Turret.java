@@ -8,6 +8,7 @@ import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
+import org.firstinspires.ftc.teamcode.utils.Utils;
 import org.firstinspires.ftc.teamcode.utils.priority.nPriorityServo;
 
 @Config
@@ -34,31 +35,29 @@ public class Turret {
 
         turret = new nPriorityServo(
                 new Servo[] {robot.hardwareMap.get(Servo.class, "turret1"), robot.hardwareMap.get(Servo.class, "turret2")},
-                "turret", nPriorityServo.ServoType.AXON_MINI,
-                0, 1, 0.92,
-                new boolean[] {false, false},
+                "turret", nPriorityServo.ServoType.AXON_MINI_EXTENDED,
+                0, 1, 0.08,
+                new boolean[] {true, true},
                 5, 6
         );
-        /*
 
+        /*
         turret.setTargetPower(0.1);
         turret.update();
         turret.setTargetPower(0.0);
         turret.update();
-
-         */
+        */
 
         robot.hardwareQueue.addDevice(turret);
     }
 
     public void update() {
-
-        /*
         // Turret PIDF
         targetTurretAngleVel = targetTurretAngleVel * (1 - targetTurretAngleVelFilter) + (targetTurretAngle - lastTurretTarget) / robot.sensors.loopTime * targetTurretAngleVelFilter;
         targetTurretAngleVel = Utils.minMaxClip(targetTurretAngleVel, -150, 150);
         lastTurretTarget = targetTurretAngle;
 
+        /*
         double turretAngle = robot.sensors.getTurretAngle();
         double turretError = targetTurretAngle - turretAngle;
         double turretPow = (Math.abs(turretError) > Math.toRadians(10) ? turretPID.update(turretError, -1, 1): finalAdjustPID.update(turretError, -0.5, 0.5));
@@ -77,47 +76,24 @@ public class Turret {
         if (turretAngle >= Sensors.turretLimitLeft) turretPow = Math.min(turretPow, -turretKStaticBig);
         if (turretAngle <= Sensors.turretLimitRight) turretPow = Math.max(turretPow, turretKStaticBig);
 
-
-
         turretPow = Utils.minMaxClip(turretPow, -1, 1);
         turret.setTargetPower(turretPow);
-
-        updateTelemetry(turretPow, turretError);
-
-         */
+        */
 
         turret.setTargetAngle(targetTurretAngle);
 
-        updateTelemetry();
-    }
-
-    public void setTargetAngle(double targetAngle) {
-        //positive turret limit in radians
-        if(targetAngle > 0.42586033761) {
-            while(targetAngle > 0.42586033761) {
-                targetAngle -= Math.toRadians(305);
-            }
-            //negative turret limit in radians
-        } else if(targetAngle < -4.89739388258) {
-            while(targetAngle < -4.89739388258) {
-                targetAngle += Math.toRadians(305);
-            }
-        }
-
-        targetTurretAngle = targetAngle * -1.0;
-    }
-
-    public double getTargetAngle() { return targetTurretAngle; }
-
-    public double getCurrentAngle() {return turret.getCurrentAngle();}
-
-    public boolean inPosition() { return turret.inPosition(); }
-
-    private void updateTelemetry() {
-        TelemetryUtil.packet.put("Turret : pos", Math.toDegrees(turret.getCurrentAngle()));
-        TelemetryUtil.packet.put("Turret : target", Math.toDegrees(turret.getTargetAngle()));
-
+        //TelemetryUtil.packet.put("Turret : targetAngleVel (deg)", Math.toDegrees(targetTurretAngleVel));
+        TelemetryUtil.packet.put("Turret : Target Angle (deg)", Math.toDegrees(targetTurretAngle));
+        //TelemetryUtil.packet.put("Turret : Power Applied", turretPow * 100);
+        TelemetryUtil.packet.put("Turret : servo predicted current angle", Math.toDegrees(turret.getCurrentAngle()));
+        TelemetryUtil.packet.put("Turret : servo target", Math.toDegrees(turret.getTargetAngle()));
 
         LogUtil.turretTarget.set(targetTurretAngle);
     }
+
+    public void setTargetAngle(double targetAngle) { targetTurretAngle = Sensors.turretAngleClip(targetAngle); }
+
+    public double getTargetAngle() { return targetTurretAngle; }
+
+    public boolean inPosition() { return turret.inPosition(); }
 }

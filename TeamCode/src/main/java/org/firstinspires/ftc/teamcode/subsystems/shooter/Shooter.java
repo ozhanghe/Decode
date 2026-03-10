@@ -17,7 +17,6 @@ import org.firstinspires.ftc.teamcode.utils.Polynomial;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.utils.Utils;
-import org.firstinspires.ftc.teamcode.utils.Vector2;
 import org.firstinspires.ftc.teamcode.utils.Vector3;
 import org.firstinspires.ftc.teamcode.utils.priority.nPriorityServo;
 
@@ -37,7 +36,7 @@ public class Shooter {
     public final Flywheel flywheel;
     public final Turret turret;
     public final nPriorityServo hood, flywheelBlocker;
-    private final ShotTable shooterTable;
+    private final ShotTable2 shooterTable;
 
     private boolean aimRequest = false, shootRequest = false, stopRequest = false;
     public boolean turretTrackInManual = false;
@@ -87,7 +86,7 @@ public class Shooter {
         this.flywheel = new Flywheel(robot);
         this.turret = new Turret(robot);
 
-        this.shooterTable = new ShotTable();
+        this.shooterTable = new ShotTable2();
 
         hood = new nPriorityServo(
             new Servo[]{robot.hardwareMap.get(Servo.class, "hood1")},
@@ -116,7 +115,7 @@ public class Shooter {
         switch (state) {
             case IDLE: {
                 stopRequest = false;
-                predictGoal();
+                predictGoal2AxisInterpolate();
                 flywheel.setTargetVelocity(Dist.CLOSE.flywheelVel);
                 setHoodAngle(0.0);
                 setShooterBlocker(true);
@@ -133,7 +132,7 @@ public class Shooter {
                 setShooterBlocker(true);
                 //TelemetryUtil.packet.put("Aim: aimLauncherV8", "before");
                 //boolean aimResult = aimLauncherV8();
-                predictGoal();
+                predictGoal2AxisInterpolate();
                 boolean turretResult = turret.inPosition();
                 //TelemetryUtil.packet.put("Aim: aimResult", aimResult);
                 TelemetryUtil.packet.put("Aim: turretResult", turretResult);
@@ -156,7 +155,7 @@ public class Shooter {
             case READY: {
                 setShooterBlocker(true);
 
-                predictGoal();
+                predictGoal2AxisInterpolate();
 
                 flywheel.setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
@@ -182,7 +181,7 @@ public class Shooter {
             }
             case SHOOT: {
                 shootRequest = false;
-                predictGoal();
+                predictGoal2AxisInterpolate();
                 setShooterBlocker(false);
                 flywheel.setTargetVelocity(minFlywheelVelocity);
                 setHoodAngle(targetHoodAngle);
@@ -230,7 +229,7 @@ public class Shooter {
         updateTelemetry();
     }
 
-    private void updateTelemetry(){
+    private void updateTelemetry() {
         TelemetryUtil.packet.put("Shooter : state", this.state);
         TelemetryUtil.packet.put("Shooter : Balltarget", ballTarget.toString());
         TelemetryUtil.packet.put("Shooter : goal distance", Math.hypot(ROBOT_POSITION.x - robot.shooter.ballTarget.x, ROBOT_POSITION.y - robot.shooter.ballTarget.y));
@@ -504,8 +503,40 @@ public class Shooter {
         return false;
     }
 
+    public void predictGoal2AxisInterpolate() {
+        ballTarget = new Vector3(-67, 69 * (Globals.isRed ? 1 : -1), 45);
+        double currFlywheelVel = flywheel.getFilteredVelocity();
+
+        double initialDist = Math.hypot(ballTarget.x - ROBOT_POSITION.x, ballTarget.y - ROBOT_POSITION.y);
+        double virtualX = ballTarget.x;
+        double virtualY = ballTarget.y;
+        minFlywheelVelocity = shooterTable.getFlywheelForDistance(initialDist);
+        targetHoodAngle = shooterTable.getLaunchAngleForDistanceAndFlywheel(initialDist, currFlywheelVel);
+
+        if (Math.hypot(ROBOT_GLOBAL_VELOCITY.x, ROBOT_GLOBAL_VELOCITY.y) > 10) {
+            double time = initialDist / (minFlywheelVelocity / 2 * Math.sin(targetHoodAngle));
+
+            virtualX = ballTarget.x - (ROBOT_GLOBAL_VELOCITY.x * time);
+            virtualY = ballTarget.y - (ROBOT_GLOBAL_VELOCITY.y * time);
+            Canvas canvas = TelemetryUtil.packet.fieldOverlay();
+            canvas.setStroke(Globals.isRed ? "#ff4000" : "#0040ff");
+            canvas.setStrokeWidth(2);
+            canvas.strokeCircle(virtualX, virtualY, 2.5);
+
+            double virtualDist = Math.hypot(virtualX - ROBOT_POSITION.x, virtualY - ROBOT_POSITION.y);
+            minFlywheelVelocity = shooterTable.getFlywheelForDistance(virtualDist);
+            targetHoodAngle = shooterTable.getLaunchAngleForDistanceAndFlywheel(virtualDist, currFlywheelVel);
+        }
+
+        TelemetryUtil.packet.put("Aim : target hood launch angle (deg)", Math.toDegrees(targetHoodAngle));
+        targetHoodAngle = Utils.minMaxClip((targetHoodAngle - hoodSweep) * hoodGearRatio, 0, 1.6);
+        double virtualTurretAngle = Math.atan2(virtualY - ROBOT_POSITION.y, virtualX - ROBOT_POSITION.x);
+        turret.setTargetAngle(virtualTurretAngle - ROBOT_POSITION.heading);
+    }
+
+/*
     public void predictGoal() {
-        /*
+        / *
         if (ROBOT_POSITION.x >= 24) ballTarget = new Vector3(-68, ballInterpolateYFar * (Globals.isRed ? 1 : -1), ballInterpolateZFar);
         else {
             double k = Utils.minMaxClip(Math.hypot(-71 - ROBOT_POSITION.x, 71 * (Globals.isRed ? 1 : -1) - ROBOT_POSITION.y), 0, 126) / 126;
@@ -513,7 +544,7 @@ public class Shooter {
         }
         if (ROBOT_POSITION.x + 48 <= ROBOT_POSITION.y * (Globals.isRed ? -1 : 1)) ballTarget = new Vector3(ballTarget.y * (Globals.isRed ? -1 : 1), ballTarget.x * (Globals.isRed ? -1 : 1), ballTarget.z);
         // Original target
-        */
+        * /
         if (ROBOT_POSITION.x > 24) {
             ballTarget = new Vector3(-70,71 * (Globals.isRed ? 1 : -1),42);
         } else {
@@ -526,7 +557,7 @@ public class Shooter {
         // Setting initial goal for the virtual
         double virtualX = ballTarget.x;
         double virtualY = ballTarget.y;
-        /*
+        / *
         if(ROBOT_POSITION.x < - 32) {
 
             double temp = virtualY;
@@ -534,7 +565,7 @@ public class Shooter {
             virtualX = temp * (Globals.isRed ? -1 : 1);
         }
 
-         */
+        * /
 
         // Looping through virtual goal
         //getting time of flight
@@ -604,4 +635,5 @@ public class Shooter {
         double virtualTurretAngle = Math.atan2(virtualY - ROBOT_POSITION.y, virtualX - ROBOT_POSITION.x) + sotmCompensation;
         turret.setTargetAngle(virtualTurretAngle - ROBOT_POSITION.heading);
     }
+*/
 }
