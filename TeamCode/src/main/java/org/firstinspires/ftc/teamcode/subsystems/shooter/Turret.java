@@ -35,7 +35,7 @@ public class Turret {
         turret = new nPriorityServo(
                 new Servo[] {robot.hardwareMap.get(Servo.class, "turret1"), robot.hardwareMap.get(Servo.class, "turret2")},
                 "turret", nPriorityServo.ServoType.AXON_MINI,
-                0, 1, 0.5,
+                0, 1, 0.92,
                 new boolean[] {false, false},
                 5, 6
         );
@@ -87,15 +87,33 @@ public class Turret {
          */
 
         turret.setTargetAngle(targetTurretAngle);
+
+        updateTelemetry();
     }
 
-    public void setTargetAngle(double targetAngle) { targetTurretAngle = Sensors.turretAngleClip(targetAngle); }
+    public void setTargetAngle(double targetAngle) {
+        //positive turret limit in radians
+        if(targetAngle > 0.42586033761) {
+            while(targetAngle > 0.42586033761) {
+                targetAngle -= Math.toRadians(305);
+            }
+            //negative turret limit in radians
+        } else if(targetAngle < -4.89739388258) {
+            while(targetAngle < -4.89739388258) {
+                targetAngle += Math.toRadians(305);
+            }
+        }
+
+        targetTurretAngle = targetAngle * -1.0;
+    }
 
     public double getTargetAngle() { return targetTurretAngle; }
 
+    public double getCurrentAngle() {return turret.getCurrentAngle();}
+
     public boolean inPosition() { return turret.inPosition(); }
 
-    private void updateTelemetry(double turretPow, double turretError) {
+    private void updateTelemetry() {
         TelemetryUtil.packet.put("Turret : pos", Math.toDegrees(turret.getCurrentAngle()));
         TelemetryUtil.packet.put("Turret : target", Math.toDegrees(turret.getTargetAngle()));
 
