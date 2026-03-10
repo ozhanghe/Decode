@@ -56,12 +56,6 @@ public class Shooter {
     public double v0, cv0;
     public double minV0 = 0.0, minFlywheelVelocity = 0.0;
     public static double minV0Superthresh = 0; // perhaps eliminate
-    public static double ballInterpolateYCloseB = 68;
-    public static double ballInterpolateYCloseS = 64;
-    public static double ballInterpolateYFar = 66;
-    public static double ballInterpolateZCloseB = 44;
-    public static double ballInterpolateZCloseS = 40;
-    public static double ballInterpolateZFar = 45;
     public static double minV0factorArc = 1.2; // TODO: tune for triple shot
     public static double minV0factorFlat = 1.24; // TODO: tune for triple shot
     public static double flywheelEfficiency = 0.955;
@@ -69,6 +63,15 @@ public class Shooter {
     private Pose2d lastPos, currVel, lastVel;
     public static double posFilter = 0.9;
     public static double arcDistThresh = 5000;
+
+    public static double ballInterpolateYCloseB = 68;
+    public static double ballInterpolateYCloseS = 64;
+    public static double ballInterpolateYFar = 66;
+    public static double ballInterpolateZCloseB = 44;
+    public static double ballInterpolateZCloseS = 40;
+    public static double ballInterpolateZFar = 45;
+
+    public static double SOTMThreshold = 10;
 
     /*
     (-71, 48)
@@ -202,7 +205,12 @@ public class Shooter {
                 break;
             }
             case TEST: {
-                if (turretTrackInManual) turretTrackTarget();
+                ballTarget = turretTrackTargetPos();
+
+                if (turretTrackInManual) {
+                    double turretAngle = Math.atan2(ballTarget.getY() - ROBOT_POSITION.y, ballTarget.getX() - ROBOT_POSITION.x);
+                    turret.setTargetAngle(turretAngle - ROBOT_POSITION.heading);
+                };
                 break;
             }
         }
@@ -285,16 +293,17 @@ public class Shooter {
         }
     }
 
-    public void turretTrackTarget() {
-        if (ROBOT_POSITION == null || ROBOT_VELOCITY == null) return;
+    public Vector3 turretTrackTargetPos() {
+        if (ROBOT_POSITION == null || ROBOT_VELOCITY == null) return new Vector3(-67, 69 * (Globals.isRed ? 1 : -1), 45);;
         // for +-180 turret
         updateBallTargetInterpolate();
         Vector3 P;
         if (ROBOT_POSITION.x + 48 >= ROBOT_POSITION.y * (Globals.isRed ? -1 : 1)) P = new Vector3(ballTarget);
         else P = new Vector3(ballTarget.y * (Globals.isRed ? -1 : 1), ballTarget.x * (Globals.isRed ? -1 : 1), ballTarget.z); // invert target along y = x or y = -x
-        P.subtract(new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight));
+        //P.subtract(new Vector3(ROBOT_POSITION.x, ROBOT_POSITION.y, launcherHeight));
         this.P = P;
-        turret.setTargetAngle(Math.atan2(P.getY(), P.getX()) - ROBOT_POSITION.heading);
+
+        return P;
     }
 
     public boolean aimLauncherV8() {
@@ -303,7 +312,7 @@ public class Shooter {
             return false;
         }
         Log.i("Points", "Starting aimLauncherV8");
-        turretTrackTarget();
+        //turretTrackTarget();
         Vector3 V = new Vector3(-currVel.x, -currVel.y, 0);
         V.subtract(Vector3.cross(new Vector3(0, 0, currVel.heading), new Vector3(dLauncher * Math.cos(ROBOT_POSITION.heading), dLauncher * Math.sin(ROBOT_POSITION.heading), 0)));
         if (V.getMag() < 6) V = new Vector3(0, 0, 0);
@@ -504,7 +513,8 @@ public class Shooter {
     }
 
     public void predictGoal2AxisInterpolate() {
-        ballTarget = new Vector3(-67, 69 * (Globals.isRed ? 1 : -1), 45);
+        //ballTarget = new Vector3(-67, 69 * (Globals.isRed ? 1 : -1), 45);
+        ballTarget = turretTrackTargetPos();
         double currFlywheelVel = flywheel.getFilteredVelocity();
 
         double initialDist = Math.hypot(ballTarget.x - ROBOT_POSITION.x, ballTarget.y - ROBOT_POSITION.y);
@@ -513,7 +523,7 @@ public class Shooter {
         minFlywheelVelocity = shooterTable.getFlywheelForDistance(initialDist);
         targetHoodAngle = shooterTable.getLaunchAngleForDistanceAndFlywheel(initialDist, currFlywheelVel);
 
-        if (Math.hypot(ROBOT_GLOBAL_VELOCITY.x, ROBOT_GLOBAL_VELOCITY.y) > 10) {
+        if (Math.hypot(ROBOT_GLOBAL_VELOCITY.x, ROBOT_GLOBAL_VELOCITY.y) > SOTMThreshold) {
             double time = initialDist / (minFlywheelVelocity / 2 * Math.sin(targetHoodAngle));
 
             virtualX = ballTarget.x - (ROBOT_GLOBAL_VELOCITY.x * time);
