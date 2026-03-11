@@ -246,15 +246,11 @@ public class Teleop extends LinearOpMode {
                 gamepad2.rumble(200);
             }*/
 
-            if (guide2.isClicked(gamepad2.guide)) { // camera
-                MergeLocalizer.useCamera = !MergeLocalizer.useCamera;
-                if (MergeLocalizer.useCamera) {
-                    gamepad1.rumble(250);
-                    gamepad2.rumble(250);
-                } else {
-                    gamepad1.rumble(100);
-                    gamepad2.rumble(100);
-                }
+            if (lb2.isClicked(gamepad2.left_bumper)) { // camera
+                MergeLocalizer.useCamera = true;
+
+            } else {
+                MergeLocalizer.useCamera = false;
             }
 
             if (h2.isClicked(gamepad2.dpad_left || gamepad2.dpad_right)) { // localize to left/right edge (unchanged x, auto y, auto h)
@@ -283,8 +279,13 @@ public class Teleop extends LinearOpMode {
 
             // MISC
 
+            /*
+
             if (lb2.isClicked(gamepad2.left_bumper)) LogUtil.event.add("ballMiss");
             else if (rb2.isClicked(gamepad2.right_bumper)) LogUtil.event.add("ballHit");
+
+
+             */
 
             if (gamepad1.dpad_up) {
                 robot.park.setPower(1);
@@ -320,6 +321,7 @@ public class Teleop extends LinearOpMode {
             telemetry.addData("Robot position (deg)", String.format(Locale.US, "(%.2f, %.2f, %.2f)", ROBOT_POSITION.x, ROBOT_POSITION.y, Math.toDegrees(ROBOT_POSITION.heading)));
             telemetry.addData("CAT", LogUtil.DISABLED ? "DISABLED" : "ENABLED");
             telemetry.addData("Vision : relocalize count", robot.drivetrain.mergeLocalizer.numberOfTimesRelocalizedWithCamera);
+            telemetry.addData("Vision : use camera", MergeLocalizer.useCamera);
 
             telemetry.update();
         }
