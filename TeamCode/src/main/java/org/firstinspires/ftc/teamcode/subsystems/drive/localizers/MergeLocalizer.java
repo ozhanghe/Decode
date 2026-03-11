@@ -175,7 +175,7 @@ public class MergeLocalizer extends Localizer {
                 if (error < 0) error += 2 * Math.PI;
                 error -= Math.PI;
 
-                if (nanoTimes.size() > 5 && consecutiveFrames >= frameRequirement && estimatedCameraPose.getErrorInX(currentPose) < maxVisionErrorThresh && estimatedCameraPose.getErrorInY(currentPose) < maxVisionErrorThresh && error < Math.toRadians(maxVisionErrorThreshHeading)) {
+                if (nanoTimes.size() > 5 && consecutiveFrames >= frameRequirement && Math.abs(estimatedCameraPose.getErrorInX(currentPose)) < maxVisionErrorThresh && Math.abs(estimatedCameraPose.getErrorInY(currentPose)) < maxVisionErrorThresh && Math.abs(error) < Math.toRadians(maxVisionErrorThreshHeading)) {
                     findPastInterpolatedPose(frameAcquisitionNanoTime);
                     //then find the offset between that and the camera pose
 
