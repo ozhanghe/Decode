@@ -8,7 +8,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Robot;
-import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.MergeLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.utils.ButtonToggle;
@@ -246,11 +245,15 @@ public class Teleop extends LinearOpMode {
                 gamepad2.rumble(200);
             }*/
 
-            if (lb2.isClicked(gamepad2.left_bumper)) { // camera
-                MergeLocalizer.useCamera = true;
-
-            } else {
-                MergeLocalizer.useCamera = false;
+            if (guide2.isClicked(gamepad2.guide)) { // camera
+                MergeLocalizer.useCamera = !MergeLocalizer.useCamera;
+                if (MergeLocalizer.useCamera) {
+                    gamepad1.rumble(250);
+                    gamepad2.rumble(250);
+                } else {
+                    gamepad1.rumble(100);
+                    gamepad2.rumble(100);
+                }
             }
 
             if (h2.isClicked(gamepad2.dpad_left || gamepad2.dpad_right)) { // localize to left/right edge (unchanged x, auto y, auto h)

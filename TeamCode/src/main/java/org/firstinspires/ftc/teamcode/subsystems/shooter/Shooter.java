@@ -210,7 +210,7 @@ public class Shooter {
                 if (turretTrackInManual) {
                     double turretAngle = Math.atan2(ballTarget.getY() - ROBOT_POSITION.y, ballTarget.getX() - ROBOT_POSITION.x);
                     turret.setTargetAngle(turretAngle - ROBOT_POSITION.heading);
-                };
+                }
                 break;
             }
         }
@@ -294,7 +294,7 @@ public class Shooter {
     }
 
     public Vector3 turretTrackTargetPos() {
-        if (ROBOT_POSITION == null || ROBOT_VELOCITY == null) return new Vector3(-67, 69 * (Globals.isRed ? 1 : -1), 45);;
+        if (ROBOT_POSITION == null || ROBOT_VELOCITY == null) return new Vector3(-67, 69 * (Globals.isRed ? 1 : -1), 45);
         // for +-180 turret
         updateBallTargetInterpolate();
         Vector3 P;
@@ -378,7 +378,7 @@ public class Shooter {
                 roots.append(tRoots.get(i));
                 if (i != tRoots.size() - 1) roots.append(", ");
             }
-            Log.i("Dynamic", "Roots: " + roots.toString() + "]");
+            Log.i("Dynamic", "Roots: " + roots + "]");
             phis = new double[tRoots.size() + 1];
             thetas = new double[phis.length];
             for (int i = 0; i < tRoots.size(); i++) {
@@ -523,8 +523,8 @@ public class Shooter {
         minFlywheelVelocity = shooterTable.getFlywheelForDistance(initialDist);
         targetHoodAngle = shooterTable.getLaunchAngleForDistanceAndFlywheel(initialDist, currFlywheelVel);
 
-        if (Math.hypot(ROBOT_GLOBAL_VELOCITY.x, ROBOT_GLOBAL_VELOCITY.y) > SOTMThreshold) {
-            double time = initialDist / (minFlywheelVelocity / 2 * Math.sin(targetHoodAngle));
+        if (Math.hypot(ROBOT_GLOBAL_VELOCITY.x, ROBOT_GLOBAL_VELOCITY.y) >= SOTMThreshold && currFlywheelVel >= 300) {
+            double time = initialDist / (currFlywheelVel / 2 * Math.sin(targetHoodAngle));
 
             virtualX = ballTarget.x - (ROBOT_GLOBAL_VELOCITY.x * time);
             virtualY = ballTarget.y - (ROBOT_GLOBAL_VELOCITY.y * time);
