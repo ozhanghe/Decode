@@ -11,6 +11,7 @@ public class ShotTable2 {
 
     public ShotTable2() {
         // TODO Find new values. These are placeholders.
+/*
         table.put( 44.0, new ShotPoint(400)
             .addValue(400, Math.toRadians(26.4))
         );
@@ -65,6 +66,42 @@ public class ShotTable2 {
             .addValue(600, Math.toRadians(45))
             .addValue(570, Math.toRadians(45.4))
         );
+*/
+        // 2026-03-12
+        table.put( 45.9, new ShotPoint(400)
+            .addValue(370, Math.toRadians(27))
+        );
+        table.put( 62.2, new ShotPoint(450)
+            .addValue(417, Math.toRadians(37))
+            .addValue(370, Math.toRadians(35))
+        );
+        table.put( 77.2, new ShotPoint(500)
+            .addValue(484, Math.toRadians(51))
+            .addValue(410, Math.toRadians(45))
+        );
+        table.put( 93.9, new ShotPoint(550)
+            .addValue(545, Math.toRadians(50))
+            .addValue(491, Math.toRadians(49))
+            .addValue(451, Math.toRadians(49))
+        );
+        table.put(112.1, new ShotPoint(580)
+            .addValue(558, Math.toRadians(49))
+            .addValue(531, Math.toRadians(49))
+            .addValue(511, Math.toRadians(48))
+            .addValue(471, Math.toRadians(45))
+        );
+        table.put(132.8, new ShotPoint(630)
+            .addValue(585, Math.toRadians(51))
+            .addValue(552, Math.toRadians(50))
+            .addValue(498, Math.toRadians(50))
+        );
+        table.put(148.4, new ShotPoint(660)
+            .addValue(612, Math.toRadians(48))
+            .addValue(578, Math.toRadians(44))
+            .addValue(558, Math.toRadians(44))
+            .addValue(545, Math.toRadians(44))
+            .addValue(532, Math.toRadians(51))
+        );
     }
 
     public double getFlywheelForDistance(double distance) {
@@ -114,14 +151,21 @@ public class ShotTable2 {
 }
 
 /* Visualizer: Run snippet then dump into Desmos 3D
-ShotTable2 table = new ShotTable2();
-for (double d = 35; d <= 160; d += 5) {
-    double tv = table.getFlywheelForDistance(d);
-    System.out.println(String.format(Locale.US, "%3.0f\t%3.0f\t%3d", d, tv, 0));
-    for (double v = 390; v <= 670; v += 10) {
-        double h = table.getLaunchAngleForDistanceAndFlywheel(d, v);
-        System.out.println(String.format(Locale.US, "%3.0f\t%3.0f\t%3.0f", d, v, Double.isNaN(h) ? 100.0 : Math.toDegrees(h)));
-    }
-}
+        ShotTable2 table = new ShotTable2();
+        for (Map.Entry<Double, ShotTable2.ShotPoint> entry : table.table.entrySet()) {
+            ShotTable2.ShotPoint shotPoint = entry.getValue();
+            for (Map.Entry<Double, Double> entry2 : shotPoint.launchTable.entrySet()) {
+                System.out.println(String.format(Locale.US, "%3.0f\t%3.0f\t%3.0f", entry.getKey(), entry2.getKey(), Math.toDegrees(entry2.getValue())));
+            }
+        }
+        System.out.println("\n\n");
+        for (double d = 35; d <= 160; d += 5) {
+            double tv = table.getFlywheelForDistance(d);
+            System.out.println(String.format(Locale.US, "%3.0f\t%3.0f\t%3d", d, tv, 0));
+            for (double v = 390; v <= 670; v += 10) {
+                double h = table.getLaunchAngleForDistanceAndFlywheel(d, v);
+                System.out.println(String.format(Locale.US, "%3.0f\t%3.0f\t%3.0f", d, v, Double.isNaN(h) ? 100.0 : Math.toDegrees(h)));
+            }
+        }
 */
 

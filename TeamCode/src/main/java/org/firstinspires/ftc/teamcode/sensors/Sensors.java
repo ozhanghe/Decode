@@ -96,7 +96,7 @@ public class Sensors {
         odoWheelPositions[1] = robot.drivetrain.rightFront.motor[0].getCurrentPosition(); // right
         odoWheelPositions[2] = robot.drivetrain.leftRear.motor[0].getCurrentPosition(); // back
 
-        double flywheelAngularVel = robot.drivetrain.rightRear.motor[0].getVelocity() / 28.0;
+        double flywheelAngularVel = robot.drivetrain.rightRear.motor[0].getVelocity() / 28.0; // rotations per second
         flywheelVelocity = flywheelAngularVel * 3.0 * Math.PI;
 
         robot.drivetrain.localizer.updateEncoders(odoWheelPositions);
@@ -140,7 +140,22 @@ public class Sensors {
             lastVoltageUpdatedTime = currentTime;
         }
 
-        updateTelemetry();
+        TelemetryUtil.packet.put("Sensors: Voltage", voltage);
+        TelemetryUtil.packet.put("Flywheel : Current Velocity (in/s)", flywheelVelocity);
+        //TelemetryUtil.packet.put("Flywheel : RPM", flywheelAngularVel * 60);
+        TelemetryUtil.packet.put("Turret : Current angle (deg)", Math.toDegrees(turretAngle));
+        //TelemetryUtil.packet.put("Turret : turretAnalogEncoderVoltage", turretAnalogEncoderVoltage);
+        TelemetryUtil.packet.put("Shooter : Hood launch angle (deg)", Math.toDegrees(robot.shooter.hood.getCurrentAngle() / Shooter.hoodGearRatio + Shooter.hoodSweep));
+        TelemetryUtil.packet.put("Intake : Ball Color", isPurple ? "purple" : isGreen ? "green" : "none");
+
+        Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
+        DashboardUtil.drawRobot(fieldOverlay, ROBOT_POSITION, "#00ff00", turretAngle, "#00e000c0", robot.shooter.turret.getTargetAngle(), "#8000ff");
+
+        LogUtil.turretAngle.set(turretAngle);
+        LogUtil.flywheelVelocity.set(flywheelVelocity);
+        LogUtil.driveCurrentX.set(ROBOT_POSITION.x);
+        LogUtil.driveCurrentY.set(ROBOT_POSITION.y);
+        LogUtil.driveCurrentAngle.set(ROBOT_POSITION.heading);
     }
 
     private double getTurretAngleRaw() { return robot.intake.feed.motor[0].getCurrentPosition() * (Math.PI) / -8192 / 2; }
@@ -167,26 +182,4 @@ public class Sensors {
      * @return the wrapped turret angle
      */
     public double getTurretAngle() { return turretAngle; }
-
-    //position of the park slides
-
-    private void updateTelemetry() {
-        TelemetryUtil.packet.put("Sensors: Voltage", voltage);
-
-        TelemetryUtil.packet.put("Flywheel : Current Velocity (in/s)", flywheelVelocity);
-        TelemetryUtil.packet.put("Turret : Current angle (deg)", Math.toDegrees(turretAngle));
-        //TelemetryUtil.packet.put("Turret : turretAnalogEncoderVoltage", turretAnalogEncoderVoltage);
-        TelemetryUtil.packet.put("Shooter : Hood launch angle (deg)", Math.toDegrees(robot.shooter.hood.getCurrentAngle() / Shooter.hoodGearRatio + Shooter.hoodSweep));
-
-        TelemetryUtil.packet.put("Intake : Ball Color", isPurple ? "purple" : isGreen ? "green" : "none");
-
-        Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
-        DashboardUtil.drawRobot(fieldOverlay, ROBOT_POSITION, "#00ff00", turretAngle, "#00e000c0", robot.shooter.turret.getTargetAngle(), "#8000ff");
-
-        LogUtil.turretAngle.set(turretAngle);
-        LogUtil.flywheelVelocity.set(flywheelVelocity);
-        LogUtil.driveCurrentX.set(ROBOT_POSITION.x);
-        LogUtil.driveCurrentY.set(ROBOT_POSITION.y);
-        LogUtil.driveCurrentAngle.set(ROBOT_POSITION.heading);
-    }
 }
