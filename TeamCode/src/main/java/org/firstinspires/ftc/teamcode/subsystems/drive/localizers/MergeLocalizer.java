@@ -57,9 +57,9 @@ public class MergeLocalizer extends Localizer {
     public static int frameRequirement = 3;
     private int consecutiveFrames = 0;
     private int notVisibleCooldown = 0;
+    public static int notVisibleCooldownInc = 10;
     public static int maxVisionErrorThresh = 10;
     public static int maxVisionErrorThreshHeading = 20; //degrees
-
     public static int cameraSearch = 25; // number of loops
 
     public void update() {
@@ -127,17 +127,23 @@ public class MergeLocalizer extends Localizer {
          */
 
         // Camera
-        /*if (useCamera && drivetrain.vision != null) {
+        /*
+        if (useCamera && drivetrain.vision != null) {
             drivetrain.vision.visionPortal.setProcessorEnabled(drivetrain.vision.aprilTagProcessor, currentPose.heading % (Math.PI * 2) > Math.PI / 2 && currentPose.heading % (Math.PI * 2) < Math.PI * 3 / 2);
             Log.i("Vision", "Heading is good stuff " + (currentPose.heading % (Math.PI * 2) > Math.PI / 2 && currentPose.heading % (Math.PI * 2) < Math.PI * 3 / 2));
         }
+
+
+         */
+
+
 
         TelemetryUtil.packet.put("Vision is not null", drivetrain.vision != null);
 
         if (drivetrain.vision != null) {
             TelemetryUtil.packet.put("Vision Camera State", drivetrain.vision.visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING);
             TelemetryUtil.packet.put("Vision Processor Enabled", drivetrain.vision.visionPortal.getProcessorEnabled(drivetrain.vision.aprilTagProcessor));
-        }*/
+        }
 
         if (useCamera && Math.hypot(Globals.ROBOT_VELOCITY.x, Globals.ROBOT_VELOCITY.y) < 20 && drivetrain.vision != null && drivetrain.vision.visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING && drivetrain.vision.visionPortal.getProcessorEnabled(drivetrain.vision.aprilTagProcessor)) {
             Pose2d cameraResult = drivetrain.vision.update();
@@ -149,12 +155,14 @@ public class MergeLocalizer extends Localizer {
                     Lerp.lerpAngle(estimatedCameraPose.heading, cameraResult.heading, cameraFilterFactor)
                 );
                 consecutiveFrames++;
-                notVisibleCooldown = 20;
+                notVisibleCooldown = notVisibleCooldownInc;
             } else {
                 --notVisibleCooldown;
+
                 if (notVisibleCooldown < 0) {
                     estimatedCameraPose = null;
                     consecutiveFrames = 0;
+
                 }
             }
 
@@ -166,7 +174,7 @@ public class MergeLocalizer extends Localizer {
                 //  consecutiveFrames = 0;
                 //we want to find the last pinpoint/odo pose at the time that the camera was taken
 
-                if (nanoTimes.size() > 5 && consecutiveFrames >= frameRequirement && Math.abs(estimatedCameraPose.getErrorInX(currentPose)) < maxVisionErrorThresh && Math.abs(estimatedCameraPose.getErrorInY(currentPose)) < maxVisionErrorThresh && Math.abs(Utils.headingClip(estimatedCameraPose.heading - currentPose.heading)) < Math.toRadians(maxVisionErrorThreshHeading)) {
+                if (nanoTimes.size() > 5 && consecutiveFrames >= frameRequirement /*&& Math.abs(estimatedCameraPose.getErrorInX(currentPose)) < maxVisionErrorThresh && Math.abs(estimatedCameraPose.getErrorInY(currentPose)) < maxVisionErrorThresh && Math.abs(Utils.headingClip(estimatedCameraPose.heading - currentPose.heading)) < Math.toRadians(maxVisionErrorThreshHeading) */) {
                     findPastInterpolatedPose(frameAcquisitionNanoTime);
                     //then find the offset between that and the camera pose
 
@@ -184,7 +192,7 @@ public class MergeLocalizer extends Localizer {
 
                     numberOfTimesRelocalizedWithCamera++;
 
-                    if (Math.hypot(newPose.x - currentPose.x, newPose.y - currentPose.y) > 10) LogUtil.drivePositionReset = true;
+                    if (Math.abs(Math.hypot(newPose.x - interpolatedPastPose.x, newPose.y - interpolatedPastPose.y)) > 10) LogUtil.drivePositionReset = true;
 
                     TelemetryUtil.packet.put("Vision : estimatedCameraPose", estimatedCameraPose);
                     TelemetryUtil.packet.put("Vision : pastPose", interpolatedPastPose);
