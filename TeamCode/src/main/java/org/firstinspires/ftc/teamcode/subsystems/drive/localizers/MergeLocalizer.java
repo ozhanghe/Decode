@@ -24,11 +24,8 @@ import java.util.Locale;
 
 @Config
 public class MergeLocalizer extends Localizer {
-    private String color;
-
     public MergeLocalizer (HardwareMap hardwareMap, Sensors sensors, Drivetrain drivetrain, String color, String expectedColor){
         super(sensors, drivetrain, color, expectedColor);
-        this.color = color;
 
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         // these offsets refer to the center of the turret
@@ -45,8 +42,8 @@ public class MergeLocalizer extends Localizer {
     }
 
     // Pinpoint
-    private GoBildaPinpointDriver pinpoint;
-    private Pose2d lastPinpointPose = null, lastPinpointMergePose = null;
+    private final GoBildaPinpointDriver pinpoint;
+    private Pose2d lastPinpointPose, lastPinpointMergePose;
     public static boolean constantCorrection = false;
     public static boolean usePinpoint = true;
     public static double pinpointPollDist = 6;
@@ -55,15 +52,14 @@ public class MergeLocalizer extends Localizer {
     private Pose2d estimatedCameraPose = new Pose2d(0,0,0);
     public static boolean useCamera = false;
     public int numberOfTimesRelocalizedWithCamera = 0;
-    private long lastFrameAcquisitionNanoTime = 0;
     public static double cameraFilterFactor = 0.2, cameraSmoothFactor = 0.02;
     //how many frames the camera has to see consecutively before it updates the pose
     public static int frameRequirement = 3;
     private int consecutiveFrames = 0;
     private int notVisibleCooldown = 0;
+    public static int notVisibleCooldownInc = 10;
     public static int maxVisionErrorThresh = 10;
     public static int maxVisionErrorThreshHeading = 20; //degrees
-
     public static int cameraSearch = 25; // number of loops
 
     public void update() {
@@ -131,17 +127,23 @@ public class MergeLocalizer extends Localizer {
          */
 
         // Camera
-        /*if (useCamera && drivetrain.vision != null) {
+        /*
+        if (useCamera && drivetrain.vision != null) {
             drivetrain.vision.visionPortal.setProcessorEnabled(drivetrain.vision.aprilTagProcessor, currentPose.heading % (Math.PI * 2) > Math.PI / 2 && currentPose.heading % (Math.PI * 2) < Math.PI * 3 / 2);
             Log.i("Vision", "Heading is good stuff " + (currentPose.heading % (Math.PI * 2) > Math.PI / 2 && currentPose.heading % (Math.PI * 2) < Math.PI * 3 / 2));
         }
+
+
+         */
+
+
 
         TelemetryUtil.packet.put("Vision is not null", drivetrain.vision != null);
 
         if (drivetrain.vision != null) {
             TelemetryUtil.packet.put("Vision Camera State", drivetrain.vision.visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING);
             TelemetryUtil.packet.put("Vision Processor Enabled", drivetrain.vision.visionPortal.getProcessorEnabled(drivetrain.vision.aprilTagProcessor));
-        }*/
+        }
 
         if (useCamera && Math.hypot(Globals.ROBOT_VELOCITY.x, Globals.ROBOT_VELOCITY.y) < 20 && drivetrain.vision != null && drivetrain.vision.visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING && drivetrain.vision.visionPortal.getProcessorEnabled(drivetrain.vision.aprilTagProcessor)) {
             Pose2d cameraResult = drivetrain.vision.update();
@@ -153,12 +155,14 @@ public class MergeLocalizer extends Localizer {
                     Lerp.lerpAngle(estimatedCameraPose.heading, cameraResult.heading, cameraFilterFactor)
                 );
                 consecutiveFrames++;
-                notVisibleCooldown = 20;
+                notVisibleCooldown = notVisibleCooldownInc;
             } else {
                 --notVisibleCooldown;
+
                 if (notVisibleCooldown < 0) {
                     estimatedCameraPose = null;
                     consecutiveFrames = 0;
+
                 }
             }
 
@@ -170,12 +174,7 @@ public class MergeLocalizer extends Localizer {
                 //  consecutiveFrames = 0;
                 //we want to find the last pinpoint/odo pose at the time that the camera was taken
 
-                double error = estimatedCameraPose.heading - currentPose.heading;
-                error = (error + Math.PI) % (2 * Math.PI);
-                if (error < 0) error += 2 * Math.PI;
-                error -= Math.PI;
-
-                if (nanoTimes.size() > 5 && consecutiveFrames >= frameRequirement && Math.abs(estimatedCameraPose.getErrorInX(currentPose)) < maxVisionErrorThresh && Math.abs(estimatedCameraPose.getErrorInY(currentPose)) < maxVisionErrorThresh && Math.abs(error) < Math.toRadians(maxVisionErrorThreshHeading)) {
+                if (nanoTimes.size() > 5 && consecutiveFrames >= frameRequirement /*&& Math.abs(estimatedCameraPose.getErrorInX(currentPose)) < maxVisionErrorThresh && Math.abs(estimatedCameraPose.getErrorInY(currentPose)) < maxVisionErrorThresh && Math.abs(Utils.headingClip(estimatedCameraPose.heading - currentPose.heading)) < Math.toRadians(maxVisionErrorThreshHeading) */) {
                     findPastInterpolatedPose(frameAcquisitionNanoTime);
                     //then find the offset between that and the camera pose
 
@@ -190,11 +189,10 @@ public class MergeLocalizer extends Localizer {
                     currentPose = newPose;
                     lastPinpointMergePose = offsetPoseUsingGlobalDelta(lastPinpointMergePose, interpolatedPastPose, smoothCameraPose);
                     poseHistory.replaceAll(now -> offsetPoseUsingGlobalDelta(now, interpolatedPastPose, smoothCameraPose));
-                    lastFrameAcquisitionNanoTime = frameAcquisitionNanoTime;
 
                     numberOfTimesRelocalizedWithCamera++;
 
-                    if (Math.hypot(newPose.x - currentPose.x, newPose.y - currentPose.y) > 10) LogUtil.drivePositionReset = true;
+                    if (Math.abs(Math.hypot(newPose.x - interpolatedPastPose.x, newPose.y - interpolatedPastPose.y)) > 10) LogUtil.drivePositionReset = true;
 
                     TelemetryUtil.packet.put("Vision : estimatedCameraPose", estimatedCameraPose);
                     TelemetryUtil.packet.put("Vision : pastPose", interpolatedPastPose);
@@ -207,7 +205,6 @@ public class MergeLocalizer extends Localizer {
                 }
             }
         }
-        //}
 
         x = currentPose.x;
         y = currentPose.y;

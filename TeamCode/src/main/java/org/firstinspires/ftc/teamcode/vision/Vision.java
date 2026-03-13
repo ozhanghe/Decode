@@ -51,8 +51,8 @@ public class Vision {
                 .setOutputUnits(DistanceUnit.INCH, AngleUnit.RADIANS)
                 .setLensIntrinsics(549.651, 549.651, 317.108, 236.644) // 640x480: 549.651, 549.651, 317.108, 236.644; 320x240: 281.5573273, 281.366942, 156.3332591, 119.8965271
                 .setCameraPose(
-                        new Position(DistanceUnit.MM, -135.675, 155.8, 228, 0),
-                        new YawPitchRollAngles(AngleUnit.DEGREES, 0, -90, 0, 0))
+                        new Position(DistanceUnit.MM, -135.67, -143.8, 228, 0),//y is forward backwards x is sideways
+                        new YawPitchRollAngles(AngleUnit.DEGREES, 180, -60, 0, 0))
                 .build();
 
         VisionPortal.Builder builder = new VisionPortal.Builder()
@@ -63,7 +63,7 @@ public class Vision {
 
         visionPortal = builder.build();
 
-        //TelemetryUtil.dashboard.startCameraStream(visionPortal, 30);
+        TelemetryUtil.dashboard.startCameraStream(visionPortal, 30);
 
         try {
             ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);

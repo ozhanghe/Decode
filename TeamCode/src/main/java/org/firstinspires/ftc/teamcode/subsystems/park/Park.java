@@ -9,16 +9,13 @@ import org.firstinspires.ftc.teamcode.utils.priority.PriorityCRServo;
 
 @Config
 public class Park {
-    private final Robot robot;
     private final PriorityCRServo park;
 
     private double power = 0;
 
     public Park(Robot robot) {
-        this.robot = robot;
-
         park = new PriorityCRServo(
-            new CRServo[]{robot.hardwareMap.get(CRServo.class, "park")},
+            new CRServo[]{robot.hardwareMap.get(CRServo.class, "park1"), robot.hardwareMap.get(CRServo.class, "park2")},
             "park", PriorityCRServo.ServoType.AXON_MAX,
             new boolean[]{false, true},
             2, 2

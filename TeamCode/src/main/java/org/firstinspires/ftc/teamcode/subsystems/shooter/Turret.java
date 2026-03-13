@@ -16,15 +16,8 @@ public class Turret {
     private final Robot robot;
     public final nPriorityServo turret;
 
-    public static PID turretPID = new PID (0.15, 0, 0.02);
-    public static PID finalAdjustPID = new PID (0.08, 0.0, 0.004);
-    public static double turretKStaticBig = 0.07;
-    public static double turretKStaticSmall = 0.085;
 
-    public static double turretDeadzoneDeg = 2.5;
-    public static double inPositionThresh = Math.toRadians(3);
 
-    public static double turretVelFactor = 0.15;
     private double lastTurretTarget = 0.0;
     private double targetTurretAngle = 0.0;
     private double targetTurretAngleVel = 0.0;
@@ -41,13 +34,6 @@ public class Turret {
                 5, 6
         );
 
-        /*
-        turret.setTargetPower(0.1);
-        turret.update();
-        turret.setTargetPower(0.0);
-        turret.update();
-        */
-
         robot.hardwareQueue.addDevice(turret);
     }
 
@@ -57,34 +43,11 @@ public class Turret {
         targetTurretAngleVel = Utils.minMaxClip(targetTurretAngleVel, -150, 150);
         lastTurretTarget = targetTurretAngle;
 
-        /*
-        double turretAngle = robot.sensors.getTurretAngle();
-        double turretError = targetTurretAngle - turretAngle;
-        double turretPow = (Math.abs(turretError) > Math.toRadians(10) ? turretPID.update(turretError, -1, 1): finalAdjustPID.update(turretError, -0.5, 0.5));
 
-        if (Math.abs(turretError) < Math.toRadians(turretDeadzoneDeg)) {
-            finalAdjustPID.resetIntegral();
-            turretPow = 0;
-        }
-        if(targetTurretAngleVel > 0.05){
-            turretPow += targetTurretAngleVel / (turret.servoType.speed) * turretVelFactor; // meant to account for robot rotating
-        }
-        if (Math.abs(turretError) > 10) {turretPID.resetIntegral(); finalAdjustPID.resetIntegral();}
-        turretPow += (Math.abs(turretError)>10 ? (Math.signum(turretPow) * turretKStaticBig) : (Math.signum(turretPow) * turretKStaticSmall));
-
-        if (Math.abs(turretError) > Math.toRadians(75)) turretPow = Math.signum(turretError);
-        if (turretAngle >= Sensors.turretLimitLeft) turretPow = Math.min(turretPow, -turretKStaticBig);
-        if (turretAngle <= Sensors.turretLimitRight) turretPow = Math.max(turretPow, turretKStaticBig);
-
-        turretPow = Utils.minMaxClip(turretPow, -1, 1);
-        turret.setTargetPower(turretPow);
-        */
 
         turret.setTargetAngle(targetTurretAngle);
 
-        //TelemetryUtil.packet.put("Turret : targetAngleVel (deg)", Math.toDegrees(targetTurretAngleVel));
         TelemetryUtil.packet.put("Turret : Target Angle (deg)", Math.toDegrees(targetTurretAngle));
-        //TelemetryUtil.packet.put("Turret : Power Applied", turretPow * 100);
         TelemetryUtil.packet.put("Turret : servo predicted current angle", Math.toDegrees(turret.getCurrentAngle()));
         TelemetryUtil.packet.put("Turret : servo target", Math.toDegrees(turret.getTargetAngle()));
 
