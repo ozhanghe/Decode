@@ -68,7 +68,7 @@ public class Vision {
         try {
             ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
             exposureControl.setMode(ExposureControl.Mode.Manual);
-            exposureControl.setExposure(15, TimeUnit.MILLISECONDS);
+            exposureControl.setExposure(15, TimeUnit.MILLISECONDS); //tune this
 
             GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
             gainControl.setGain(100);

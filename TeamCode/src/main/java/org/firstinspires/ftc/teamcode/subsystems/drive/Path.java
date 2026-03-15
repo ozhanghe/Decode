@@ -85,6 +85,7 @@ public class Path {
         } else {
             this.lastIndex = newIndex;
         }
+        return this;
     }
 
     public Path addPoint(Pose2d p, boolean rev, boolean dec, double pow) {

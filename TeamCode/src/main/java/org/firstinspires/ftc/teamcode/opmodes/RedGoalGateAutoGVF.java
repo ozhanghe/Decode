@@ -20,7 +20,7 @@ import org.firstinspires.ftc.teamcode.utils.RunMode;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 
 @Config
-@Autonomous(name = "* Red Goal Gate Auto", group = "Auto", preselectTeleOp = "A. Teleop")
+@Autonomous(name = "* GVF RED GOAL", group = "Auto", preselectTeleOp = "A. Teleop")
 public class RedGoalGateAutoGVF extends LinearOpMode {
     private Robot robot;
     public static long shootDuration = 700, intakeDuration = 1000, gateIntakeDuration = 700, timeout = 2500;
@@ -186,7 +186,7 @@ public class RedGoalGateAutoGVF extends LinearOpMode {
 
         Path gate_intake1 = new Path(new Pose2d(ROBOT_POSITION.x, ROBOT_POSITION.y, ROBOT_POSITION.heading))
                 .addPoint(new Pose2d(4, 51, Math.toRadians(80)), false, false)
-                .addPoint(new Pose2d(16, 59, Math.toRadians(140)), false, false)
+                .addPoint(new Pose2d(16, 59, Math.toRadians(140)), false, false);
 
         Path gate_intake2 = new Path(new Pose2d(ROBOT_POSITION.x, ROBOT_POSITION.y, ROBOT_POSITION.heading))
                 .addPoint(new Pose2d(12, 59, Math.toRadians(80)), false, false)
