@@ -16,7 +16,7 @@ import org.firstinspires.ftc.teamcode.utils.priority.nPriorityServo;
 public class Intake {
     private final Robot robot;
     public final PriorityMotor roller, feed;
-    //public final nPriorityServo index1, index2;
+    public final nPriorityServo rindex, lindex;
 
     private boolean requestIntake = false, requestShoot = false, requestOff = false, reversed = false;
 
@@ -48,24 +48,24 @@ public class Intake {
             "feed", 2, 4,
             new double[] {1}, robot.sensors
         );
-        /*
-        index1 = new nPriorityServo(
-                new Servo[]{robot.hardwareMap.get(Servo.class, "index1")},
-                "index1", nPriorityServo.ServoType.AXON_MINI,
+
+        rindex = new nPriorityServo(
+                new Servo[]{robot.hardwareMap.get(Servo.class, "rindex")},
+                "rindex", nPriorityServo.ServoType.AXON_MINI,
                 0.027, 0.4, 0.03,
                 new boolean[] {false},
-                3, 7, true
+                3, 7
         );
 
-        index2 = new nPriorityServo(
-                new Servo[]{robot.hardwareMap.get(Servo.class, "index2")},
-                "index2", nPriorityServo.ServoType.AXON_MINI,
+        lindex = new nPriorityServo(
+                new Servo[]{robot.hardwareMap.get(Servo.class, "lindex")},
+                "lindex", nPriorityServo.ServoType.AXON_MINI,
                 0.027, 0.4, 0.03,
                 new boolean[] {false},
-                3, 7, true
+                3, 7
         );
-        */
-        robot.hardwareQueue.addDevices(roller, feed);
+
+        robot.hardwareQueue.addDevices(roller, feed, rindex, lindex);
 
         roller.motor[0].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         roller.motor[0].setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
