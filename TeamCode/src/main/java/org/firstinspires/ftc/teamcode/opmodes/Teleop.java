@@ -189,7 +189,7 @@ public class Teleop extends LinearOpMode {
                     Shooter.forceUpdateVel = 580;
                 } else if(gamepad2.right_bumper) {
                     Shooter.forceUpdateVelBool = true;
-                    Shooter.forceUpdateVel = 500;
+                    Shooter.forceUpdateVel = 400;
                 } else {
                     Shooter.forceUpdateVelBool = false;
 
