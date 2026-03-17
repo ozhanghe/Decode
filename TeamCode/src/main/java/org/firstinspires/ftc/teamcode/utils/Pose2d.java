@@ -81,10 +81,15 @@ public class Pose2d implements Cloneable {
     }
 
     public double mag() { return Math.sqrt(x * x + y * y); }
+
     public Vector2 toVec2() {return new Vector2(x, y); }
 
     public static Pose2d from3D(Pose3D p) {
         return new Pose2d(p.getPosition().x, p.getPosition().y, p.getOrientation().getYaw(AngleUnit.RADIANS));
+    }
+
+    public Pose2d mirror() {
+        return new Pose2d(x, -y, -heading);
     }
 
     @NonNull

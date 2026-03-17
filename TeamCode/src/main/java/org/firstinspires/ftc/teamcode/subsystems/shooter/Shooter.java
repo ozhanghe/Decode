@@ -67,10 +67,11 @@ public class Shooter {
 
     public static double ballInterpolateYCloseB = 68;
     public static double ballInterpolateYCloseS = 64;
-    public static double ballInterpolateYFar = 66;
     public static double ballInterpolateZCloseB = 44;
     public static double ballInterpolateZCloseS = 40;
     public static double ballInterpolateZFar = 45;
+    public static double ballInterpolateYFar = 67;
+    public static double ballInterpolateXFar = -60;
 
     public static double SOTMThreshold = 10;
     public static double flywheelThresh = 50;
@@ -179,7 +180,7 @@ public class Shooter {
                     }
                 }
 
-                if (autoShootIfInZone && isRobotInZone()) {
+                if (autoShootIfInZone && isRobotInZone() && Math.hypot(ROBOT_GLOBAL_VELOCITY.x, ROBOT_GLOBAL_VELOCITY.y) < SOTMThreshold) {
                     Log.i("Shooter", "Auto Shot");
                     setShooterBlocker(false);
                     if (flywheelBlocker.inPosition()) {
@@ -303,7 +304,7 @@ public class Shooter {
     }
 
     public void updateBallTargetInterpolate() {
-        if (ROBOT_POSITION.x >= 24) ballTarget = new Vector3(-68, ballInterpolateYFar * (Globals.isRed ? 1 : -1), ballInterpolateZFar);
+        if (ROBOT_POSITION.x >= 24) ballTarget = new Vector3(ballInterpolateXFar, ballInterpolateYFar * (Globals.isRed ? 1 : -1), ballInterpolateZFar);
         else {
             double k = Utils.minMaxClip(Math.hypot(-71 - ROBOT_POSITION.x, 71 * (Globals.isRed ? 1 : -1) - ROBOT_POSITION.y), 0, 126) / 126;
             ballTarget = new Vector3(-68, (ballInterpolateYCloseS * k + ballInterpolateYCloseB * (1 - k)) * (Globals.isRed ? 1 : -1), ballInterpolateZCloseS * k + ballInterpolateZCloseB * (1 - k));
@@ -316,10 +317,8 @@ public class Shooter {
         updateBallTargetInterpolate();
         Vector3 P;
         if (ROBOT_POSITION.x + 48 >= ROBOT_POSITION.y * (Globals.isRed ? -1 : 1)) P = new Vector3(ballTarget);
-        else P = new Vector3(ballTarget.y * (Globals.isRed ? -1 : 1), ballTarget.x * (Globals.isRed ? -1 : 1), ballTarget.z); // invert target along y = x or y = -x
-        this.P = P;
-
-        return P;
+        else ballTarget = new Vector3(ballTarget.y * (Globals.isRed ? -1 : 1), ballTarget.x * (Globals.isRed ? -1 : 1), ballTarget.z); // invert target along y = x or y = -x
+        return ballTarget;
     }
 
     public boolean aimLauncherV8() {
@@ -534,8 +533,8 @@ public class Shooter {
     }
 
     public void predictGoal2AxisInterpolate() {
-        ballTarget = new Vector3(-67, 69 * (Globals.isRed ? 1 : -1), 45);
-        //ballTarget = turretTrackTargetPos();
+        //ballTarget = new Vector3(-67, 69 * (Globals.isRed ? 1 : -1), 45);
+        ballTarget = turretTrackTargetPos();
         double currFlywheelVel = flywheel.getFilteredVelocity();
 
         double initialDist = Math.hypot(ballTarget.x - ROBOT_POSITION.x, ballTarget.y - ROBOT_POSITION.y);
@@ -549,6 +548,7 @@ public class Shooter {
 
             virtualX = ballTarget.x - (ROBOT_GLOBAL_VELOCITY.x * time);
             virtualY = ballTarget.y - (ROBOT_GLOBAL_VELOCITY.y * time);
+
             Canvas canvas = TelemetryUtil.packet.fieldOverlay();
             canvas.setStroke(Globals.isRed ? "#ff4000" : "#0040ff");
             canvas.setStrokeWidth(2);

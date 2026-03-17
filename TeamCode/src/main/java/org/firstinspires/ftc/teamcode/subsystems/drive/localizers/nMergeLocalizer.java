@@ -32,7 +32,7 @@ public class nMergeLocalizer extends Localizer {
     public static boolean useOdometry = true;
     public static boolean useCamera = true;
 
-    public static double pinpointPollDist = 6;
+    public static double pinpointPollDist = 12;
 
     // EKF
     private final RobotEKF ekf;

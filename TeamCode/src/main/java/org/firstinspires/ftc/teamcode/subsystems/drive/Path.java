@@ -79,7 +79,7 @@ public class Path {
 
     public Path setIndex(int newIndex){
         if (newIndex >= segments.size()) {
-            this.lastIndex = segments.size() - 1;
+            this.lastIndex = segments.size();
         } else if (newIndex < 0) {
             this.lastIndex = 0;
         } else {

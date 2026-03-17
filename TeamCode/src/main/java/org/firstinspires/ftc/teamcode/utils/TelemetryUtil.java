@@ -9,7 +9,7 @@ public class TelemetryUtil {
 
     public static void setup() {
         dashboard = FtcDashboard.getInstance();
-        dashboard.setTelemetryTransmissionInterval(200);
+        dashboard.setTelemetryTransmissionInterval(100);
         //DashboardUtil.drawField();
     }
 

@@ -7,12 +7,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Robot;
-import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
-import org.firstinspires.ftc.teamcode.utils.priority.HardwareQueue;
-import org.firstinspires.ftc.teamcode.vision.Vision;
 
 @TeleOp
 public class EncoderPoseTuner extends LinearOpMode {
@@ -42,9 +39,9 @@ public class EncoderPoseTuner extends LinearOpMode {
             robot.sensors.update();
             drivetrain.update();
 
-            telemetry.addData("leftOdoRadius", (drivetrain.leftFront.motor[0].getCurrentPosition() - leftInitial) * drivetrain.mergeLocalizer.encoders[0].ticksToInches/theta + "");
-            telemetry.addData("rightOdoRadius", (drivetrain.rightFront.motor[0].getCurrentPosition() - rightInitial) * drivetrain.mergeLocalizer.encoders[1].ticksToInches/theta + "");
-            telemetry.addData("backOdoRadius", (drivetrain.leftRear.motor[0].getCurrentPosition() - backInitial) * drivetrain.mergeLocalizer.encoders[2].ticksToInches/theta + "");
+            telemetry.addData("leftOdoRadius", (drivetrain.leftFront.motor[0].getCurrentPosition() - leftInitial) * drivetrain.nMergeLocalizer.encoders[0].ticksToInches/theta + "");
+            telemetry.addData("rightOdoRadius", (drivetrain.rightFront.motor[0].getCurrentPosition() - rightInitial) * drivetrain.nMergeLocalizer.encoders[1].ticksToInches/theta + "");
+            telemetry.addData("backOdoRadius", (drivetrain.leftRear.motor[0].getCurrentPosition() - backInitial) * drivetrain.nMergeLocalizer.encoders[2].ticksToInches/theta + "");
             telemetry.addData("heading", ROBOT_POSITION.heading);
             telemetry.update();
         }

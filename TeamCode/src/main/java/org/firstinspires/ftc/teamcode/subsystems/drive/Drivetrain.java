@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.subsystems.drive;
 
 import static org.firstinspires.ftc.teamcode.utils.Globals.DRIVETRAIN_ENABLED;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
-import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_VELOCITY;
 import static org.firstinspires.ftc.teamcode.utils.Globals.TRACK_WIDTH;
 
 import android.util.Log;
@@ -18,20 +17,18 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigu
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.Localizer;
-import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.MergeLocalizer;
+import org.firstinspires.ftc.teamcode.subsystems.drive.localizers.nMergeLocalizer;
 import org.firstinspires.ftc.teamcode.utils.AngleUtil;
 import org.firstinspires.ftc.teamcode.utils.DashboardUtil;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
-import org.firstinspires.ftc.teamcode.utils.Utils;
 import org.firstinspires.ftc.teamcode.utils.Vector2;
 import org.firstinspires.ftc.teamcode.utils.priority.HardwareQueue;
 import org.firstinspires.ftc.teamcode.utils.priority.PriorityMotor;
 import org.firstinspires.ftc.teamcode.vision.Vision;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -53,7 +50,7 @@ public class Drivetrain {
 
     public Vision vision;
     public Localizer localizer;
-    public MergeLocalizer mergeLocalizer;
+    public nMergeLocalizer nMergeLocalizer;
     private final HardwareQueue hardwareQueue;
     private final Sensors sensors;
 
@@ -91,7 +88,7 @@ public class Drivetrain {
         setMinPowersToOvercomeFriction(1.0);
 
         localizer = new Localizer (sensors, this, "#ff0000", "#ffffff");
-        mergeLocalizer = new MergeLocalizer (hardwareMap, sensors, this, "#0000ff", "#ff00ff");
+        nMergeLocalizer = new nMergeLocalizer (hardwareMap, sensors, this, "#0000ff", "#ff00ff");
         //if (vision != null) vision.start();
     }
 
@@ -153,7 +150,7 @@ public class Drivetrain {
 
     public void setPoseEstimate(Pose2d pose2d) {
         localizer.setPoseEstimate(pose2d);
-        mergeLocalizer.setPoseEstimate(pose2d);
+        nMergeLocalizer.setPoseEstimate(pose2d);
         LogUtil.drivePositionReset = true;
     }
 
@@ -162,6 +159,8 @@ public class Drivetrain {
     }
 
     private Path path = null;
+    long segmentStartTime;
+    int lastSegmentIndex;
     public PathData data;
     private Vector2 moveVector = new Vector2(0, 0);
     private double turnPow = 0;
@@ -181,11 +180,11 @@ public class Drivetrain {
             return;
         }
 
-        if(path != null) {
+        if (path != null) {
             state = State.FOLLOW_SPLINE;
         }
 
-        switch(state) {
+        switch (state) {
             case FOLLOW_SPLINE:
                 data = path.update(ROBOT_POSITION);
 
@@ -197,20 +196,14 @@ public class Drivetrain {
                     break;
                 }
 
-                long segmentStartTime = 5000;
-                int lastSegmentIndex = 0;
-                // FIXME Values set to segmentStartTime and lastSegmentIndex are unused
                 if (data.index != lastSegmentIndex) {
                     lastSegmentIndex = data.index;
                     segmentStartTime = System.currentTimeMillis();
-                }
-                else {
-                    if (System.currentTimeMillis() - segmentStartTime > 5000) {
-                        Log.i("Drivetrain", "Segment " + data.index + " timed out. Skipping to next index");
-                        path.setIndex(data.index + 1);
-                        segmentStartTime = System.currentTimeMillis();
-                        lastSegmentIndex = data.index + 1;
-                    }
+                } else if (System.currentTimeMillis() - segmentStartTime > 5000) {
+                    Log.i("Drivetrain", "Segment " + data.index + " timed out. Skipping to next index");
+                    path.setIndex(data.index + 1);
+                    segmentStartTime = System.currentTimeMillis();
+                    lastSegmentIndex = data.index + 1;
                 }
 
                 Vector2 traverse = new Vector2(data.velocity.x, data.velocity.y);
@@ -268,6 +261,8 @@ public class Drivetrain {
 
     public void setPath (Path p) {
         this.path = p;
+        segmentStartTime = System.currentTimeMillis();
+        lastSegmentIndex = 0;
     }
 
     private void calculateErrors() {

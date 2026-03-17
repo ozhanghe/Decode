@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems.drive.localizers;
 
+import com.acmerobotics.dashboard.config.Config;
+
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 
@@ -12,6 +14,7 @@ The sensor inputs into the kalman filter are the following:
  Note:
  Everything is in inches and radians! (Rishi I commented Units yo!)
  */
+@Config
 public class RobotEKF {
 
     //this is our robot state [x, y, theta]

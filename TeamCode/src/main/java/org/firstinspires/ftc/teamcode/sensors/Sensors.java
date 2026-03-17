@@ -18,7 +18,6 @@ import org.firstinspires.ftc.teamcode.utils.LEDWrapper;
 import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.RunMode;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
-import org.firstinspires.ftc.teamcode.utils.RelativeEncoder;
 import org.firstinspires.ftc.teamcode.utils.Utils;
 
 import java.util.List;
@@ -101,12 +100,12 @@ public class Sensors {
 
         robot.drivetrain.localizer.updateEncoders(odoWheelPositions);
         robot.drivetrain.localizer.update();
-        robot.drivetrain.mergeLocalizer.updateEncoders(odoWheelPositions);
-        robot.drivetrain.mergeLocalizer.update();
+        robot.drivetrain.nMergeLocalizer.updateEncoders(odoWheelPositions);
+        robot.drivetrain.nMergeLocalizer.update();
 
-        ROBOT_POSITION = robot.drivetrain.mergeLocalizer.getPoseEstimate();
-        ROBOT_VELOCITY = robot.drivetrain.mergeLocalizer.getRelativePoseVelocity();
-        ROBOT_GLOBAL_VELOCITY = robot.drivetrain.mergeLocalizer.getGlobalVelocity();
+        ROBOT_POSITION = robot.drivetrain.nMergeLocalizer.getPoseEstimate();
+        ROBOT_VELOCITY = robot.drivetrain.nMergeLocalizer.getRelativePoseVelocity();
+        ROBOT_GLOBAL_VELOCITY = robot.drivetrain.nMergeLocalizer.getGlobalVelocity();
 
         //if (currentTime - initialTime < 500_000_000) resetTurretAngleEncoder = true;
         turretAngleEncoderPosition = getTurretAngleRaw();

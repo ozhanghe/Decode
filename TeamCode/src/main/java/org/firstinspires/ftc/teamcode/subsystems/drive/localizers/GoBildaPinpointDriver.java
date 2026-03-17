@@ -1091,3 +1091,40 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
         }
     }
 }
+
+/*
+   public void updateData(){
+        final int positionThreshold = 5000; //more than one FTC field in mm
+        final int headingThreshold = 120; //About 20 full rotations in Radians
+        final int velocityThreshold = 10000; //10k mm/sec is faster than an FTC robot should be going...
+        final int headingVelocityThreshold = 120; //About 20 rotations per second
+
+        float oldPosX = xPosition;
+        float oldPosY = yPosition;
+        float oldPosH = hOrientation;
+        float oldVelX = xVelocity;
+        float oldVelY = yVelocity;
+        float oldVelH = hVelocity;
+
+        byte[] bArr   =      deviceClient.read(Register.X_POSITION.bVal,6*4);
+
+        xPosition     = byteArrayToFloat(Arrays.copyOfRange(bArr, 0,4), ByteOrder.LITTLE_ENDIAN);
+        yPosition     = byteArrayToFloat(Arrays.copyOfRange(bArr, 4,8), ByteOrder.LITTLE_ENDIAN);
+        hOrientation  = byteArrayToFloat(Arrays.copyOfRange(bArr, 8,12), ByteOrder.LITTLE_ENDIAN);
+        xVelocity     = byteArrayToFloat(Arrays.copyOfRange(bArr, 12,16), ByteOrder.LITTLE_ENDIAN);
+        yVelocity     = byteArrayToFloat(Arrays.copyOfRange(bArr, 16,20), ByteOrder.LITTLE_ENDIAN);
+        hVelocity     = byteArrayToFloat(Arrays.copyOfRange(bArr, 20,24), ByteOrder.LITTLE_ENDIAN);
+
+
+          Check to see if any of the floats we have received from the device are NaN or are too large
+          if they are, we return the previously read value and alert the user via the DeviceStatus Enum.
+
+        xPosition    = isPositionCorrupt(oldPosX, xPosition, positionThreshold, true);
+        yPosition    = isPositionCorrupt(oldPosY, yPosition, positionThreshold, true);
+        hOrientation = isPositionCorrupt(oldPosH, hOrientation, headingThreshold, true);
+        xVelocity    = isVelocityCorrupt(oldVelX, xVelocity, velocityThreshold);
+        yVelocity    = isVelocityCorrupt(oldVelY, yVelocity, velocityThreshold);
+        hVelocity    = isVelocityCorrupt(oldVelH, hVelocity, headingVelocityThreshold);
+
+    }
+ */
