@@ -27,9 +27,9 @@ public class RobotEKF {
     private final double[][] Q = new double[3][3];
 
     //tune the below values these are the values that represent how much variance each of them have.
-    public static double visionRX = 0.04, visionRY = 0.04, visionRT = 0.02;
+    public static double visionRX = 0.05, visionRY = 0.05, visionRT = 0.03;
     public static double pinpointRX = 0.01, pinpointRY = 0.01, pinpointRT = 0.05;
-    public static double odoRX = 0.1, odoRY = 0.1, odoRT = 0.06;
+    public static double odoRX = 0.1, odoRY = 0.1, odoRT = 0.05;
 
 
 
