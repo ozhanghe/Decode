@@ -76,7 +76,7 @@ public class nPriorityServo extends PriorityDevice {
 
         for (Servo s : servos) {
             if (s instanceof ServoImplEx) {
-                ((ServoImplEx) s).setPwmRange(new PwmControl.PwmRange(400, 2600));
+                ((ServoImplEx) s).setPwmRange(new PwmControl.PwmRange(500, 2500));
             }
         }
 
