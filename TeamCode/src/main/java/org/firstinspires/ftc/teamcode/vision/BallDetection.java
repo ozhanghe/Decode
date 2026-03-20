@@ -5,6 +5,7 @@ import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 
 import android.util.Log;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -19,6 +20,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+@Config
 public class BallDetection {
 
     private Limelight3A limelight;
@@ -26,19 +28,20 @@ public class BallDetection {
     private ArrayList<Vector2> ballPoses = new ArrayList<>();
 
     public static double stalenessThreshMs = 100;
-    public static double confidenceThresh = 50;
+    public static double confidenceThresh = 0.7;
 
     public BallDetection(HardwareMap hardwareMap) {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.setPollRateHz(50);
         limelight.pipelineSwitch(7);
 
-        TelemetryUtil.dashboard.startCameraStream(limelight, 30);
 
     }
 
     public void start() {
         limelight.start();
+        //TelemetryUtil.dashboard.startCameraStream(limelight, 30);
+
     }
 
     public void stop() {
@@ -58,16 +61,18 @@ public class BallDetection {
                 if (detection.getConfidence() > confidenceThresh) {
                     double tx = detection.getTargetXDegrees();
                     double ty = detection.getTargetYDegrees();
+                    Log.i("Ty", String.valueOf(ty));
 
 
                     //lowk in inches
                     double d = (Globals.LLHeight - Globals.ballRadius) / Math.tan(Math.toRadians(ty) + Math.toRadians(Globals.LlAngle));
+
                     //funny polar to cartesian conversion
                     Vector2 ballPos = new Vector2(ROBOT_POSITION.x + d * Math.cos(ROBOT_POSITION.heading + tx), ROBOT_POSITION.y + d * Math.sin(ROBOT_POSITION.heading + tx));
 
                     ballPoses.add(ballPos);
                 } else {
-                    Log.i("BallDetection", "Confidence too low");
+                    Log.i("BallDetection", "Confidence too low " + detection.getConfidence());
                 }
             }
         } else{

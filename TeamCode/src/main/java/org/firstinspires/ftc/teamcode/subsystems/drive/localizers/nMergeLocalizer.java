@@ -128,7 +128,7 @@ public class nMergeLocalizer extends Localizer {
             TelemetryUtil.packet.put("Vision Processor Enabled", drivetrain.vision.visionPortal.getProcessorEnabled(drivetrain.vision.aprilTagProcessor));
         }
 
-        if (useCamera && Math.hypot(Globals.ROBOT_VELOCITY.x, Globals.ROBOT_VELOCITY.y) < 20 && drivetrain.vision != null && drivetrain.vision.visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING && drivetrain.vision.visionPortal.getProcessorEnabled(drivetrain.vision.aprilTagProcessor)) {
+        if (useCamera && Math.hypot(Globals.ROBOT_VELOCITY.x, Globals.ROBOT_VELOCITY.y) < 10 && drivetrain.vision != null && drivetrain.vision.visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING && drivetrain.vision.visionPortal.getProcessorEnabled(drivetrain.vision.aprilTagProcessor)) {
             Pose2d cameraResult = drivetrain.vision.update();
             if (cameraResult != null) {
                 if (estimatedCameraPose == null) estimatedCameraPose = cameraResult;

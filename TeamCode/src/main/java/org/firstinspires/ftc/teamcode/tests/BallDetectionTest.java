@@ -5,11 +5,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.utils.Globals;
+import org.firstinspires.ftc.teamcode.utils.LogUtil;
 import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.utils.Vector2;
 import org.firstinspires.ftc.teamcode.vision.BallDetection;
 
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
 @TeleOp
 public class BallDetectionTest extends LinearOpMode {
@@ -20,6 +22,9 @@ public class BallDetectionTest extends LinearOpMode {
     public void runOpMode() {
         b = new BallDetection(hardwareMap);
         b.start();
+
+        TelemetryUtil.setup();
+
 
         while(!isStopRequested()) {
             b.update();
@@ -35,7 +40,19 @@ public class BallDetectionTest extends LinearOpMode {
                 canvas.strokeCircle(p.get(i).x, p.get(i).y, 5);
             }
 
+            this.updateTelemetry();
+
+
+
         }
 
+
+    }
+
+    public void updateTelemetry() {
+        Canvas canvas = TelemetryUtil.packet.fieldOverlay();
+
+        TelemetryUtil.sendTelemetry();
+        LogUtil.send();
     }
 }
