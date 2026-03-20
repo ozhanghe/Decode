@@ -165,7 +165,8 @@ public class Drivetrain {
     private Vector2 moveVector = new Vector2(0, 0);
     private double turnPow = 0;
 
-    public static double correctScalar = 0.2, decelThresh = 8.0;
+    // TODO: Tune these values
+    public static double correctScalar = 1.0, decelThresh = 8.0;
 
     private Pose2d targetPoint = new Pose2d (0, 0, 0);
     public static PID xPID = new PID (0.05, 0.0, 0.005);
@@ -188,14 +189,16 @@ public class Drivetrain {
             case FOLLOW_SPLINE:
                 data = path.update(ROBOT_POSITION);
 
+                // Null data indicates the end of path has been reached
                 if (data == null) {
                     targetPoint = path.getLastPose();
-                    maxPower = 0.25;
+                    maxPower = 0.6;
                     path = null;
                     state = State.PID_TO_POINT;
                     break;
                 }
 
+                // Timeout / stuck protection (looks good? will check more in depth. consider switching to PID to point rather than moving the path ahead since the splines will be starting at weird points now
                 if (data.index != lastSegmentIndex) {
                     lastSegmentIndex = data.index;
                     segmentStartTime = System.currentTimeMillis();
@@ -223,8 +226,9 @@ public class Drivetrain {
                 double targetHeading = Math.atan2(traverse.y, traverse.x) + (data.reversed ? Math.PI : 0);
                 turnPow = pathRot + turnPID.update(targetHeading - ROBOT_POSITION.heading, -0.8, 0.8);
 
+                // Tune decel split to be a smoother transition into PID to point
                 if (data.decel & ROBOT_POSITION.getDistanceFromPoint(path.getSegLast(data.index)) < decelThresh) {
-                    moveVector.mul(0.2 + 0.8 * Math.sqrt(ROBOT_POSITION.getDistanceFromPoint(path.getSegLast(data.index)) / decelThresh));
+                    moveVector.mul(0.4 + 0.6 * Math.sqrt(ROBOT_POSITION.getDistanceFromPoint(path.getSegLast(data.index)) / decelThresh));
                 }
                 moveVector.mul(data.power);
 
