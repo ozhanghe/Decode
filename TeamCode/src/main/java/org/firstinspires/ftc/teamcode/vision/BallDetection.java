@@ -69,8 +69,9 @@ public class BallDetection {
 
                     //funny polar to cartesian conversion
                     Vector2 ballPos = new Vector2(ROBOT_POSITION.x + d * Math.cos(ROBOT_POSITION.heading + tx), ROBOT_POSITION.y + d * Math.sin(ROBOT_POSITION.heading + tx));
-
-                    ballPoses.add(ballPos);
+                    if (ballPos.x >= 0 && ballPos.y >= 0){
+                        ballPoses.add(ballPos);
+                    }
                 } else {
                     Log.i("BallDetection", "Confidence too low " + detection.getConfidence());
                 }
