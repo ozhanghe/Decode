@@ -214,7 +214,15 @@ public class Drivetrain {
                 Vector2 correct = new Vector2(0, traverse.mag() * traverse.mag() / data.radius * correctScalar);
                 correct.rotate(Math.atan2(traverse.y, traverse.x));
 
-                moveVector = Vector2.add(traverse, correct);
+                // Only scale the traverse part of moveVector bc correction should remain true to curr velocity
+                if (data.decel & ROBOT_POSITION.getDistanceFromPoint(path.getSegLast(data.index)) < decelThresh) {
+                    Vector2 decelTraverse = new Vector2(traverse.x, traverse.y);
+                    decelTraverse.mul(0.3 * ROBOT_POSITION.getDistanceFromPoint(path.getSegLast(data.index)) / decelThresh);
+                    moveVector = Vector2.add(decelTraverse, correct);
+                } else {
+                    moveVector = Vector2.add(traverse, correct);
+                }
+
                 moveVector.rotate(-ROBOT_POSITION.heading);
                 double mag = moveVector.mag();
                 moveVector.norm();
@@ -227,12 +235,7 @@ public class Drivetrain {
                 double targetHeading = Math.atan2(traverse.y, traverse.x) + (data.reversed ? Math.PI : 0);
                 turnPow = pathRot + hPID.update(targetHeading - ROBOT_POSITION.heading, -1.0, 1.0);
 
-                // Tune decel split to be a smoother transition into PID to point
-                if (data.decel & ROBOT_POSITION.getDistanceFromPoint(path.getSegLast(data.index)) < decelThresh) {
-                    moveVector.mul(0.3 * Math.sqrt(ROBOT_POSITION.getDistanceFromPoint(path.getSegLast(data.index)) / decelThresh));
-                }
                 moveVector.mul(data.power);
-
                 setMoveVector(moveVector, turnPow);
                 break;
             case PID_TO_POINT:
