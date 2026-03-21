@@ -52,7 +52,7 @@ public class Intake {
         rindex = new nPriorityServo(
                 new Servo[]{robot.hardwareMap.get(Servo.class, "rindex")},
                 "rindex", nPriorityServo.ServoType.AXON_MINI,
-                0.027, 0.4, 0.03,
+                0.0, 1.0, 0.03,
                 new boolean[] {false},
                 3, 7
         );
@@ -60,7 +60,7 @@ public class Intake {
         lindex = new nPriorityServo(
                 new Servo[]{robot.hardwareMap.get(Servo.class, "lindex")},
                 "lindex", nPriorityServo.ServoType.AXON_MINI,
-                0.027, 0.4, 0.03,
+                0.51, 0.8, 0.78,
                 new boolean[] {false},
                 3, 7
         );

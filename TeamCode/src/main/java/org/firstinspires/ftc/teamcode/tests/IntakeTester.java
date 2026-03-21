@@ -14,12 +14,14 @@ import org.firstinspires.ftc.teamcode.utils.RunMode;
 public class IntakeTester extends LinearOpMode {
     public static double feedPower = 0.0, intakePower = 0.0;
     public static boolean updateValues = false;
-
+    public static double indexServoAngle = 0;
     public void runOpMode() {
         Globals.RUNMODE = RunMode.TESTER;
         Robot robot = new Robot(hardwareMap);
         Intake intake = robot.intake;
         intake.state = Intake.State.TEST;
+
+
 
         while (opModeInInit()) {
             robot.update();
@@ -35,6 +37,7 @@ public class IntakeTester extends LinearOpMode {
             if (updateValues) {
                 intake.feed.setTargetPower(feedPower);
                 intake.roller.setTargetPower(intakePower);
+                intake.lindex.setTargetPos(indexServoAngle);
                 updateValues = false;
             }
 
