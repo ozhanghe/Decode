@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_BACK_LENGTH;
-import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_WIDTH;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -9,7 +8,6 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.Robot;
-import org.firstinspires.ftc.teamcode.sensors.Sensors;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.utils.Globals;
@@ -55,13 +53,13 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         //robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         //preloads
         shoot(Math.toRadians(126), 1, true, true);
-        intake(11.5, 60, false, false);
+        intake(11.5, 60, false, 0);
         open_gate(500);
 
         //middle spikemarks
         shoot(Math.toRadians(90), 1, true, false);
 
-        intake(-13, 51, true, false);
+        intake(-13, 51, true, 0);
         shoot(Math.toRadians(80), 2, true, false);
         //gate intake and shoot
         gate_intake(true);
@@ -147,23 +145,78 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         robot.drivetrain.goToPoint(new Pose2d(x, 22, Math.PI / 2), 1, true);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.intake.reqIntake(true);
-        int[] balls = new int[3];
-        if (spike != 0) balls[3 - spike] = 1;
         int[] pattern = new int[3];
         pattern[Globals.BALL_PATTERN - 21] = 1;
-        for (int i = 0; i < 3; i++) {
-            if (balls[i] != pattern[i]) {
+        if (spike != 0) {
+            // sorted intake
+            int[] balls = new int[3];
+            balls[3 - spike] = 1; // tells you where the green ball is
+            int[] slots = new int[]{-1, -1}; // [0] is left slot, [1] is right slot
+            int slotsInUse = 0;
+            for (int i = 0; i < 3; i++) {
+                if (slots[0] == pattern[i - slotsInUse]) { // checks if the next ball we wanna intake is in left slot
+                    // if yes, we intake it
+                    robot.intake.setLeftBlocker(false);
+                    robot.waitWhile(() -> !robot.intake.lindex.inPosition());
+                    slots[0] = -1;
+                    slotsInUse--;
+                }
+                if (slots[1] == pattern[i - slotsInUse]) { // checks if the next ball we want is in the right slot
+                    // if yes, then we intake it
+                    robot.intake.setRightBlocker(false);
+                    robot.waitWhile(() -> !robot.intake.rindex.inPosition());
+                    slots[1] = -1;
+                    slotsInUse--;
+                }
+                if (balls[i] != pattern[i - slotsInUse]) {
+                    // in the event that we don't have the ball we want
+                    // in front of us or in our slots, we put the front ball in a slot
+                    // it should be impossible for us to have all slots
+                    // occupied & unwanted and also have the ball in front
+                    // of us not be the one we want
 
+                    // prioritizes the use of the right slot since that's less distance for red auto
+                    int deltaX = 3 * (slots[1] == -1 ? -1 : 1);
+                    if (deltaX < 0) robot.intake.setRightBlocker(true);
+                    else robot.intake.setLeftBlocker(true);
+                    slotsInUse++;
+                    slots[(deltaX < 0 ? 1 : 0)] = balls[i];
+                    robot.drivetrain.goToPoint(new Pose2d(x + deltaX, y + i * 5, Math.PI / 2), 1);
+                    robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+                } else {
+                    robot.drivetrain.goToPoint(new Pose2d(x, y + i * 5, Math.PI / 2), 1);
+                    robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+                }
+
+                // but also to deal with the case where we still have slotted balls after the 3rd ball intaken,
+                // we'll just check again if the balls we want are in the slots after slotting or intaking!
+                // this is the jank solution
+                if (slots[0] == pattern[i - slotsInUse]) { // checks if the next ball we wanna intake is in left slot
+                    // if yes, we intake it
+                    robot.intake.setLeftBlocker(false);
+                    robot.waitWhile(() -> !robot.intake.lindex.inPosition());
+                    slots[0] = -1;
+                    slotsInUse--;
+                }
+                if (slots[1] == pattern[i - slotsInUse]) { // checks if the next ball we want is in the right slot
+                    // if yes, then we intake it
+                    robot.intake.setRightBlocker(false);
+                    robot.waitWhile(() -> !robot.intake.rindex.inPosition());
+                    slots[1] = -1;
+                    slotsInUse--;
+                }
             }
+        } else {
+            // regular intake
+
+            robot.drivetrain.goToPoint(new Pose2d(x, 40, Math.PI / 2), 1);
+            robot.waitFor(intakeDuration);
+
+            // why do we have 2 extra go to's?? -Nikhil
+            robot.drivetrain.goToPoint(new Pose2d(x, 40, Math.PI / 2), 1);
+
+            robot.drivetrain.goToPoint(new Pose2d(x, 40, Math.PI / 2), 1);
         }
-
-        // intake
-        robot.drivetrain.goToPoint(new Pose2d(x, 40, Math.PI / 2), 1);
-        robot.waitFor(intakeDuration);
-
-        robot.drivetrain.goToPoint(new Pose2d(x, 40, Math.PI / 2), 1);
-
-        robot.drivetrain.goToPoint(new Pose2d(x, 40, Math.PI / 2), 1);
 
         // back off
         if (!skipLast) {

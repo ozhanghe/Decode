@@ -157,6 +157,14 @@ public class Intake {
 
     public void setRollerDirection(boolean reversed) { this.reversed = reversed; }
 
+    public void setRightBlocker(boolean on) {
+        rindex.setTargetAngle(0.5 * (on ? 1 : 0));
+    }
+
+    public void setLeftBlocker(boolean on) {
+        lindex.setTargetAngle(0.5 * (on ? 1 : 0));
+    }
+
     private void updateTelemetry() {
         TelemetryUtil.packet.put("Intake : state", this.state);
         LogUtil.intakeState.set(this.state.toString());
