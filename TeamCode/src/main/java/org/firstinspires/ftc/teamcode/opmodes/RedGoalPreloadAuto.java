@@ -142,21 +142,19 @@ public class RedGoalPreloadAuto extends LinearOpMode {
         //if (recharge) robot.shooter.reqAim(true);
     }
 
-    private void intake(double x, double y, boolean skipLast, double spike) {
+    private void intake(double x, double y, boolean skipLast, int spike) {
         // align
         robot.drivetrain.goToPoint(new Pose2d(x, 22, Math.PI / 2), 1, true);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         robot.intake.reqIntake(true);
         int[] balls = new int[3];
+        if (spike != 0) balls[3 - spike] = 1;
         int[] pattern = new int[3];
-        if(spike == 1){
-        }
-        if(balls[0] == pattern[0]){
-            robot.drivetrain.goToPoint(new Pose2d(ROBOT_POSITION.x,ROBOT_POSITION.y +3, Math.PI/2), 1);
-        } else {
-            robot.drivetrain.goToPoint(new Pose2d(ROBOT_POSITION.x + 6,ROBOT_POSITION.y, Math.PI/2), 1);
-            robot.drivetrain.goToPoint(new Pose2d(ROBOT_POSITION.x,ROBOT_POSITION.y + 3, Math.PI/2), 1);
-            robot.drivetrain.goToPoint(new Pose2d(ROBOT_POSITION.x - 6,ROBOT_POSITION.y, Math.PI/2), 1);
+        pattern[Globals.BALL_PATTERN - 21] = 1;
+        for (int i = 0; i < 3; i++) {
+            if (balls[i] != pattern[i]) {
+
+            }
         }
 
         // intake
