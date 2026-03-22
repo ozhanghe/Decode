@@ -103,12 +103,12 @@ public class Sensors {
 
         robot.drivetrain.localizer.updateEncoders(odoWheelPositions);
         robot.drivetrain.localizer.update();
-        robot.drivetrain.nMergeLocalizer.updateEncoders(odoWheelPositions);
-        robot.drivetrain.nMergeLocalizer.update();
+        robot.drivetrain.mergeLocalizer.updateEncoders(odoWheelPositions);
+        robot.drivetrain.mergeLocalizer.update();
 
-        ROBOT_POSITION = robot.drivetrain.nMergeLocalizer.getPoseEstimate();
-        ROBOT_VELOCITY = robot.drivetrain.nMergeLocalizer.getRelativePoseVelocity();
-        ROBOT_GLOBAL_VELOCITY = robot.drivetrain.nMergeLocalizer.getGlobalVelocity();
+        ROBOT_POSITION = robot.drivetrain.mergeLocalizer.getPoseEstimate();
+        ROBOT_VELOCITY = robot.drivetrain.mergeLocalizer.getRelativePoseVelocity();
+        ROBOT_GLOBAL_VELOCITY = robot.drivetrain.mergeLocalizer.getGlobalVelocity();
 
         //if (currentTime - initialTime < 500_000_000) resetTurretAngleEncoder = true;
         turretAngleEncoderPosition = getTurretAngleRaw();
