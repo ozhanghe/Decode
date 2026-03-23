@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.google.ar.core.Pose;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -103,32 +104,26 @@ public class nMergeLocalizer extends Localizer {
 
         ekf.predict(vxField, vyField, omega, loopTime);
 
-        // EKF UPDATE — ODOMETRY
-        if (useOdometry) {
-            double ekfTheta     = ekf.getTheta();
-            double odoPoseX     = ekf.getX() + Math.cos(ekfTheta) * relDeltaX - Math.sin(ekfTheta) * relDeltaY;
-            double odoPoseY     = ekf.getY() + Math.sin(ekfTheta) * relDeltaX + Math.cos(ekfTheta) * relDeltaY;
-            double odoPoseTheta = AngleUnit.normalizeRadians(ekfTheta + deltaHeading);
-            ekf.updateOdometry(odoPoseX, odoPoseY, odoPoseTheta);
-        }
-
         // EKF UPDATE — PINPOINT
         if (lastPinpointCorrectedPose != null) {
             if (usePinpoint && (currentTimeNanos - lastPinpointPollNanos >= pinpointPollGapMs * 1000_000 || currentPose.getDistanceFromPoint(lastPinpointCorrectedPose) >= pinpointPollDist) || constantCorrection) {
                 Log.i("Localization Test", "pinpoint in use");
-                lastPinpointPollNanos = currentTimeNanos;
+                findPastInterpolatedPose(lastPinpointPollNanos);
                 pinpoint.update();
-                ekf.updatePinpoint(pinpoint.getPosX(), pinpoint.getPosY(), pinpoint.getHeading());
-
-                lastPinpointCorrectedPose = currentPose.clone();
-
+                Pose2d currpinpoint = new Pose2d(pinpoint.getPosX(),pinpoint.getPosY(),pinpoint.getHeading());
+                Pose2d newpinpoint = new Pose2d (interpolatedPastPose.x + currpinpoint.x - lastPinpointCorrectedPose.x,
+                        interpolatedPastPose.y + currpinpoint.y - lastPinpointCorrectedPose.y,
+                        interpolatedPastPose.heading + currpinpoint.heading - lastPinpointCorrectedPose.heading);
+                ekf.updatePinpoint(newpinpoint.getX(), newpinpoint.getY(), newpinpoint.getHeading());
+                lastPinpointCorrectedPose = currpinpoint.clone();
+                lastPinpointPollNanos = currentTimeNanos;
             }
         } else {
             Log.i("Localization Test", "pinpoint in use");
             pinpoint.update();
             ekf.updatePinpoint(pinpoint.getPosX(), pinpoint.getPosY(), pinpoint.getHeading());
-
             lastPinpointCorrectedPose = currentPose;
+            lastPinpointPollNanos = currentTimeNanos;
         }
 
 
