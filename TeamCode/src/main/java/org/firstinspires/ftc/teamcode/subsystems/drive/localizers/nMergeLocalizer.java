@@ -39,9 +39,9 @@ public class nMergeLocalizer extends Localizer {
 
     // EKF
     private final RobotEKF ekf;
-    public static double Q_X     = 0.02;
-    public static double Q_Y     = 0.02;
-    public static double Q_THETA = 0.005;
+    public static double Q_X     = 0.5;
+    public static double Q_Y     = 0.5;
+    public static double Q_THETA = 0.5;
 
     // Camera
     private Pose2d estimatedCameraPose = new Pose2d(0, 0, 0);
