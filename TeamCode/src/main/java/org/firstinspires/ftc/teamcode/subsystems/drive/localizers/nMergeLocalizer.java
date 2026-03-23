@@ -96,13 +96,7 @@ public class nMergeLocalizer extends Localizer {
         constAccelMath.calculate(loopTime, relDelta, currentPose);
 
         // EKF PREDICT
-        double cosH    = Math.cos(ekf.getTheta());
-        double sinH    = Math.sin(ekf.getTheta());
-        double vxField = (cosH * relDeltaX - sinH * relDeltaY) / loopTime;
-        double vyField = (sinH * relDeltaX + cosH * relDeltaY) / loopTime;
-        double omega   = deltaHeading / loopTime;
-
-        ekf.predict(vxField, vyField, omega, loopTime);
+        ekf.predict(relDeltaX,relDeltaY,deltaHeading);
 
         // EKF UPDATE — PINPOINT
         if (lastPinpointCorrectedPose != null) {

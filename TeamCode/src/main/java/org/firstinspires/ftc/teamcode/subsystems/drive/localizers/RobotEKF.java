@@ -45,21 +45,20 @@ public class RobotEKF {
 
     //starting with noise
     public RobotEKF(Pose2d startPose) {
-        this(startPose, 0.01, 0.01, 0.01);
+        this(startPose, 0.5, 0.5, 0.5);
     }
 
     //prediction phase of kalman filter
-    public void predict(double vxField, double vyField, double omega, double dt) {
-        x     += vxField * dt;
-        y     += vyField * dt;
-        theta  = AngleUnit.normalizeRadians(theta + omega * dt);
+    public void predict(double dX, double dY, double dTheta) {
+        double cosH = Math.cos(theta);
+        double sinH = Math.sin(theta);
 
-        //Since there is no correlation between the x,y, and theta and each of them act indpendently F · P · Fᵀ  +  Q becomes P + Q as F is the identity matrix bc of no correlations
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                P[i][j] += Q[i][j] * dt;
-            }
-        }
+        //rotation to global
+        x     += cosH * dX - sinH * dY;
+        y     += sinH * dX + cosH * dY;
+        theta += dTheta;
+        theta  = AngleUnit.normalizeRadians(theta);
+        add3x3(P, Q);
     }
 
     //feeding the sensors into the covariance matrix
