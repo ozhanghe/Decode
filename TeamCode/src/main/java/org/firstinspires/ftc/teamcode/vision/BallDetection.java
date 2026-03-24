@@ -10,8 +10,6 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.utils.Globals;
-import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 import org.firstinspires.ftc.teamcode.utils.Utils;
 import org.firstinspires.ftc.teamcode.utils.Vector2;
 
@@ -122,5 +120,26 @@ public class BallDetection {
 
     public ArrayList<Vector2> getBallPoses() {
         return (ArrayList<Vector2>) ballPoses.clone();
+    }
+
+    public Vector2 getBestBall() {
+
+        this.update();
+        double[] w = getWeights(this.ballPoses);
+
+        if (ballPoses.size() == 0) {
+            return null;
+        } else {
+            double min = -1000000;
+            int bestIndex = 0;
+            for(int i = 0; i < w.length - 1; i++) {
+                if(w[i] > min) {
+                    min = w[i];
+                    bestIndex = i;
+                }
+            }
+            return ballPoses.get(bestIndex);
+        }
+
     }
 }
