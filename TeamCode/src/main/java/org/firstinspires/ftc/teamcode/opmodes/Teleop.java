@@ -201,7 +201,6 @@ public class Teleop extends LinearOpMode {
                 if (rb1.isClicked(gamepad1.right_bumper)) {
                     rb1.isReleased(gamepad1.right_bumper);
                     if (robot.shooter.state == Shooter.State.READY) robot.shooter.reqShoot(true);
-                    else if (robot.shooter.state == Shooter.State.IDLE) robot.shooter.reqAim(true);
                 } else if (rb1.isReleased(gamepad1.right_bumper)) {
                     rb1.isClicked(gamepad1.right_bumper);
                     if (robot.shooter.state == Shooter.State.SHOOT) {

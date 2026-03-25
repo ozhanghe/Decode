@@ -6,6 +6,7 @@ import com.google.ar.core.Pose;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.utils.Globals;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
+import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
 
 /*
 The sensor inputs into the kalman filter are the following:
@@ -29,9 +30,8 @@ public class RobotEKF {
     private final double[][] Q = new double[3][3];
 
     //tune the below values these are the values that represent how much variance each of them have.
-    public static double visionRX = 0.05, visionRY = 0.05, visionRT = 0.03;
+    public static double visionRX = 0.005, visionRY = 0.005, visionRT = 0.03;
     public static double pinpointRX = 0.01, pinpointRY = 0.01, pinpointRT = 0.05;
-    public static double odoRX = 0.1, odoRY = 0.1, odoRT = 0.05;
 
     ConstantAccelMath constAccelMath = new ConstantAccelMath();
 
@@ -42,7 +42,7 @@ public class RobotEKF {
         this.y     = startPose.y;
         this.theta = startPose.heading;
 
-        setDiagonal(P, new double[]{0.01, 0.01, 0.01});
+        setDiagonal(P, new double[]{0.1, 0.1, 0.05});
 
         setDiagonal(Q, new double[]{qX, qY, qTheta});
     }
@@ -67,6 +67,9 @@ public class RobotEKF {
         x     = predictionPose.x;
         y     = predictionPose.y;
         theta = predictionPose.heading;
+        TelemetryUtil.packet.put("Predict : X", x);
+        TelemetryUtil.packet.put("Predict : Y", y);
+        TelemetryUtil.packet.put("Predict : Heading", theta);
         add3x3(P, Q);
     }
 
@@ -84,10 +87,6 @@ public class RobotEKF {
 
     public void updatePinpoint(double zx, double zy, double zt) {
         updateSensor(zx, zy, zt, pinpointRX, pinpointRY, pinpointRT);
-    }
-
-    public void updateOdometry(double zx, double zy, double zt) {
-        updateSensor(zx, zy, zt, odoRX, odoRY, odoRT);
     }
 
     public void updateAprilTag(double zx, double zy, double zt) {
@@ -128,7 +127,7 @@ public class RobotEKF {
         this.x     = pose.x;
         this.y     = pose.y;
         this.theta = pose.heading;
-        setDiagonal(P, new double[]{0.01, 0.01, 0.01});
+        setDiagonal(P, new double[]{0.1, 0.1, 0.05});
     }
 
     private void fullUpdate3(double[] innov, double[] R) {

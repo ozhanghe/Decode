@@ -125,7 +125,6 @@ public class Shooter {
         switch (state) {
             case IDLE: {
                 stopRequest = false;
-                predictGoal2AxisInterpolate();
                 flywheel.setTargetVelocity(forceUpdateVelBool ? forceUpdateVel : Dist.CLOSE.flywheelVel);
                 setHoodAngle(0.0);
                 setShooterBlocker(true);
@@ -547,14 +546,28 @@ public class Shooter {
         double initialDist = Math.hypot(ballTarget.x - ROBOT_POSITION.x, ballTarget.y - ROBOT_POSITION.y);
         double virtualX = ballTarget.x;
         double virtualY = ballTarget.y;
+        double lastFilteredAccelX = 0;
+        double lastFilteredAccelY = 0;
         minFlywheelVelocity = shooterTable.getFlywheelForDistance(initialDist);
         targetHoodAngle = shooterTable.getLaunchAngleForDistanceAndFlywheel(initialDist, currFlywheelVel);
 
         if (Math.hypot(ROBOT_GLOBAL_VELOCITY.x, ROBOT_GLOBAL_VELOCITY.y) >= SOTMThreshold && currFlywheelVel >= 300) {
             double time = initialDist / (currFlywheelVel / 2 * Math.sin(targetHoodAngle));
+            double dt = Globals.LOOP_TIME;
+            double weight = 0.8;
 
-            virtualX = ballTarget.x - (ROBOT_GLOBAL_VELOCITY.x * time);
-            virtualY = ballTarget.y - (ROBOT_GLOBAL_VELOCITY.y * time);
+            double rawX = (ROBOT_GLOBAL_VELOCITY.x - lastVel.x) / dt;
+            double rawY = (ROBOT_GLOBAL_VELOCITY.y - lastVel.y) / dt;
+            double accelX = lastFilteredAccelX * 0.8 + rawX * 0.2;
+            double accelY = lastFilteredAccelY * 0.8 + rawY * 0.2;
+            lastFilteredAccelX = accelX;
+            lastFilteredAccelY = accelY;
+            TelemetryUtil.packet.put("Velocity : X Acceleration", accelX);
+            TelemetryUtil.packet.put("Velocity : Y Acceleration", accelY);
+
+
+            virtualX = ballTarget.x - (ROBOT_GLOBAL_VELOCITY.x * time + 0.5 * accelX * time * time);
+            virtualY = ballTarget.y - (ROBOT_GLOBAL_VELOCITY.y * time + 0.5 * accelY * time * time);
 
             Canvas canvas = TelemetryUtil.packet.fieldOverlay();
             canvas.setStroke(Globals.isRed ? "#ff4000" : "#0040ff");

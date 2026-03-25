@@ -34,14 +34,18 @@
 
         private Pose2d lastPinpointPose;
         private long lastPinpointPollNanos;
-        public static long pinpointPollGapMs = 2000;
-        public static double pinpointPollDist = 6;
+        public static long pinpointPollGapMs = 1000;
+        public static double pinpointResetDist = 5.0;
 
         // EKF
         private final RobotEKF ekf;
-        public static double Q_X     = 0.5;
-        public static double Q_Y     = 0.5;
-        public static double Q_THETA = 0.5;
+        public static double Q_X     = 0.1;
+        public static double Q_Y     = 0.1;
+        public static double Q_THETA = 0.1;
+
+        private double py;
+        private double px;
+        private double pt;
 
         // Camera
         private Pose2d estimatedCameraPose = new Pose2d(0, 0, 0);
@@ -95,10 +99,11 @@
             Pose2d relDelta = new Pose2d(relDeltaX, relDeltaY, deltaHeading);
 
             // EKF PREDICT
-            //ekf.predict(relDeltaX,relDeltaY,deltaHeading);
+            ekf.predict(relDeltaX,relDeltaY,deltaHeading);
 
             // EKF UPDATE — PINPOINT
-            if (usePinpoint && (currentTimeNanos - lastPinpointPollNanos >= pinpointPollGapMs * 1000_000 || currentPose.getDistanceFromPoint(lastPinpointPose) >= pinpointPollDist) || constantCorrection) {
+            /*
+            if (usePinpoint && (currentTimeNanos - lastPinpointPollNanos >= pinpointPollGapMs * 1000_000 || constantCorrection)) {
                 //Log.i("Localization Test", "pinpoint in use");
                 findPastInterpolatedPose(lastPinpointPollNanos);
                 pinpoint.update();
@@ -108,11 +113,23 @@
                 lastPinpointPose = currpinpoint.clone();
                 lastPinpointPollNanos = currentTimeNanos;
             }
+            */
 
-            if (usePinpoint) {
+            if (usePinpoint && (currentTimeNanos - lastPinpointPollNanos >= pinpointPollGapMs * 1000_000)) {
+                pinpoint.update();
+                px = pinpoint.getPosX();
+                py = pinpoint.getPosY();
+                pt = pinpoint.getHeading();
+                if (Math.hypot(px - ekf.getX(), py - ekf.getY()) > pinpointResetDist && consecutiveFrames == 0 ) {
+                    ekf.resetPose(new Pose2d(px, py, pt));
+                } else {
+                    ekf.updatePinpoint(px, py, pt);
+                }
                 Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
                 DashboardUtil.drawRobot(fieldOverlay, new Pose2d(pinpoint.getPosX(), pinpoint.getPosY(), pinpoint.getHeading()), this.expectedColor);
             }
+
+
 
             //Log.i("LoopTime", "sensors after ekf pinpoint " + GET_LOOP_TIME());
 
@@ -223,9 +240,9 @@
             TelemetryUtil.packet.put(this.getClass().getSimpleName() + " distance", distanceTraveled);
             TelemetryUtil.packet.put(this.getClass().getSimpleName() + " velocity", relCurrentVel);
 
-            TelemetryUtil.packet.put("Pinpoint x", pinpoint.getPosX());
-            TelemetryUtil.packet.put("Pinpoint y", pinpoint.getPosY());
-            TelemetryUtil.packet.put("Pinpoint heading", pinpoint.getHeading());
+            TelemetryUtil.packet.put("Pinpoint x", px);
+            TelemetryUtil.packet.put("Pinpoint y", py);
+            TelemetryUtil.packet.put("Pinpoint heading", pt);
 
             TelemetryUtil.packet.put("EKF P[0][0] (x var)",     ekf.getCovarianceCopy()[0][0]);
             TelemetryUtil.packet.put("EKF P[1][1] (y var)",     ekf.getCovarianceCopy()[1][1]);
