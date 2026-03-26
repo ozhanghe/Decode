@@ -43,7 +43,6 @@ public class RobotEKF {
         this.theta = startPose.heading;
 
         setDiagonal(P, new double[]{0.1, 0.1, 0.05});
-
         setDiagonal(Q, new double[]{qX, qY, qTheta});
     }
 
