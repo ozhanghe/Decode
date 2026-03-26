@@ -102,19 +102,27 @@
             ekf.predict(relDeltaX,relDeltaY,deltaHeading);
 
             // EKF UPDATE — PINPOINT
-            /*
+
             if (usePinpoint && (currentTimeNanos - lastPinpointPollNanos >= pinpointPollGapMs * 1000_000 || constantCorrection)) {
                 //Log.i("Localization Test", "pinpoint in use");
-                findPastInterpolatedPose(lastPinpointPollNanos);
-                pinpoint.update();
-                Pose2d currpinpoint = new Pose2d(pinpoint.getPosX(),pinpoint.getPosY(),pinpoint.getHeading());
-                Pose2d newpinpoint = MergeLocalizer.offsetPoseUsingGlobalDelta(interpolatedPastPose, lastPinpointPose, currpinpoint);
-                ekf.updatePinpoint(newpinpoint.x, newpinpoint.y, newpinpoint.heading);
+                Pose2d pastPose = ekf.getPose();
+                px = pinpoint.getPosX();
+                py = pinpoint.getPosY();
+                pt = pinpoint.getHeading();
+                Pose2d currpinpoint = new Pose2d(px,py,pt);
+                Pose2d newpinpoint = MergeLocalizer.offsetPoseUsingGlobalDelta(pastPose, lastPinpointPose, currpinpoint);
+                if (Math.hypot(px - ekf.getX(), py - ekf.getY()) > pinpointResetDist && consecutiveFrames == 0 ) {
+                    ekf.resetPose(new Pose2d(newpinpoint.x, newpinpoint.y, newpinpoint.heading));
+                } else {
+                    ekf.updatePinpoint(newpinpoint.x, newpinpoint.y, newpinpoint.heading);
+                }
                 lastPinpointPose = currpinpoint.clone();
                 lastPinpointPollNanos = currentTimeNanos;
-            }
-            */
 
+                Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
+                DashboardUtil.drawRobot(fieldOverlay, new Pose2d(newpinpoint.x, newpinpoint.y, newpinpoint.heading), this.expectedColor);
+            }
+            /*
             if (usePinpoint && (currentTimeNanos - lastPinpointPollNanos >= pinpointPollGapMs * 1000_000)) {
                 pinpoint.update();
                 px = pinpoint.getPosX();
@@ -127,6 +135,8 @@
                 }
                 Canvas fieldOverlay = TelemetryUtil.packet.fieldOverlay();
                 DashboardUtil.drawRobot(fieldOverlay, new Pose2d(pinpoint.getPosX(), pinpoint.getPosY(), pinpoint.getHeading()), this.expectedColor);
+
+             */
             }
 
 
