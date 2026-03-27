@@ -37,7 +37,7 @@ public class Intake {
         roller = new PriorityMotor(
             new DcMotorEx[] {robot.hardwareMap.get(DcMotorEx.class, "roller")},
             "roller", 2, 4,
-            new double[] {1}, robot.sensors
+            new double[] {-1}, robot.sensors
         );
 
         feed = new PriorityMotor(
@@ -90,7 +90,7 @@ public class Intake {
             case INTAKE: {
                 requestIntake = false;
 
-                roller.setTargetPowerSmooth(intakeRollerPower * (reversed ? -1 : 1), 0.3);
+                roller.setTargetPowerSmooth(intakeRollerPower * (reversed ? -1 : 1), 0.1);
                 feed.setTargetPower(intakeFeedPower * (reversed ? -1 : 1));
 
                 if (requestOff) {
@@ -110,7 +110,7 @@ public class Intake {
             case SHOOT_FEED: {
                 requestShoot = false;
 
-                roller.setTargetPowerSmooth(shootRollerPower, 0.3);
+                roller.setTargetPowerSmooth(shootRollerPower, 0.1);
                 feed.setTargetPower(shootFeedPower);
 
                 if (requestOff) {
