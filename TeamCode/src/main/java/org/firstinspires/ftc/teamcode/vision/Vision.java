@@ -77,7 +77,6 @@ public class Vision {
     }
 
     public Pose2d update() {
-        //visionPortal.setProcessorEnabled(aprilTagProcessor, true);
         detections = aprilTagProcessor.getFreshDetections();
 
         if (detections != null && !detections.isEmpty()) {
