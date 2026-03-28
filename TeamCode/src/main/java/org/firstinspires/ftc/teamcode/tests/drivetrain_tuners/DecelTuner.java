@@ -47,7 +47,7 @@ public class DecelTuner extends LinearOpMode {
             boolean y = gamepad1.y;
 
             if (!stopToggle) {
-                robot.drivetrain.drive(gamepad1);
+                robot.drivetrain.drive(gamepad1, false);
             } else {
                 gamepad1.rumble(1.0, 1.0, 100);
                 robot.drivetrain.setMotorPowers(0, 0, 0, 0);

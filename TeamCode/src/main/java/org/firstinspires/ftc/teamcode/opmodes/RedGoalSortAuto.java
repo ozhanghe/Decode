@@ -27,9 +27,9 @@ public class RedGoalSortAuto extends LinearOpMode {
     public void runOpMode() {
         Globals.isRed = true;
         Globals.RUNMODE = RunMode.AUTO;
-        robot = new Robot(hardwareMap);
+        robot = new Robot(hardwareMap, true);
         robot.setStopChecker(this::isStopRequested);
-        robot.drivetrain.setPoseEstimate(new Pose2d(-71 + ROBOT_BACK_LENGTH, 24.25 + ROBOT_WIDTH / 2, 0));
+        robot.drivetrain.setPoseEstimate(new Pose2d(-71 + ROBOT_BACK_LENGTH, ROBOT_WIDTH / 2, 0));
 
         robot.shooter.state = Shooter.State.TEST;
         robot.shooter.setShooterBlocker(true);
@@ -48,16 +48,16 @@ public class RedGoalSortAuto extends LinearOpMode {
         long t = System.currentTimeMillis();
         robot.shooter.setManual(false);
 
-        shoot(Math.toRadians(180), 1, true, true);
-        intake(11.5, 60, false, 1);
+        shoot(0, 1, true, true);
+        intake(11.5, 34, false, 2);
 
         open_gate(500);
 
         shoot(Math.toRadians(90), 1, true, false);
-        intake(-13, 51, true, 2);
+        intake(-13, 34, true, 1);
 
         shoot(Math.toRadians(80), 2, true, false);
-        intake(36, 51, true, 2);
+        intake(36, 34, true, 3);
 
         shoot(Math.toRadians(80), 1, false, false);
 
@@ -80,15 +80,15 @@ public class RedGoalSortAuto extends LinearOpMode {
 
     private void open_gate(long duration) {
         // align
-        robot.drivetrain.goToPoint(new Pose2d(0, 48, -Math.PI / 2), 1);
+        robot.drivetrain.goToPoint(new Pose2d(0, 48, Math.PI / 2), 1);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
         // hit gate
-        robot.drivetrain.goToPoint(new Pose2d(0, 53, -Math.PI / 2), 0.5);
+        robot.drivetrain.goToPoint(new Pose2d(0, 53, Math.PI / 2), 0.5);
         robot.waitFor(duration);
 
         // back off
-        robot.drivetrain.goToPoint(new Pose2d(0, 30, -Math.PI / 2), 1, true);
+        robot.drivetrain.goToPoint(new Pose2d(0, 30, Math.PI / 2), 1, true);
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
     }
 
@@ -124,7 +124,7 @@ public class RedGoalSortAuto extends LinearOpMode {
             robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
             robot.drivetrain.goToPoint(new Pose2d(11.5, 20, Math.toRadians(90)), 1, false);
-            robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+            robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT || Globals.BALL_PATTERN != 0);
         } else {
             robot.waitFor(50);
 
@@ -133,19 +133,26 @@ public class RedGoalSortAuto extends LinearOpMode {
 
     private void intake(double x, double y, boolean skipLast, int spike) {
         // align
-        robot.drivetrain.goToPoint(new Pose2d(x, 22, Math.PI / 2), 1, true);
-        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+
+        robot.drivetrain.goToPoint(new Pose2d(x, 34, Math.PI / 2), 0.8, false);
         robot.intake.reqIntake(true);
+
+        robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+
         int[] pattern = new int[3];
-        pattern[Globals.BALL_PATTERN - 21] = 1;
+        if (Globals.BALL_PATTERN == 0) spike = 0;
+        else pattern[Globals.BALL_PATTERN - 21] = 1;
         if (spike != 0) {
+            Log.i("Sort", "Inside spike != 0 is not zero");
             // sorted intake
             int[] balls = new int[3];
             balls[3 - spike] = 1; // tells you where the green ball is
             int[] slots = new int[]{-1, -1}; // [0] is left slot, [1] is right slot
             int slotsInUse = 0;
             for (int i = 0; i < 3; i++) {
+                Log.i("Sort", "Inside the first for loop");
                 if (slots[0] == pattern[i - slotsInUse]) { // checks if the next ball we wanna intake is in left slot
+                    Log.i("Sort","slots[0]");
                     // if yes, we intake it
                     robot.intake.setLeftBlocker(false);
                     robot.waitWhile(() -> !robot.intake.lindex.inPosition());
@@ -153,6 +160,7 @@ public class RedGoalSortAuto extends LinearOpMode {
                     slotsInUse--;
                 }
                 if (slots[1] == pattern[i - slotsInUse]) { // checks if the next ball we want is in the right slot
+                    Log.i("Sort", "slots[1]");
                     // if yes, then we intake it
                     robot.intake.setRightBlocker(false);
                     robot.waitWhile(() -> !robot.intake.rindex.inPosition());
@@ -160,6 +168,7 @@ public class RedGoalSortAuto extends LinearOpMode {
                     slotsInUse--;
                 }
                 if (balls[i] != pattern[i - slotsInUse]) {
+                    Log.i("Sort", "balls[i] != pattern[i-slotsInUse]");
                     // in the event that we don't have the ball we want
                     // in front of us or in our slots, we put the front ball in a slot
                     // it should be impossible for us to have all slots
@@ -167,15 +176,21 @@ public class RedGoalSortAuto extends LinearOpMode {
                     // of us not be the one we want
 
                     // prioritizes the use of the right slot since that's less distance for red auto
-                    int deltaX = 3 * (slots[1] == -1 ? -1 : 1);
+                    double deltaX = 7.5 * (slots[1] == -1 ? -1 : 1);
                     if (deltaX < 0) robot.intake.setRightBlocker(true);
                     else robot.intake.setLeftBlocker(true);
                     slotsInUse++;
                     slots[(deltaX < 0 ? 1 : 0)] = balls[i];
-                    robot.drivetrain.goToPoint(new Pose2d(x + deltaX, y + i * 5, Math.PI / 2), 1);
+                    robot.drivetrain.goToPoint(new Pose2d(x + deltaX, y + i * 5, Math.PI / 2), 0.3);
                     robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+                    robot.drivetrain.goToPoint(new Pose2d(x + deltaX, y + i * 5 + 5, Math.PI / 2), 0.3);
+                    robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+
                 } else {
-                    robot.drivetrain.goToPoint(new Pose2d(x, y + i * 5, Math.PI / 2), 1);
+                    Log.i("Sort", "ball in front is the correct ball");
+                    robot.drivetrain.goToPoint(new Pose2d(x, y + i * 5, Math.PI / 2), 0.3);
+                    robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+                    robot.drivetrain.goToPoint(new Pose2d(x, y + i * 5 + 5, Math.PI / 2), 0.3);
                     robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
                 }
 
@@ -183,6 +198,7 @@ public class RedGoalSortAuto extends LinearOpMode {
                 // we'll just check again if the balls we want are in the slots after slotting or intaking!
                 // this is the jank solution
                 if (slots[0] == pattern[i - slotsInUse]) { // checks if the next ball we wanna intake is in left slot
+                    Log.i("Sort", "slots[0] == pattern[i - slotsInUse]");
                     // if yes, we intake it
                     robot.intake.setLeftBlocker(false);
                     robot.waitWhile(() -> !robot.intake.lindex.inPosition());
@@ -191,6 +207,8 @@ public class RedGoalSortAuto extends LinearOpMode {
                 }
                 if (slots[1] == pattern[i - slotsInUse]) { // checks if the next ball we want is in the right slot
                     // if yes, then we intake it
+                    Log.i("Sort", "slots[1] == pattern[i - slotsInUse]");
+
                     robot.intake.setRightBlocker(false);
                     robot.waitWhile(() -> !robot.intake.rindex.inPosition());
                     slots[1] = -1;
@@ -199,7 +217,7 @@ public class RedGoalSortAuto extends LinearOpMode {
             }
         } else {
             // regular intake
-
+            Log.i("Sort", "regular intake");
             robot.drivetrain.goToPoint(new Pose2d(x, 20, Math.PI / 2), 1);
             robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
 
@@ -215,6 +233,7 @@ public class RedGoalSortAuto extends LinearOpMode {
 
         // back off
         if (!skipLast) {
+            Log.i("Sort", "skip last");
             robot.drivetrain.goToPoint(new Pose2d(x, 30, Math.PI / 2), 1, true);
             robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
         }

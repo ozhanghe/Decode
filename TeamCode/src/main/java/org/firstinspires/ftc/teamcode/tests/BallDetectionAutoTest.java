@@ -42,6 +42,8 @@ public class BallDetectionAutoTest extends LinearOpMode {
             robot.update();
         } while (opModeInInit());
 
+        robot.intake.reqIntake(true);
+
         Vector2 ballPos;
         b.update();
 
@@ -60,6 +62,9 @@ public class BallDetectionAutoTest extends LinearOpMode {
 
         robot.update();
         robot.waitWhile(() -> robot.drivetrain.state != Drivetrain.State.WAIT);
+
+        robot.intake.reqOff(true);
+
 
         Globals.AUTO_ENDING_POSE = Globals.ROBOT_POSITION.clone();
         robot.waitWhile(() -> {

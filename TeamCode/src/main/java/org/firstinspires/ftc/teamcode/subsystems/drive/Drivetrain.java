@@ -176,8 +176,8 @@ public class Drivetrain {
     public static double correctScalar = 5.5, rotScalar = 1.15, decelThresh = 36.0;
 
     private Pose2d targetPoint = new Pose2d (0, 0, 0);
-    public static PID xPID = new PID (0.4, 0.0, 0.007);
-    public static PID yPID = new PID (0.4, 0.0, 0.007);
+    public static PID xPID = new PID (0.2, 0.0, 0.007);
+    public static PID yPID = new PID (0.2, 0.0, 0.007);
     public static PID turnPID = new PID (0.4, 0.0, 0.002);
     public static PID hPID = new PID (0.53, 0.0, 0.0);
     public static double turnKStatic = 0.15;

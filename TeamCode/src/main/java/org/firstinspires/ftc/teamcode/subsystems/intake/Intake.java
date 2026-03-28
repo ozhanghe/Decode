@@ -37,7 +37,7 @@ public class Intake {
         roller = new PriorityMotor(
             new DcMotorEx[] {robot.hardwareMap.get(DcMotorEx.class, "roller")},
             "roller", 2, 4,
-            new double[] {-1}, robot.sensors
+            new double[] {1}, robot.sensors
         );
 
         feed = new PriorityMotor(
@@ -57,7 +57,7 @@ public class Intake {
         lindex = new nPriorityServo(
                 new Servo[]{robot.hardwareMap.get(Servo.class, "lindex")},
                 "lindex", nPriorityServo.ServoType.AXON_MINI,
-                0, 1, 0.1,
+                0, 1, 0.83,
                 new boolean[] {false},
                 2, 4
         );
