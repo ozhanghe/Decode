@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems.shooter;
 
+import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_GLOBAL_ACCELERATION;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_GLOBAL_VELOCITY;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_POSITION;
 import static org.firstinspires.ftc.teamcode.utils.Globals.ROBOT_VELOCITY;
@@ -553,15 +554,8 @@ public class Shooter {
         if (Math.hypot(ROBOT_GLOBAL_VELOCITY.x, ROBOT_GLOBAL_VELOCITY.y) >= SOTMThreshold && currFlywheelVel >= 300) {
             double time = initialDist / (currFlywheelVel / 2 * Math.sin(targetHoodAngle));
 
-            double rawAccelX = (ROBOT_GLOBAL_VELOCITY.x - lastVel.x) / robot.sensors.loopTime;
-            double rawAccelY = (ROBOT_GLOBAL_VELOCITY.y - lastVel.y) / robot.sensors.loopTime;
-            sotmFilteredAccelX = sotmFilteredAccelX * 0.8 + rawAccelX * 0.2;
-            sotmFilteredAccelY = sotmFilteredAccelY * 0.8 + rawAccelY * 0.2;
-            TelemetryUtil.packet.put("Aim : X Acceleration", sotmFilteredAccelX);
-            TelemetryUtil.packet.put("Aim : Y Acceleration", sotmFilteredAccelY);
-
-            virtualX = ballTarget.x - (ROBOT_GLOBAL_VELOCITY.x * time + 0.5 * sotmFilteredAccelX * time * time);
-            virtualY = ballTarget.y - (ROBOT_GLOBAL_VELOCITY.y * time + 0.5 * sotmFilteredAccelY * time * time);
+            virtualX = ballTarget.x - (ROBOT_GLOBAL_VELOCITY.x * time + 0.5 * ROBOT_GLOBAL_ACCELERATION.x * time * time);
+            virtualY = ballTarget.y - (ROBOT_GLOBAL_VELOCITY.y * time + 0.5 * ROBOT_GLOBAL_ACCELERATION.y * time * time);
 
             Canvas canvas = TelemetryUtil.packet.fieldOverlay();
             canvas.setStroke(Globals.isRed ? "#ff4000" : "#0040ff");
