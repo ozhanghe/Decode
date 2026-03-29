@@ -381,6 +381,7 @@ public class Drivetrain {
         }
     }
 
+    public void drive(Gamepad gamepad) { drive(gamepad, false); }
     public void drive(Gamepad gamepad, boolean lockHeading) {
         resetMinPowersToOvercomeFriction();
         state = State.DRIVE;
@@ -395,7 +396,7 @@ public class Drivetrain {
 
         double turn;
 
-        if(lockHeading) {
+        if (lockHeading) {
 
             if (!wasLocking) {
                 turnPID.resetIntegral();
@@ -403,7 +404,7 @@ public class Drivetrain {
             wasLocking = true;
 
             double error = AngleUtil.clipAngle(Math.toRadians(targetHeading) * (Globals.isRed ? 1 : -1) - ROBOT_POSITION.heading);
-            if(Math.abs(error) < Math.toRadians(headingLockDeadzone)) {
+            if (Math.abs(error) < Math.toRadians(headingLockDeadzone)) {
                 turn = 0;
                 turnPID.resetIntegral();
             } else {

@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems.drive.localizers;
 
+import android.util.Log;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 
@@ -41,7 +43,7 @@ public class Localizer {
     protected ArrayList<Pose2d> poseHistory = new ArrayList<Pose2d>();
     protected ArrayList<Pose2d> relHistory = new ArrayList<Pose2d>();
     protected ArrayList<Long> nanoTimes = new ArrayList<Long>();
-    protected ArrayList<Pose2d> velHistory = new ArrayList<Pose2d>();
+    protected ArrayList<Pose2d> relVelHistory = new ArrayList<Pose2d>();
 
     protected double maxVel = 0.0;
     protected double startHeadingOffset = 0;
@@ -69,6 +71,7 @@ public class Localizer {
 
         relHistory.add(new Pose2d(0,0,0));
         poseHistory.add(new Pose2d(0,0,0));
+        relVelHistory.add(new Pose2d(0,0,0));
         nanoTimes.add(0L);
     }
 
@@ -221,6 +224,7 @@ public class Localizer {
             Utils.headingClip(poseHistory.get(0).getHeading() - poseHistory.get(velCalcLastIndex).getHeading()) / actualVelTime
         );
     }
+
     private int accelCalcLastIndex;
     private Pose2d calcAccel(ArrayList<Pose2d> history) {
         double actualAccelTime = 0;
@@ -229,52 +233,53 @@ public class Localizer {
         double totalTime = 0;
         accelCalcLastIndex = 0;
         long start = !nanoTimes.isEmpty() ? nanoTimes.get(0) : 0;
-        if(start == 0){
-            for (int i = 0; i < nanoTimes.size()-1; i++) {
-                totalTime = (double)(start - nanoTimes.get(i)) / 1.0E9;
 
-                if (totalTime <= targetAccelTimeEstimate) {
-                    actualAccelTime = totalTime;
+        for (int i = 0; i < nanoTimes.size()-1; i++) {
+            totalTime = (double)(start - nanoTimes.get(i)) / 1.0E9;
 
-                    double deltaVX = history.get(i).getX() - history.get(i + 1).getX();
-                    double deltaVY = history.get(i).getY() - history.get(i + 1).getY();
+            if (totalTime <= targetAccelTimeEstimate) {
+                actualAccelTime = totalTime;
 
-                    relDeltaVelXTotal += deltaVX;
-                    relDeltaVelYTotal += deltaVY;
-                    accelCalcLastIndex = i;
-                }
+                double deltaVX = history.get(i).getX() - history.get(i + 1).getX();
+                double deltaVY = history.get(i).getY() - history.get(i + 1).getY();
+
+                relDeltaVelXTotal += deltaVX;
+                relDeltaVelYTotal += deltaVY;
+                accelCalcLastIndex = i;
             }
         }
         if (actualAccelTime == 0) return new Pose2d(0, 0, 0);
         return new Pose2d(
-                (relDeltaVelXTotal) / actualAccelTime,
-                (relDeltaVelYTotal) / actualAccelTime
+            (relDeltaVelXTotal) / actualAccelTime,
+            (relDeltaVelYTotal) / actualAccelTime
         );
     }
 
 
     public void updateVelocity() {
+        Log.i("updateVelocity", "nanoTimes " + nanoTimes.size());
+        Log.i("updateVelocity", "relHistory " + relHistory.size());
         relCurrentVel = calcVel(relHistory);
-        relCurrentAccel = calcAccel(velHistory);
-
         currentVel = new Pose2d(
             relCurrentVel.x * Math.cos(heading) - relCurrentVel.y * Math.sin(heading),
             relCurrentVel.x * Math.sin(heading) + relCurrentVel.y * Math.cos(heading),
             relCurrentVel.heading
         );
 
-        currentAccel = new Pose2d(
-                relCurrentAccel.x * Math.cos(heading) - relCurrentAccel.y * Math.sin(heading),
-                relCurrentAccel.x * Math.sin(heading) + relCurrentAccel.y * Math.cos(heading)
-        );
+        relVelHistory.add(0, relCurrentVel.clone());
 
-        velHistory.add(0,currentVel.clone());
+        Log.i("updateVelocity", "relVelHistory " + relVelHistory.size());
+        relCurrentAccel = calcAccel(relVelHistory);
+        currentAccel = new Pose2d(
+            relCurrentAccel.x * Math.cos(heading) - relCurrentAccel.y * Math.sin(heading),
+            relCurrentAccel.x * Math.sin(heading) + relCurrentAccel.y * Math.cos(heading)
+        );
 
         while (velCalcLastIndex + 1 < nanoTimes.size()) {
             nanoTimes.remove(nanoTimes.size() - 1);
             relHistory.remove(relHistory.size() - 1);
             poseHistory.remove(poseHistory.size() - 1);
-            velHistory.remove(velHistory.size()-1);
+            relVelHistory.remove(relVelHistory.size() - 1);
         }
     }
 

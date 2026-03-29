@@ -218,7 +218,7 @@ public class nMergeLocalizer extends Localizer {
         super.setPoseEstimate(pose);
         ekf.resetPose(pose);
         pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, pose.x, pose.y, AngleUnit.RADIANS, pose.heading));
-        lastPinpointPose = pose.clone();
+        lastPinpointPose = pastPose = pose.clone();
         estimatedCameraPose = null;
         consecutiveFrames   = 0;
     }

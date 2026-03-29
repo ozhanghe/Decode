@@ -33,7 +33,7 @@ public class EncoderPoseTuner extends LinearOpMode {
         while (!isStopRequested()) {
             START_LOOP();
 
-            drivetrain.drive(gamepad1, false);
+            drivetrain.drive(gamepad1);
             theta = Math.PI * 20; // 10 rotations
 
             robot.sensors.update();
