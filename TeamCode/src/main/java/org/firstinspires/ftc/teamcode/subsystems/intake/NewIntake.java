@@ -1,0 +1,86 @@
+package org.firstinspires.ftc.teamcode.subsystems.intake;
+
+import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.Robot;
+import org.firstinspires.ftc.teamcode.utils.TelemetryUtil;
+import org.firstinspires.ftc.teamcode.utils.priority.PriorityMotor;
+import org.firstinspires.ftc.teamcode.utils.priority.nPriorityServo;
+
+@Config
+public class NewIntake {
+    private final Robot robot;
+    public final PriorityMotor roller;
+
+    private boolean requestIntake = false;
+    private boolean requestOff = false;
+    private boolean reversed = false;
+
+    public static double rollerPower = 1.0;
+
+    public enum State {
+        IDLE,
+        INTAKE
+    }
+
+    public State state = State.IDLE;
+
+    public NewIntake(Robot robot) {
+        this.robot = robot;
+        roller = new PriorityMotor(
+                new DcMotorEx[] { robot.hardwareMap.get(DcMotorEx.class, "roller") },
+                "roller", 2, 4,
+                new double[] { 1 }, robot.sensors
+        );
+
+        this.robot.hardwareQueue.addDevices(roller);
+    }
+
+    long turnedOffTime = 0;
+
+    public void update() {
+        switch (state) {
+            case IDLE: {
+                roller.setTargetPower(0.0);
+                if (requestIntake) {
+                    requestIntake = false;
+                    state = State.INTAKE;
+                }
+
+                break;
+            }
+            case INTAKE: {
+                roller.setTargetPowerSmooth(rollerPower * (reversed ? -1 : 1), 0.1);
+
+                if (requestOff) {
+                    requestOff = false;
+                    state = State.IDLE;
+                }
+
+                break;
+            }
+        }
+        updateTelemetry();
+    }
+
+    public void requestIntake(boolean req) {
+        requestIntake = req;
+    }
+
+    public void reqOff(boolean req) {
+        requestOff = req;
+        turnedOffTime = System.currentTimeMillis();
+    }
+
+    private void updateTelemetry() {
+        TelemetryUtil.packet.put("NewIntake: state", this.state);
+        TelemetryUtil.packet.put("NewIntake: reversed", reversed);
+    }
+
+    public void setRollerDirection(boolean direction) {
+        reversed = direction;
+    }
+}
