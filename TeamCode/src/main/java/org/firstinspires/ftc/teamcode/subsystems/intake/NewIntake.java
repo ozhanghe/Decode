@@ -50,6 +50,7 @@ public class NewIntake {
         switch (state) {
             case IDLE: {
                 roller.setTargetPower(0.0);
+                feed.setTargetPower(0.0);
                 if (requestIntake) {
                     requestIntake = false;
                     state = State.INTAKE;
