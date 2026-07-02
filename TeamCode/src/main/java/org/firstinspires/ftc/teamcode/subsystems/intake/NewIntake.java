@@ -37,7 +37,7 @@ public class NewIntake {
 
         feed = new PriorityMotor(
             new DcMotorEx[] { robot.hardwareMap.get(DcMotorEx.class, "feed")},
-            "feed", 1,3
+            "feed", 2,4
             new double[] {1}, robot.sensors
         );
 
