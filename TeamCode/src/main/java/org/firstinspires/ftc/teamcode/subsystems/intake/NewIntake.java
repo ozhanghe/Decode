@@ -34,6 +34,11 @@ public class NewIntake {
                 new DcMotorEx[] { robot.hardwareMap.get(DcMotorEx.class, "roller") },
                 "roller", 2, 4,
                 new double[] { 1 }, robot.sensors
+
+        feed = new PriorityMotor(
+            new DcMotorEx[] { robot.hardwareMap.get(DcMotorEx.class, "feed")},
+            "feed", 1,3
+            new double[] {1}, robot.sensors
         );
 
         this.robot.hardwareQueue.addDevices(roller);
