@@ -36,12 +36,14 @@ public class NewIntake {
                 "roller", 2, 4,
                 new double[] { 1 }, robot.sensors
 
-        flipper = new nPriorityServo(
-            new DcMotorEx[] { robot.hardwareMap.get(DcMotorEx.class, "flipper")},
-            "flipper", 2,4
-            new double[] {1}, robot.sensors
+        flipper = new PriorityCRServo(
+            new CRServo[]{robot.hardwareMap.get(CRServo.class, "flipper1"), robot.hardwareMap.get(CRServo.class, "flipper2")},
+            "flipper", PriorityCRServo.ServoType.AXON_MINI,
+            new boolean[]{false, true},
+            2, 2
         );
 
+        this.robot.hardwareQueue.addDevices(flipper);
         this.robot.hardwareQueue.addDevices(roller);
     }
 
