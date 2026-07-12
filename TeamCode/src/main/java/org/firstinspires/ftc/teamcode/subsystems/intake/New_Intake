@@ -76,8 +76,27 @@ public class NewIntake {
             }
             case TRANSIT:{
                 roller.setTargetPowerSmooth(rollerPower * (0.5),0.1);
-                flipper.setTargetPower(flipperTransitAngle ,1.0)
+                flipper.setTargetAngle(flipperTransitAngle ,1.0)
             }
+            case CHECK:{
+                if(case == case.TRANSIT){
+                    if(flipper.positon == flipperTransitAngle){
+                        break;
+                    }
+                    else{
+                        state = State.TRANSIT;
+                    }
+                }
+                else if(case == case.INTAKE){
+                    if(flipper.position == flipperRegAngle){
+                        break;
+                    }
+                    else{
+                        flipper.setTargetAngle(flipperRegAngle);
+                    }
+                break;
+                }
+            }    
         }
         updateTelemetry();
     }
