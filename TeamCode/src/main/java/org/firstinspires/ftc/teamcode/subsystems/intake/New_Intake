@@ -21,8 +21,8 @@ public class NewIntake {
 
     public static double rollerPower = 1.0;
 
-    private double flipperRegAngle = 0.0
-    private double flipperTransitAngle=135.0    
+    public static double flipperRegAngle = 0.0
+    private static double flipperTransitAngle=135.0    
 
     public enum State {
         IDLE,
