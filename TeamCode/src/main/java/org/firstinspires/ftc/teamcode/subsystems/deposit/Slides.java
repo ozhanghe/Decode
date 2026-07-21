@@ -18,6 +18,9 @@ public class Slides
     private PriorityMotor slidesMotor;
 
     private double length, vel, targetLength;
+    private boolean powerOverride = false;
+    private boolean manualOverride = false;
+    private double overridedPower = 0.0;
 
     public Slides(Robot robot)
     {
@@ -38,14 +41,30 @@ public class Slides
         this.length = this.robot.sensors.getSlidesPos();
         this.vel = this.robot.sensors.getSlidesVelocity();
 
+        if(this.manualOverride)
+        {
+            return;
+        }
+
         double ffTerms = Slides.kSF * Math.signum(this.vel) + Slides.kG;
-        double power = pid.update(this.targetLength-this.length, Slides.minPower, Slides.maxPower) + ffTerms;
+        double power = this.powerOverride ? this.overridedPower : pid.update(this.targetLength-this.length, Slides.minPower, Slides.maxPower) + ffTerms;
         this.slidesMotor.setTargetPower(power);
     }
 
     public void setTargetLength(double tLength)
     {
         this.targetLength = tLength;
+    }
+
+    public void overridePower(double power)
+    {
+        this.powerOverride = true;
+        this.overridedPower = power;
+    }
+
+    public void unoverridePower()
+    {
+        this.powerOverride = false;
     }
 
     public Robot getRobot()
