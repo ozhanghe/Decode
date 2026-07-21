@@ -97,6 +97,9 @@ public class NewIntake {
                 break;
                 }
             }    
+            case TEST: {
+                break;
+            }
         }
         updateTelemetry();
     }
