@@ -9,6 +9,7 @@ import org.firstinspires.ftc.robotcontroller.external.samples.SensorOctoQuad;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.sensors.Sensors;
+import org.firstinspires.ftc.teamcode.utils.AngleUtil;
 import org.firstinspires.ftc.teamcode.utils.PID;
 import org.firstinspires.ftc.teamcode.utils.Pose2d;
 import org.firstinspires.ftc.teamcode.utils.Vector2;
@@ -176,15 +177,15 @@ public class PathfollowerDrivetrain
 
         Vector2 vel = new Vector2(pd.velocity);
         double v = vel.mag();
-        double tHeading = Math.atan2(vel.y, vel.x);
+        double tHeading = Math.atan2(vel.y, vel.x) + (pd.reversed ? Math.PI : 0);
         vel.norm();
         vel.mul(pd.power);
         vel.rotate(-this.currentHeading);
 
         double kF_heading = (PathfollowerDrivetrain.kR * v)/pd.radius;
-        double headingError = tHeading-this.currentHeading;
+        double headingError = AngleUtil.clipAngle(tHeading-this.currentHeading);
 
-        double rotatePow = rotationPID.update(headingError, maxPower, minPower) + kF_heading;
+        double rotatePow = rotationPID.update(headingError, minPower, maxPower) + kF_heading;
         double motorPowX = vel.x;
         double motorPowY = vel.y;
 
