@@ -78,6 +78,17 @@ public class NewIntake {
                 roller.setTargetPowerSmooth(rollerPower * (0.5),0.1);
                 flipper.setTargetAngle(flipperTransitAngle ,1.0)
             }
+
+            case CHECK:{
+                if(flipper.positon == flipperTransitAngle){
+                    break;
+                }
+                else{
+                    flipper.setTargetAngle(flipperTransitAngle);
+                    break;
+                }
+            }       
+                
  
             case TEST: {
                 break;
